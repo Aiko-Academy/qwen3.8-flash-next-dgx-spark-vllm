@@ -10,8 +10,9 @@ Maintained by Aiko Academy. Measured on 2026-10-18.
 ## Figures
 
 One DGX Spark, the server started from this repository (`serve/serve.sh`), read back by `serve/verify.sh` (38 OK,
-`results/verify-public-set-1018.json`). Clients on another machine of the local network, one pass at a time, every
-pass checked clean (`docs/method.md`). The right-hand column is the same server with the draft vocabulary we use
+`results/verify-public-set-1018.json`). Clients on another machine, over the network, one pass at a time, every pass
+checked clean by `bench/idle_pass.py` (`docs/method.md`); llama-benchy runs on the Spark itself, and its window was
+checked with the server's access log instead. The right-hand column is the same server with the draft vocabulary we use
 ourselves, built on private texts (not published), measured the same day by the same commands.
 
 | measure | this recipe | same, our private draft set | protocol | files |
@@ -62,7 +63,7 @@ How much of the model's output each draft set covers (share of generated tokens 
 |---|---|---|
 | engine | vLLM v0.31.0, official image pinned by digest | `serve/serve.sh` |
 | checkpoint | `nvidia/Qwen3.8-Flash-Next-NVFP4` at a pinned revision; dense BF16 layers converted to block FP8 | `serve/prepare.sh`, `patches/fp8-hybrid/` |
-| memory | per-layer embedding table (51 GB) read in place from the checkpoint, rows prefetched with `MADV_WILLNEED` | `patches/ple-checkpoint-mapped/` (vllm#58439) |
+| memory | per-layer embedding table (51.2 GB) read in place from the checkpoint, rows prefetched with `MADV_WILLNEED` | `patches/ple-checkpoint-mapped/` (vllm#58439) |
 | context | 524 288 tokens, YaRN factor 2 over 262 144; KV cache fp8, MTP layer in BF16 | `serve/serve.sh`, `patches/mtp-kv-bf16/` (vllm#60023) |
 | speculative decoding | MTP 2; the drafter scores 65 536 rows of the head, in NVFP4 on Marlin | `patches/draft-vocab/`, `patches/draft-nvfp4-head/` |
 | cache and determinism | prefix cache repaired; deterministic sparse-attention top-k | `patches/cache-det/` |

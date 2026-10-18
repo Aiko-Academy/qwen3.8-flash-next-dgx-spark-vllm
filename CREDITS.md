@@ -9,9 +9,16 @@ that says what was taken and what was changed.
 
 | what | who | licence |
 |---|---|---|
-| Qwen3.8-Flash-Next, the model | Qwen team | see the model card |
-| checkpoint `nvidia/Qwen3.8-Flash-Next-NVFP4`, revision `fc694b54fb0174e0913e6adf86691ef85a4ead47` (downloaded by `serve/prepare.sh`, never redistributed here) | NVIDIA | licence of the Hugging Face model card |
+| Qwen3.8-Flash-Next, the model | Qwen team | Qwen Community License 1.0 (`qwen-community-1.0` on the model card of `Qwen/Qwen3.8-Flash-Next`) |
+| checkpoint `nvidia/Qwen3.8-Flash-Next-NVFP4`, revision `fc694b54fb0174e0913e6adf86691ef85a4ead47` (downloaded by `serve/prepare.sh`, never redistributed here) | NVIDIA | NVIDIA Open Model License (`nvidia-open-model-license` on its model card) |
 | vLLM v0.31.0, image `vllm/vllm-openai:v0.31.0` (digest `sha256:c1c9f6fd...`, build commit `db9527a4`), and every vLLM file modified in `patches/*/vllm-overlay/` | the vLLM project | Apache-2.0 |
+
+## Data
+
+| what | where it comes from | licence |
+|---|---|---|
+| public corpus of the draft vocabulary (`patches/draft-vocab/public-corpus.tsv`): only revision ids, commits and hashes are published; the `.npy` holds token ids | 213 Wikipedia featured articles at fixed revisions (French and English); vllm-project/vllm v0.31.0, microsoft/TypeScript v5.9.3, tokio-rs/tokio 1.47.1 at fixed commits | Wikipedia text CC BY-SA 4.0, not redistributed; vLLM and TypeScript Apache-2.0; tokio MIT |
+| French text of the prefill and prefix-cache prompts (`bench/prompts/long-fr-verne.txt`) | Jules Verne, 1873, Project Gutenberg eBook #800 | public domain |
 
 ## Code used
 

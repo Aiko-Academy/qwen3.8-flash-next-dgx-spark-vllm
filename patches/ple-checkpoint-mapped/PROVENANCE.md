@@ -1,7 +1,8 @@
 # Provenance: per-layer embeddings read in place from the checkpoint
 
 What makes the model fit one 128 GB Spark: with `--engram-config '{"checkpoint_mapped": true}'`, the per-layer
-embedding (PLE) table, 51 GB in the checkpoint, is memory-mapped read-only from the safetensors files and gathered
+embedding (PLE) table (51.2 GB, 129 tensors of `model-fp8-mtp-ple.safetensors`, which also holds the 2.5 GB MTP
+layer) is memory-mapped read-only from the checkpoint and gathered
 on demand, instead of being copied to host memory. The rows a step needs are first passed to
 `madvise(MADV_WILLNEED)`, which queues all their reads at once.
 

@@ -3,7 +3,9 @@
 # Installed at a pinned version in a throwaway container of the vLLM image: host network (to reach the address
 # the server is bound to), no capability, no new privilege, 4 GB, pinned on the Cortex-A725 cores (0-4) so that the client does not compete with the engine's
 # cores. The tokenizer is read from the checkpoint, mounted read-only. The key comes from the docker --env-file of
-# serve.sh and is passed inside the container only.
+# serve.sh and is passed inside the container only, as a command-line argument of llama-benchy: anyone who can list
+# the host's processes sees it while the bench runs. The wheel is checked by its sha256; its dependencies are
+# resolved from PyPI without hashes, inside a container that is thrown away.
 #   bench/community/llama-benchy.sh <label>       writes results/llama-benchy-<label>.md and .json
 # Same configuration as serve.sh (SERVE_CONFIG): BIND, PORT, API_KEY_FILE, SOURCE_DIR.
 set -euo pipefail

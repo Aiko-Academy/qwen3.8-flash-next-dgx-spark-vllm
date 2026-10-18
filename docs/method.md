@@ -9,7 +9,7 @@ How the figures of this repository are measured, and what makes two figures comp
 | machine | one NVIDIA DGX Spark (GB10, 128 GB unified memory, 20 cores: ten Cortex-X925 at 3.9 GHz, ten Cortex-A725) |
 | system | DGX OS, kernel 7.0.0-1019-nvidia, driver 580.178.04, Docker |
 | server | the container of `serve/serve.sh`, read back by `serve/verify.sh` (25 settings) |
-| client | another machine of the same local network for the benches; on the Spark itself for llama-benchy |
+| client | another machine, over the network, for the benches; the Spark itself for llama-benchy |
 
 The server we measure is shared with other users. Every pass is played at rest and checked afterwards.
 
@@ -26,11 +26,11 @@ when none waited. A contaminated pass is discarded and replayed, never averaged.
 HTTP error, is never green. The verdict sits next to the result, in `results/<name>.pass.json`.
 
 We also read the server's access log before each pass, to know who else was there; that tool is ours and not part
-of this repository.
+of this repository. llama-benchy does not go through `idle_pass.py`: its window was checked with that log only.
 
 ## First pass and second pass
 
-The per-layer embedding table (51 GB) is read from the NVMe as decoding needs its rows. The probe
+The per-layer embedding table (51.2 GB) is read from the NVMe as decoding needs its rows. The probe
 (`bench/probe.py`) plays each prompt twice:
 
 | pass | what it measures |

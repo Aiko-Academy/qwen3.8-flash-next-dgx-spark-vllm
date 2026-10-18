@@ -30,7 +30,9 @@ greedy text (measured on 2026-10-18, `docs/method.md`).
 ## The set we serve and the set we publish
 
 Our own service uses a set built on our private texts; it stays private. This repository builds its set from the
-public corpus above (`serve/prepare.sh draft-vocab`, output `build/draft_vocab_public_65536.npy`). The difference
+public corpus above (`serve/prepare.sh draft-vocab`, output `build/draft_vocab_public_65536.npy`, sha256
+`19a4415d6146a0fc91355674a11d9929d0e726da56656096a9a52c3d168368a8`, rebuilt to the byte on 2026-10-18 and checked by
+`prepare.sh`). The difference
 between the two (coverage of the benchmark outputs, acceptance, throughput) is measured and published in
 `results/` and in the README.
 

@@ -1,8 +1,8 @@
 # Provenance: dense layers in block FP8
 
 The NVIDIA checkpoint keeps its dense layers (attention projections, shared experts, linear-attention
-projections) in BF16. This patch serves them in FP8 e4m3 with 128x128 block scales: about 5.4 GiB fewer bytes
-read per decoding step. The experts stay NVFP4, the target `lm_head` stays BF16.
+projections) in BF16. This patch serves them in FP8 e4m3 with 128x128 block scales: the 300 converted tensors weigh
+5.4 GiB in BF16 and 2.7 GiB in FP8, so about 2.7 GiB fewer bytes are read per decoding step. The experts stay NVFP4, the target `lm_head` stays BF16.
 
 ## Source
 

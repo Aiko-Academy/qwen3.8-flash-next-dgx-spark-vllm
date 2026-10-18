@@ -31,6 +31,8 @@ PATCHES="${PATCHES:-$REPO/patches}"
 BUILD="${BUILD:-$REPO/build}"
 NVME_DEVICE="${NVME_DEVICE:-/dev/nvme0n1}"
 P="$PATCHES/fp8-hybrid"
+# sha256 of the draft vocabulary built from the frozen public corpus (rebuilt to the byte on 2026-10-18)
+DRAFT_VOCAB_SHA="19a4415d6146a0fc91355674a11d9929d0e726da56656096a9a52c3d168368a8"
 V="$PATCHES/draft-vocab"
 
 say() { echo "== $*"; }
@@ -136,6 +138,9 @@ step_draft_vocab() {
     --corpus /corpus --complement /v/draft_vocab_65536.npy
   docker run --rm --network none -v "$BUILD":/out --entrypoint chown "$IMAGE" "$(id -u):$(id -g)" /out/draft_vocab_public_65536.npy
   sha256sum "$out" | sed 's/^/   /'
+  [ "$(sha256sum "$out" | cut -d' ' -f1)" = "$DRAFT_VOCAB_SHA" ] \
+    || fail "draft vocabulary differs from the published one ($DRAFT_VOCAB_SHA): corpus or tokenizer changed"
+  echo "   equal to the published draft vocabulary"
 }
 
 case "${1:-}" in
