@@ -1,5 +1,15 @@
 # Changelog
 
+## Since v0.32.0-1 (2026-10-19)
+
+- `bench/toolcall.py`: `--system TEXT` puts a system message before the prompt; a `code_with_tool` case sends the
+  code prompt with the Bash tool declared; every draw records the names called outside code against the declared
+  tools, and the summary counts the draws with an undeclared call. Seven new self-check fixtures (27 in all).
+- Measured on 2026-10-19 with our private draft set (README table, `results/toolcall-*-1019`), to the code prompt
+  that gave invented calls: with a system message, 0 of 12 draws call a tool and 12 return code (cut at the
+  3 000-token budget); with the Bash tool declared, 12 call Bash and none an undeclared tool; with reasoning low,
+  0 of 12 call a tool and 12 return code. The same tests on v0.31.0 are not measured.
+
 ## v0.32.0-1 (2026-10-18)
 
 The recipe moves to vLLM v0.32.0 (image pinned by digest `sha256:befccf0e...`). Same checkpoint, same converted

@@ -1,0 +1,416 @@
+{
+ "kind": "toolcall",
+ "label": "reasoning-low-v0320-private-set-1019",
+ "measured_at": "2026-10-19T00:35:59+0200",
+ "repo_commit": "80cacf92b18856d6ad35946f5091ca23bb7fdb5b",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "path": "chat (return_token_ids)",
+  "temperature": 0.7,
+  "reasoning": "low",
+  "series": 3,
+  "per_series": 4,
+  "cases": [
+   "code_without_tool"
+  ],
+  "system": null
+ },
+ "summary": {
+  "code_without_tool": {
+   "complete": 12
+  },
+  "total": {
+   "complete": 12
+  }
+ },
+ "called": {
+  "code_without_tool": {
+   "draws": 12,
+   "with_undeclared_call": 0,
+   "with_declared_calls_only": 0,
+   "without_call": 12,
+   "code_block_returned": 12,
+   "length_finishes": 0,
+   "names": []
+  }
+ },
+ "responses": [
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 2939,
+   "content": 8972,
+   "visible": 8970,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```ts\n// src/priority-queue.ts\n\nexport interface QueueItem<T = unkno",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based queue\n2. Removal by ID\n3. Vitest unit tests\n\nI need to provide:\n- The queue implementation with types\n- Removal",
+   "reasoning_tokens": 173,
+   "seconds": 54.8,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "00:36:54"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 3815,
+   "content": 11925,
+   "visible": 11923,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/PriorityQueue.ts\n\nexport interface QueueItem<T>",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based queue\n2. Removal by ID\n3. Vitest unit tests\n\nI need to provide clean, production-quality code. Let me think abo",
+   "reasoning_tokens": 245,
+   "seconds": 69.9,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "00:38:03"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 4050,
+   "content": 12925,
+   "visible": 12923,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/types.ts\nexport interface QueueItem<T> {\n  id: ",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based queue\n2. Removal by ID\n3. Vitest unit tests\n\nI need to design a robust priority queue that supports:\n- Adding i",
+   "reasoning_tokens": 216,
+   "seconds": 76.8,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "00:39:20"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 4189,
+   "content": 12889,
+   "visible": 12887,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/PriorityQueue.ts\n\nexport interface QueueItem<T>",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based ordering\n2. Removal by ID\n3. Vitest unit tests\n\nLet me design this carefully:\n\n- A generic Priority Queue class",
+   "reasoning_tokens": 257,
+   "seconds": 76.0,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "00:40:36"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 4469,
+   "content": 13965,
+   "visible": 13963,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// types.ts\nexport interface QueueItem<T = unknown> {\n",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based queue\n2. Removal by ID\n3. Unit tests with Vitest\n\nI need to write clean, production-ready TypeScript code. Let ",
+   "reasoning_tokens": 294,
+   "seconds": 82.8,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "00:41:59"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 3902,
+   "content": 12518,
+   "visible": 12516,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/types.ts\n\nexport interface QueueItem<T = unknow",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority queue functionality\n2. Removal by ID\n3. Vitest unit tests\n\nI need to provide clean, production-ready code. Let me thi",
+   "reasoning_tokens": 273,
+   "seconds": 74.1,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "00:43:13"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 3977,
+   "content": 12434,
+   "visible": 12432,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/PriorityQueue.ts\n\nexport interface QueueItem<T>",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based ordering\n2. Removal by identifier\n3. Vitest unit tests\n\nI need to provide production-quality code with:\n- A pri",
+   "reasoning_tokens": 265,
+   "seconds": 73.5,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "00:44:27"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 4527,
+   "content": 14024,
+   "visible": 14022,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/priority-queue.ts\n\nexport interface QueueEntry<",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based ordering\n2. Removal by identifier\n3. Vitest unit tests\n\nI'll write a clean, well-structured implementation with",
+   "reasoning_tokens": 447,
+   "seconds": 86.2,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "00:45:53"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 3763,
+   "content": 11865,
+   "visible": 11863,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/priority-queue.ts\n\nexport interface QueueItem<T",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based queue\n2. Removal by ID\n3. Vitest unit tests\n\nI need to provide:\n- The queue implementation (class-based, type-s",
+   "reasoning_tokens": 212,
+   "seconds": 69.3,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "00:47:02"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 4031,
+   "content": 11858,
+   "visible": 11856,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/priority-queue.ts\n\nexport interface QueueItem<T",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with ID-based removal, along with Vitest unit tests. Let me think about the design:\n\n1. **Priority Queue with IDs**: I need a queue whe",
+   "reasoning_tokens": 228,
+   "seconds": 73.9,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "00:48:16"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 3830,
+   "content": 11987,
+   "visible": 11985,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/priority-queue.ts\n\nexport interface QueueItem<T",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with:\n1. Priority-based ordering\n2. Removal by ID\n3. Unit tests using Vitest\n\nLet me design this properly:\n\n- A priority queue where it",
+   "reasoning_tokens": 280,
+   "seconds": 70.8,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "00:49:27"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 3665,
+   "content": 11183,
+   "visible": 11181,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "\n\n```typescript\n// src/priority-queue.ts\n\nexport interface QueueElemen",
+   "raw_excerpt": "The user wants a complete TypeScript module for a priority queue with removal by ID, plus unit tests using Vitest. Let me design this:\n\n1. **Priority Queue Module**: \n   - Elements with id, priority, ",
+   "reasoning_tokens": 215,
+   "seconds": 67.7,
+   "reasoning_markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "00:50:35"
+  }
+ ],
+ "requests": {
+  "sent": 12,
+  "errors": 0
+ },
+ "finished_at": "2026-10-19T00:50:35+0200"
+}

@@ -1,0 +1,344 @@
+{
+ "kind": "toolcall",
+ "label": "system-v0320-private-set-1019",
+ "measured_at": "2026-10-19T00:23:35+0200",
+ "repo_commit": "80cacf92b18856d6ad35946f5091ca23bb7fdb5b",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "path": "chat (return_token_ids)",
+  "temperature": 0.7,
+  "reasoning": "default",
+  "series": 3,
+  "per_series": 4,
+  "cases": [
+   "code_without_tool"
+  ],
+  "system": "You are a helpful assistant."
+ },
+ "summary": {
+  "code_without_tool": {
+   "complete": 12
+  },
+  "total": {
+   "complete": 12
+  }
+ },
+ "called": {
+  "code_without_tool": {
+   "draws": 12,
+   "with_undeclared_call": 0,
+   "with_declared_calls_only": 0,
+   "without_call": 12,
+   "code_block_returned": 12,
+   "length_finishes": 12,
+   "names": []
+  }
+ },
+ "responses": [
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10503,
+   "visible": 10502,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// PriorityQueue.ts\n\nexport interface QueueItem<T> {\n  i",
+   "raw_excerpt": "```typescript\n// PriorityQueue.ts\n\nexport interface QueueItem<T> {\n  id: string;\n  priority: number;\n  data: T;\n  timestamp: number;\n}\n\nexport class PriorityQueue<T> {\n  private items: QueueItem<T>[] ",
+   "reasoning_tokens": 0,
+   "seconds": 56.4,
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "00:24:32"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10353,
+   "visible": 10353,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string",
+   "raw_excerpt": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string;\n  priority: number;\n  data: T;\n  addedAt: number;\n}\n\nexport class PriorityQueue<T> {\n  private heap: QueueItem<T>[];\n  private i",
+   "reasoning_tokens": 0,
+   "seconds": 55.1,
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "00:25:27"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 11288,
+   "visible": 11288,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n/**\n * Priority Queue Module\n * \n * A complete priority ",
+   "raw_excerpt": "```typescript\n/**\n * Priority Queue Module\n * \n * A complete priority queue implementation with:\n * - Priority-based ordering\n * - Removal by ID\n * - Full TypeScript typing\n * - Comprehensive Vitest u",
+   "reasoning_tokens": 0,
+   "seconds": 57.5,
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "00:26:25"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10774,
+   "visible": 10774,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n/**\n * Priority Queue Module with ID-based removal and c",
+   "raw_excerpt": "```typescript\n/**\n * Priority Queue Module with ID-based removal and comprehensive tests.\n * \n * Features:\n * - Priority-based ordering (lower number = higher priority)\n * - Insert, remove by ID, peek",
+   "reasoning_tokens": 0,
+   "seconds": 57.3,
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "00:27:22"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10152,
+   "visible": 10152,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// PriorityQueue.ts\n\nexport interface QueueItem<T> {\n  i",
+   "raw_excerpt": "```typescript\n// PriorityQueue.ts\n\nexport interface QueueItem<T> {\n  id: string;\n  priority: number; // Lower number = higher priority (e.g., 1 is higher than 5)\n  data: T;\n  timestamp: number; // For",
+   "reasoning_tokens": 0,
+   "seconds": 55.8,
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "00:28:18"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10166,
+   "visible": 10161,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string",
+   "raw_excerpt": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string;\n  priority: number;\n  data: T;\n  timestamp: number;\n}\n\nexport class PriorityQueue<T> {\n  private heap: QueueItem<T>[] = [];\n  pr",
+   "reasoning_tokens": 0,
+   "seconds": 55.0,
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "00:29:13"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10380,
+   "visible": 10380,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string",
+   "raw_excerpt": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string;\n  value: T;\n  priority: number;\n  timestamp: number;\n}\n\nexport class PriorityQueue<T> {\n  private heap: QueueItem<T>[];\n  privat",
+   "reasoning_tokens": 0,
+   "seconds": 54.8,
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "00:30:08"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10244,
+   "visible": 10243,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// types.ts\nexport interface QueueItem<T> {\n  id: string",
+   "raw_excerpt": "```typescript\n// types.ts\nexport interface QueueItem<T> {\n  id: string;\n  priority: number; // Higher number = higher priority\n  data: T;\n  createdAt: number;\n}\n\nexport interface PriorityQueueOptions ",
+   "reasoning_tokens": 0,
+   "seconds": 55.1,
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "00:31:03"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10725,
+   "visible": 10725,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// PriorityQueue.ts\n\nexport interface PriorityQueueItem<",
+   "raw_excerpt": "```typescript\n// PriorityQueue.ts\n\nexport interface PriorityQueueItem<T> {\n  id: string;\n  value: T;\n  priority: number; // lower number = higher priority\n}\n\nexport class PriorityQueue<T> {\n  private ",
+   "reasoning_tokens": 0,
+   "seconds": 56.1,
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "00:31:59"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10321,
+   "visible": 10321,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// queue.ts\n\nexport interface QueueItem<T> {\n  id: strin",
+   "raw_excerpt": "```typescript\n// queue.ts\n\nexport interface QueueItem<T> {\n  id: string;\n  priority: number;\n  data: T;\n  timestamp: number;\n}\n\nexport class PriorityQueue<T> {\n  private items: Map<string, QueueItem<T",
+   "reasoning_tokens": 0,
+   "seconds": 54.7,
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "00:32:54"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10146,
+   "visible": 10146,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// PriorityQueue.ts\n\nexport interface PriorityItem<T> {\n",
+   "raw_excerpt": "```typescript\n// PriorityQueue.ts\n\nexport interface PriorityItem<T> {\n  id: string;\n  priority: number;\n  value: T;\n}\n\nexport class PriorityQueue<T> {\n  private items: Map<string, PriorityItem<T>>;\n  ",
+   "reasoning_tokens": 0,
+   "seconds": 53.8,
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "00:33:48"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10051,
+   "visible": 10051,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// priority-queue.ts\n\ninterface QueueItem<T> {\n  id: str",
+   "raw_excerpt": "```typescript\n// priority-queue.ts\n\ninterface QueueItem<T> {\n  id: string;\n  priority: number;\n  value: T;\n  addedAt: number;\n}\n\nexport class PriorityQueue<T> {\n  private items: QueueItem<T>[] = [];\n\n",
+   "reasoning_tokens": 0,
+   "seconds": 54.9,
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "00:34:42"
+  }
+ ],
+ "requests": {
+  "sent": 12,
+  "errors": 0
+ },
+ "finished_at": "2026-10-19T00:34:42+0200"
+}

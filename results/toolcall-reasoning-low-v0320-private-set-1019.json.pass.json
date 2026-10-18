@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I toolcall.py reasoning-low-v0320-private-set-1019 --cases code_without_tool --series 3 --per-series 4 --reasoning low",
+ "result": "toolcall-reasoning-low-v0320-private-set-1019.json",
+ "waited_for_rest_s": 26,
+ "start": "2026-10-19T00:35:59+0200",
+ "end": "2026-10-19T00:50:35+0200",
+ "rc": 0,
+ "sent": 12,
+ "errors": 0,
+ "finished_by_engine": 12,
+ "peak_running": 1.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

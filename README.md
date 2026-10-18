@@ -5,7 +5,7 @@ context, MTP speculative decoding, 16 concurrent sequences, tool calls. It is th
 extracted into one script, with every patch it needs, the benches that measured it, and credit to the people whose
 work it assembles (`CREDITS.md`).
 
-Maintained by Aiko Academy. Measured on 2026-10-18.
+Maintained by Aiko Academy. Measured on 2026-10-18; the tool-call follow-ups on 2026-10-19.
 
 ## Figures
 
@@ -41,8 +41,11 @@ shows what they are: calls to `list_files` and `read_file`, tools the request ne
 A speed measured on that text is not a speed of code. On v0.31.0 the same greedy prompt answered with the module at
 each of the six greedy passes of the day (600 tokens, the probe's limit). Sampled at temperature 0.7, the code prompt
 gives invented calls in 6 of 12 draws with the public set and 11 of 12 with ours; the French prose prompt, in none of
-12 (table below). Not measured yet: the same test on v0.31.0, and with a system message, reasoning on, or tools
-declared.
+12 (table below). On 2026-10-19, with our set, the calls went away as soon as the request carried anything more
+than the bare prompt: with a system message ("You are a helpful assistant."), 12 code answers out of 12 and no tool
+call (all 12 cut at the 3 000-token budget, the module being longer); with the Bash tool declared, 12 calls to Bash
+out of 12 and no undeclared tool; with reasoning low, 12 code answers and no tool call. Not measured yet: the same
+tests on v0.31.0.
 
 The draft vocabulary only decides which tokens the drafter may propose; the target model checks every one. On
 v0.32.0 the two sets are level in French prose (41.1 and 41.2 tok/s), and the public set is faster in English (45.3
@@ -66,6 +69,9 @@ Measured once per version, the draft set named in each cell:
 | literal `<tool_call>` written in prose | 32 complete answers out of 36, 4 short stops, no content lost, no fabricated call (public set) | 35 out of 36, 1 short stop, no content lost, no fabricated call (our set) | `bench/toolcall.py`, temperature 0.7 | `toolcall-v0320-public-set-1018`, `toolcall-private-set-1018` |
 | invented tool calls, code prompt, no tool declared | 6 of 12 (public set), 11 of 12 (our set) | not measured | `bench/toolcall.py --cases code_without_tool --series 3 --per-series 4`, temperature 0.7 | `toolcall-unprompted-v0320-1018`, `toolcall-unprompted-v0320-private-set-1018` |
 | invented tool calls, French prose prompt, no tool declared | 0 of 12 (public set), 0 of 12 (our set) | not measured | same, `prose_fr_without_tool` | same |
+| invented tool calls, code prompt, system message | 0 of 12, 12 code answers, 12 cut at 3 000 tokens (our set) | not measured | same, `--system "You are a helpful assistant."` | `toolcall-system-v0320-private-set-1019` |
+| code prompt, Bash tool declared | 12 calls to Bash out of 12, 0 undeclared, no code answer (our set) | not measured | `bench/toolcall.py --cases code_with_tool --series 3 --per-series 4`, temperature 0.7 | `toolcall-with-tool-v0320-private-set-1019` |
+| invented tool calls, code prompt, reasoning low | 0 of 12, 12 code answers, none cut (our set) | not measured | `bench/toolcall.py --cases code_without_tool --reasoning low` | `toolcall-reasoning-low-v0320-private-set-1019` |
 | NVMe reads of decoding | not measured | disk wake-up about 10 ms after 120 ms of silence; 16 streams of new text: 140.0 tok/s, 5.4 ms per read (our set) | `bench/nvme_reads.py` | `nvme-reads-private-set-1018` |
 
 How much of the model's output each draft set covers (share of generated tokens inside the set, measured on the
@@ -123,8 +129,8 @@ running container; `--print` shows the docker run. The version on vLLM v0.31.0 s
   (`serve/image-base.sha`); a newer image needs them redone, or dropped where upstream has merged them.
 - On v0.32.0, a request for code with no tool declared often comes back as calls to tools that do not exist (6 and
   11 of 12 draws at temperature 0.7, depending on the draft set). The parser drops them and the client receives a
-  sentence of intent. Not measured yet: the same test on v0.31.0, and with a system message, reasoning on, or tools
-  declared.
+  sentence of intent. With a system message, a declared tool or reasoning low, none of 12 draws called an
+  undeclared tool (our set, 2026-10-19). Not measured yet: the same tests on v0.31.0.
 - One machine, one model. Throughput figures are ours, on one Spark, at our protocol; other people's figures are
   quoted in `CREDITS.md` and `docs/negative-results.md` with theirs.
 - Changing the draft vocabulary changed greedy prose in our A-B-A on v0.31.0 (code did not): `docs/method.md`.
