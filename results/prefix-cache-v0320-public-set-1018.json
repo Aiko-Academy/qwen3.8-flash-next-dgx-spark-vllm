@@ -1,0 +1,55 @@
+{
+ "kind": "prefix-cache",
+ "label": "v0320-public-set-1018",
+ "measured_at": "2026-10-18T18:54:53+0200",
+ "repo_commit": "834b427103d18c8471d2d0a2ddf727bf7f109d95-dirty",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "prompt_chars": 63575,
+  "repeats": 3,
+  "max_tokens": 120,
+  "temperature": 0
+ },
+ "passes": [
+  {
+   "seconds": 13.02,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique français, Passepartout. Alors que l'opinion publique londonienne se divise sur la faisabilité de ce voyage, l'inspecteur de police Fix, convaincu que Fogg est l'auteur d'un vol de cinquante-cinq mille livres à la Banque d'Angleterre, se lance à sa poursuite en le filant discrètement."
+  },
+  {
+   "seconds": 3.85,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique français, Passepartout. Alors que l'opinion publique londonienne se divise sur la faisabilité de ce voyage, l'inspecteur de police Fix, convaincu que Fogg est l'auteur d'un vol de cinquante-cinq mille livres à la Banque d'Angleterre, se lance à sa poursuite en le filant discrètement."
+  },
+  {
+   "seconds": 3.58,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique français, Passepartout. Alors que l'opinion publique londonienne se divise sur la faisabilité de ce voyage, l'inspecteur de police Fix, convaincu que Fogg est l'auteur d'un vol de cinquante-cinq mille livres à la Banque d'Angleterre, se lance à sa poursuite en le filant discrètement."
+  }
+ ],
+ "hit_tokens": 32960.0,
+ "cases": [
+  {
+   "name": "prefix cache served (32960 tokens hit)",
+   "ok": true
+  },
+  {
+   "name": "repeats faster than the cold pass (under 0.7 times)",
+   "ok": true
+  },
+  {
+   "name": "the two cached outputs identical (passes 1 and 2)",
+   "ok": true
+  },
+  {
+   "name": "cold output identical to the cached outputs (pass 0)",
+   "ok": true
+  }
+ ],
+ "verdict": "green",
+ "requests": {
+  "sent": 3,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T18:55:14+0200"
+}

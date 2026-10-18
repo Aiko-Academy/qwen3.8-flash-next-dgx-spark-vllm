@@ -1,0 +1,89 @@
+{
+ "kind": "code-gate",
+ "label": "v0320-off-1018",
+ "measured_at": "2026-10-18T18:33:44+0200",
+ "repo_commit": "834b427103d18c8471d2d0a2ddf727bf7f109d95",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "reasoning": "off",
+  "temperature": 0.1,
+  "max_tokens": 3072,
+  "long_document": {
+   "chars": 70000,
+   "sha256": "5511e705a25e97ff077d0882a980a8577f7c67816d0c642d82a9d6896eb73248"
+  }
+ },
+ "results": [
+  {
+   "name": "solidity_guard",
+   "content": "```solidity\n// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\ninterface IWhitelist {\n    function isWhitelisted(address account) external view returns (bool);\n}\n\ncontract ERC20Whitelisted {\n    string public name = \"Whitelisted Token\";\n    string public symbol = \"WLT\";\n    uint8 public decimals = 18;\n    uint256 public totalSupply;\n\n    mapping(address => uint256) public balanceOf;\n    mapping(address => mapping(address => uint256)) public allowance;\n\n    address public immutable whitelistAddress;\n\n    error NotWhitelisted(address account);\n\n    event Transfer(address indexed from, address indexed to, uint256 value);\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n\n    constructor(address _whitelistAddress) {\n        whitelistAddress = _whitelistAddress;\n    }\n\n    function getWhitelistAddress() public view returns (address) {\n        return whitelistAddress;\n    }\n\n    modifier onlyWhitelisted(address from, address to) {\n        IWhitelist wl = IWhitelist(whitelistAddress);\n        if (!wl.isWhitelisted(from)) revert NotWhitelisted(from);\n        if (!wl.isWhitelisted(to)) revert NotWhitelisted(to);\n        _;\n    }\n\n    function transfer(address to, uint256 amount) public returns (bool) {\n        _transfer(msg.sender, to, amount);\n        return true;\n    }\n\n    function transferFrom(address from, address to, uint256 amount) public returns (bool) {\n        uint256 currentAllowance = allowance[from][msg.sender];\n        if (currentAllowance != type(uint256).max) {\n            require(currentAllowance >= amount, \"ERC20: insufficient allowance\");\n            unchecked {\n                allowance[from][msg.sender] = currentAllowance - amount;\n            }\n        }\n        _transfer(from, to, amount);\n        return true;\n    }\n\n    function approve(address spender, uint256 amount) public returns (bool) {\n        allowance[msg.sender][spender] = amount;\n        emit Approval(msg.sender, spender, amount);\n        return true;\n    }\n\n    function _transfer(address from, address to, uint256 amount) internal {\n        require(from != address(0), \"ERC20: transfer from the zero address\");\n        require(to != address(0), \"ERC20: transfer to the zero address\");\n\n        // Gate: both sender and receiver must be whitelisted\n        IWhitelist wl = IWhitelist(whitelistAddress);\n        if (!wl.isWhitelisted(from)) revert NotWhitelisted(from);\n        if (!wl.isWhitelisted(to)) revert NotWhitelisted(to);\n\n        uint256 fromBalance = balanceOf[from];\n        require(fromBalance >= amount, \"ERC20: transfer amount exceeds balance\");\n        unchecked {\n            balanceOf[from] = fromBalance - amount;\n        }\n        balanceOf[to] += amount;\n\n        emit Transfer(from, to, amount);\n    }\n\n    function mint(address to, uint256 amount) external {\n        require(to != address(0), \"ERC20: mint to the zero address\");\n        totalSupply += amount;\n        balanceOf[to] += amount;\n        emit Transfer(address(0), to, amount);\n    }\n\n    function burn(address from, uint256 amount) external {\n        require(from != address(0), \"ERC20: burn from the zero address\");\n        uint256 fromBalance = balanceOf[from];\n        require(fromBalance >= amount, \"ERC20: burn amount exceeds balance\");\n        unchecked {\n            balanceOf[from] = fromBalance - amount;\n        }\n        totalSupply -= amount;\n        emit Transfer(from, address(0), amount);\n    }\n}\n```",
+   "prompt_tokens": 122,
+   "reasoning_tokens": 0,
+   "answer_tokens": 877,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 16.7
+  },
+  {
+   "name": "abi_runner_ethers",
+   "content": "```javascript\nconst { ethers } = require('ethers');\n\nconst RPC_URL = process.env.RPC_URL;\nconst TOKEN = process.env.TOKEN;\nconst HOLDER = process.env.HOLDER;\n\nif (!RPC_URL || !TOKEN || !HOLDER) {\n    console.error('Missing environment variables: RPC_URL, TOKEN, HOLDER');\n    process.exit(1);\n}\n\nconst abi = [\n    {\n        \"type\": \"function\",\n        \"name\": \"balanceOf\",\n        \"stateMutability\": \"view\",\n        \"inputs\": [\n            {\n                \"name\": \"a\",\n                \"type\": \"address\"\n            }\n        ],\n        \"outputs\": [\n            {\n                \"type\": \"uint256\"\n            }\n        ]\n    },\n    {\n        \"type\": \"function\",\n        \"name\": \"decimals\",\n        \"stateMutability\": \"view\",\n        \"inputs\": [],\n        \"outputs\": [\n            {\n                \"type\": \"uint8\"\n            }\n        ]\n    }\n];\n\nasync function main() {\n    try {\n        const provider = new ethers.JsonRpcProvider(RPC_URL);\n        const contract = new ethers.Contract(TOKEN, abi, provider);\n\n        const decimals = await contract.decimals();\n        const balance = await contract.balanceOf(HOLDER);\n\n        const formattedBalance = ethers.formatUnits(balance, decimals);\n        console.log(formattedBalance);\n    } catch (error) {\n        console.error('Error:', error.message);\n        process.exit(1);\n    }\n}\n\nmain();\n```",
+   "prompt_tokens": 180,
+   "reasoning_tokens": 0,
+   "answer_tokens": 358,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 7.0
+  },
+  {
+   "name": "react_hook_ts",
+   "content": "```typescript\nimport { useState, useEffect, useRef, useCallback } from 'react';\n\ninterface ChainHeadState {\n  blockNumber: number | null;\n  loading: boolean;\n  error: string | null;\n}\n\nexport function useChainHead(rpcUrl: string): ChainHeadState {\n  const [state, setState] = useState<ChainHeadState>({\n    blockNumber: null,\n    loading: true,\n    error: null,\n  });\n\n  const isMountedRef = useRef<boolean>(true);\n  const abortControllerRef = useRef<AbortController | null>(null);\n\n  const fetchBlockNumber = useCallback(async () => {\n    if (!isMountedRef.current) return;\n\n    // Cancel any pending request\n    if (abortControllerRef.current) {\n      abortControllerRef.current.abort();\n    }\n\n    const controller = new AbortController();\n    abortControllerRef.current = controller;\n\n    try {\n      const response = await fetch(rpcUrl, {\n        method: 'POST',\n        headers: {\n          'Content-Type': 'application/json',\n        },\n        body: JSON.stringify({\n          jsonrpc: '2.0',\n          id: 1,\n          method: 'eth_blockNumber',\n          params: [],\n        }),\n        signal: controller.signal,\n      });\n\n      if (!isMountedRef.current) return;\n\n      if (!response.ok) {\n        throw new Error(`HTTP error! status: ${response.status}`);\n      }\n\n      const data = await response.json();\n\n      if (!isMountedRef.current) return;\n\n      if (data.error) {\n        throw new Error(data.error.message || 'RPC error');\n      }\n\n      const hexBlockNumber = data.result as string;\n      const blockNumber = parseInt(hexBlockNumber, 16);\n\n      if (isNaN(blockNumber)) {\n        throw new Error('Invalid block number format');\n      }\n\n      setState({\n        blockNumber,\n        loading: false,\n        error: null,\n      });\n    } catch (err: unknown) {\n      if (!isMountedRef.current) return;\n\n      // Ignore abort errors\n      if (err instanceof Error && err.name === 'AbortError') {\n        return;\n      }\n\n      const errorMessage = err instanceof Error ? err.message : 'Unknown error';\n      setState({\n        blockNumber: null,\n        loading: false,\n        error: errorMessage,\n      });\n    }\n  }, [rpcUrl]);\n\n  useEffect(() => {\n    isMountedRef.current = true;\n\n    // Initial fetch\n    fetchBlockNumber();\n\n    // Set up interval\n    const intervalId = setInterval(() => {\n      fetchBlockNumber();\n    }, 5000);\n\n    return () => {\n      isMountedRef.current = false;\n      clearInterval(intervalId);\n      if (abortControllerRef.current) {\n        abortControllerRef.current.abort();\n      }\n    };\n  }, [fetchBlockNumber]);\n\n  return state;\n}\n```",
+   "prompt_tokens": 115,
+   "reasoning_tokens": 0,
+   "answer_tokens": 668,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 12.7
+  },
+  {
+   "name": "code_long",
+   "content": "```bash\n#!/usr/bin/env bash\n# status.sh: report the state of the serving container and its API.\n#\n#   serve/status.sh           inspect the container, show its last logs, and query /v1/models\n#\n# Configuration by environment variables, or by a file named in SERVE_CONFIG (serve/config.example.env lists them\n# all). The API key is never an argument: API_KEY_FILE names a docker --env-file that holds VLLM_API_KEY=<key>.\nset -euo pipefail\n\nREPO=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")/..\" && pwd)\"\nif [ -n \"${SERVE_CONFIG:-}\" ]; then\n  # shellcheck disable=SC1090\n  . \"$SERVE_CONFIG\"\nfi\n\nCONTAINER=\"${CONTAINER:-vllm-flashnext}\"\nBIND=\"${BIND:-127.0.0.1}\"\nPORT=\"${PORT:-8000}\"\nAPI_KEY_FILE=\"${API_KEY_FILE:-}\"\n\nsay() { echo \"== $*\"; }\nfail() { echo \"status.sh: $*\" >&2; exit 1; }\n\n# 1. Container state\nsay \"container $CONTAINER\"\nif ! docker inspect \"$CONTAINER\" >/dev/null 2>&1; then\n  fail \"container $CONTAINER not found\"\nfi\n\nSTATE=$(docker inspect -f '{{.State.Status}}' \"$CONTAINER\")\nSTARTED=$(docker inspect -f '{{.State.StartedAt}}' \"$CONTAINER\")\nRESTARTS=$(docker inspect -f '{{.RestartCount}}' \"$CONTAINER\")\n\necho \"   status:   $STATE\"\necho \"   started:  $STARTED\"\necho \"   restarts: $RESTARTS\"\n\n# 2. Last logs\nsay \"last 10 log lines\"\ndocker logs --tail 10 \"$CONTAINER\" 2>&1 || true\n\n# 3. API check\nsay \"API /v1/models\"\nURL=\"http://${BIND}:${PORT}/v1/models\"\nHEADERS=(-H \"Content-Type: application/json\")\n\nif [ -n \"$API_KEY_FILE\" ] && [ -f \"$API_KEY_FILE\" ]; then\n  # Extract key from env-file format (VLLM_API_KEY=...)\n  KEY=$(grep -E '^\\s*(export\\s+)?VLLM_API_KEY=' \"$API_KEY_FILE\" | tail -1 | sed -E 's/^\\s*(export\\s+)?VLLM_API_KEY=//' | tr -d \"'\\\"\")\n  if [ -n \"$KEY\" ]; then\n    HEADERS+=(-H \"Authorization: Bearer $KEY\")\n  fi\nfi\n\nif curl -s -f \"${HEADERS[@]}\" \"$URL\" >/dev/null 2>&1; then\n  echo \"   OK: server responds\"\n  curl -s \"${HEADERS[@]}\" \"$URL\" | python3 -m json.tool 2>/dev/null || curl -s \"${HEADERS[@]}\" \"$URL\"\nelse\n  echo \"   FAIL: server unreachable or error\"\n  exit 1\nfi\n```",
+   "prompt_tokens": 21181,
+   "reasoning_tokens": 0,
+   "answer_tokens": 676,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 23.0
+  }
+ ],
+ "requests": {
+  "sent": 4,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T18:34:44+0200",
+ "judged": {
+  "ok": 4,
+  "total": 4,
+  "tasks": [
+   {
+    "name": "solidity_guard",
+    "ok": true,
+    "detail": "compiles"
+   },
+   {
+    "name": "abi_runner_ethers",
+    "ok": true,
+    "detail": "valid syntax"
+   },
+   {
+    "name": "react_hook_ts",
+    "ok": true,
+    "detail": "valid syntax"
+   },
+   {
+    "name": "code_long",
+    "ok": true,
+    "detail": "bash -n valid"
+   }
+  ]
+ }
+}

@@ -1,0 +1,579 @@
+{
+ "kind": "toolcall",
+ "label": "unprompted-v0320-1018",
+ "measured_at": "2026-10-18T18:42:39+0200",
+ "repo_commit": "834b427103d18c8471d2d0a2ddf727bf7f109d95-dirty",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "path": "chat (return_token_ids)",
+  "temperature": 0.7,
+  "reasoning": "default",
+  "series": 3,
+  "per_series": 4,
+  "cases": [
+   "code_without_tool",
+   "prose_fr_without_tool"
+  ]
+ },
+ "summary": {
+  "code_without_tool": {
+   "complete": 6,
+   "missed_call": 6
+  },
+  "prose_fr_without_tool": {
+   "complete": 12,
+   "missed_call": 0
+  },
+  "total": {
+   "complete": 18,
+   "missed_call": 6
+  }
+ },
+ "responses": [
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10412,
+   "visible": 10412,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "```typescript\n// priority-queue.ts\n\nexport type Priority = number;\n\nex",
+   "raw_excerpt": "```typescript\n// priority-queue.ts\n\nexport type Priority = number;\n\nexport interface QueueItem<T> {\n  id: string;\n  value: T;\n  priority: Priority;\n  timestamp: number;\n}\n\nexport interface PriorityQue",
+   "reasoning_tokens": 0,
+   "seconds": 56.9,
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "18:43:36"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 9889,
+   "visible": 9889,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "```typescript\n// priority-queue.ts\n\n/**\n * A generic priority queue su",
+   "raw_excerpt": "```typescript\n// priority-queue.ts\n\n/**\n * A generic priority queue supporting:\n * - Insertion with numeric priority (lower number = higher priority)\n * - Removal by ID\n * - Peek at highest priority i",
+   "reasoning_tokens": 0,
+   "seconds": 55.2,
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "18:44:31"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 2243,
+   "content": 7429,
+   "visible": 7429,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "```ts\n// priority-queue.ts\nexport interface QueueItem<T> {\n  id: strin",
+   "raw_excerpt": "```ts\n// priority-queue.ts\nexport interface QueueItem<T> {\n  id: string;\n  priority: number;\n  data: T;\n  timestamp: number;\n}\n\nexport class PriorityQueue<T> {\n  private heap: QueueItem<T>[] = [];\n\n  ",
+   "reasoning_tokens": 0,
+   "seconds": 41.9,
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "18:45:13"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 208,
+   "content": 127,
+   "visible": 727,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "content_start": "I'll start by exploring the project structure to understand the setup,",
+   "raw_excerpt": "setup, then build the priority queue module and its tests.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 3.9,
+   "raw_full": "I'll start by exploring the project structure to understand the setup, then build the priority queue module and its tests.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\nvite.config.ts\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\ntsconfig.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup, then build the priority queue module and its tests.\n\n\n\n\n",
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "18:45:17"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 820,
+   "content": 4020,
+   "visible": 4020,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans le système financier traditionnel, le règlement d'un paiement int",
+   "raw_excerpt": "Dans le système financier traditionnel, le règlement d'un paiement interbancaire repose sur des comptes de correspondants ou des comptes de réserve détenus à la banque centrale. Lorsque deux banques d",
+   "reasoning_tokens": 0,
+   "seconds": 20.1,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 1,
+   "time": "18:45:37"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 814,
+   "content": 3977,
+   "visible": 3977,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans l’architecture traditionnelle du système bancaire, un paiement in",
+   "raw_excerpt": "Dans l’architecture traditionnelle du système bancaire, un paiement interbancaire repose sur un processus séquentiel qui introduit un risque de règlement et des délais. Généralement, la banque émettri",
+   "reasoning_tokens": 0,
+   "seconds": 20.8,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 2,
+   "time": "18:45:58"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 771,
+   "content": 3870,
+   "visible": 3870,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans le système financier traditionnel, le règlement d’un paiement int",
+   "raw_excerpt": "Dans le système financier traditionnel, le règlement d’un paiement interbancaire repose sur des comptes de réserve détenus par les banques commerciales auprès de la banque centrale. Ces comptes foncti",
+   "reasoning_tokens": 0,
+   "seconds": 20.2,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 3,
+   "time": "18:46:18"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 805,
+   "content": 3883,
+   "visible": 3883,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "La monnaie de banque centrale tokenisée (MBCt) représente une évolutio",
+   "raw_excerpt": "La monnaie de banque centrale tokenisée (MBCt) représente une évolution majeure dans l'infrastructure des paiements de détail et de gros, transformant les réserves traditionnelles en actifs numériques",
+   "reasoning_tokens": 0,
+   "seconds": 20.1,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 4,
+   "time": "18:46:39"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 91,
+   "content": 73,
+   "visible": 332,
+   "calls": [],
+   "markers": {
+    "tool_call": 2,
+    "tool_call_outside_code": 2,
+    "function": 2,
+    "function_outside_code": 2
+   },
+   "content_start": "I'll start by exploring the project structure to understand the setup.",
+   "raw_excerpt": "y exploring the project structure to understand the setup.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 1.8,
+   "raw_full": "I'll start by exploring the project structure to understand the setup.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup.\n\n\n",
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "18:46:40"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10380,
+   "visible": 10380,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string",
+   "raw_excerpt": "```typescript\n// queue.ts\nexport interface QueueItem<T> {\n  id: string;\n  value: T;\n  priority: number; // lower number = higher priority\n  insertedAt: number; // timestamp for FIFO tie-breaking\n}\n\nex",
+   "reasoning_tokens": 0,
+   "seconds": 56.4,
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "18:47:37"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 9967,
+   "visible": 9967,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Voici un module complet `PriorityQueue` (tas binaire, `O(log n)`), ave",
+   "raw_excerpt": "Voici un module complet `PriorityQueue` (tas binaire, `O(log n)`), avec `enqueue / dequeue / peek / removeById / updatePriority`, un itérateur ordonné, des erreurs typées, et une suite vitest exhausti",
+   "reasoning_tokens": 0,
+   "seconds": 58.0,
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "18:48:35"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 201,
+   "content": 101,
+   "visible": 700,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "content_start": "I'll start by exploring the project structure to understand the setup ",
+   "raw_excerpt": "ructure to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit",
+   "reasoning_tokens": 0,
+   "seconds": 3.7,
+   "raw_full": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\ntsconfig.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n60\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\nvite.config.ts\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n\n\n\n",
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "18:48:39"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 760,
+   "content": 3652,
+   "visible": 3652,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans l'écosystème financier actuel, les paiements interbancaires s'eff",
+   "raw_excerpt": "Dans l'écosystème financier actuel, les paiements interbancaires s'effectuent principalement via des comptes de réserve détenus par les banques commerciales auprès de la banque centrale. Ces comptes s",
+   "reasoning_tokens": 0,
+   "seconds": 19.2,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 1,
+   "time": "18:48:58"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 780,
+   "content": 3721,
+   "visible": 3721,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "La transition vers une monnaie de banque centrale tokenisée (MBCt) rep",
+   "raw_excerpt": "La transition vers une monnaie de banque centrale tokenisée (MBCt) repose sur la création d'un registre distribué ou d'une infrastructure de registre décentralisé (DLT) opérée par la banque centrale. ",
+   "reasoning_tokens": 0,
+   "seconds": 20.2,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 2,
+   "time": "18:49:18"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 792,
+   "content": 3953,
+   "visible": 3953,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans l'architecture financière traditionnelle, les paiements interbanc",
+   "raw_excerpt": "Dans l'architecture financière traditionnelle, les paiements interbancaires reposent sur des comptes de réserve détenus par les banques commerciales auprès de la banque centrale. Le processus standard",
+   "reasoning_tokens": 0,
+   "seconds": 20.0,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 3,
+   "time": "18:49:38"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 763,
+   "content": 3765,
+   "visible": 3765,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans un système de paiement interbancaire traditionnel, les banques co",
+   "raw_excerpt": "Dans un système de paiement interbancaire traditionnel, les banques commerciales détiennent des comptes de réserve auprès de la banque centrale, et les transferts de fonds impliquent des mouvements de",
+   "reasoning_tokens": 0,
+   "seconds": 19.8,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 4,
+   "time": "18:49:58"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 9945,
+   "visible": 9944,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Voici un module TypeScript complet : file d'attente prioritaire (struc",
+   "raw_excerpt": "Voici un module TypeScript complet : file d'attente prioritaire (structure de tas), retrait par identifiant en O(log n), `enqueue` dédoublonnable, `dequeue` avec `wait` optionnel, et une suite de test",
+   "reasoning_tokens": 0,
+   "seconds": 61.2,
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "18:50:59"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 156,
+   "content": 121,
+   "visible": 550,
+   "calls": [],
+   "markers": {
+    "tool_call": 3,
+    "tool_call_outside_code": 3,
+    "function": 3,
+    "function_outside_code": 3
+   },
+   "content_start": "Je vais d'abord explorer la structure du projet existant pour comprend",
+   "raw_excerpt": "ur comprendre la configuration (TypeScript, Vitest, etc.).\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 3.0,
+   "raw_full": "Je vais d'abord explorer la structure du projet existant pour comprendre la configuration (TypeScript, Vitest, etc.).\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\ntsconfig.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "Je vais d'abord explorer la structure du projet existant pour comprendre la configuration (TypeScript, Vitest, etc.).\n\n\n\n",
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "18:51:02"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 148,
+   "content": 100,
+   "visible": 529,
+   "calls": [],
+   "markers": {
+    "tool_call": 3,
+    "tool_call_outside_code": 3,
+    "function": 3,
+    "function_outside_code": 3
+   },
+   "content_start": "I'll start by exploring the project structure to understand the setup ",
+   "raw_excerpt": "ructure to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 2.7,
+   "raw_full": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\ntsconfig.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n\n\n",
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "18:51:05"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 208,
+   "content": 123,
+   "visible": 722,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "content_start": "Je vais d'abord explorer la structure du projet pour comprendre la con",
+   "raw_excerpt": "dre la configuration existante (TypeScript, Vitest, etc.).\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>",
+   "reasoning_tokens": 0,
+   "seconds": 3.8,
+   "raw_full": "Je vais d'abord explorer la structure du projet pour comprendre la configuration existante (TypeScript, Vitest, etc.).\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\ntsconfig.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\nvite.config.ts\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "Je vais d'abord explorer la structure du projet pour comprendre la configuration existante (TypeScript, Vitest, etc.).\n\n\n\n\n",
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "18:51:09"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 768,
+   "content": 3812,
+   "visible": 3812,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "La tokenisation de la monnaie de banque centrale, ou CBDC, transforme ",
+   "raw_excerpt": "La tokenisation de la monnaie de banque centrale, ou CBDC, transforme la nature même des réserves bancaires en actifs numériques programmables et transférables instantanément. Dans ce nouvel environne",
+   "reasoning_tokens": 0,
+   "seconds": 19.8,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 1,
+   "time": "18:51:29"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 797,
+   "content": 3908,
+   "visible": 3908,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans l’architecture traditionnelle, les paiements interbancaires s’app",
+   "raw_excerpt": "Dans l’architecture traditionnelle, les paiements interbancaires s’appuient sur des comptes de réserve détenus par les banques commerciales auprès de la banque centrale. Ces comptes sont des entités c",
+   "reasoning_tokens": 0,
+   "seconds": 19.9,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 2,
+   "time": "18:51:49"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 688,
+   "content": 3292,
+   "visible": 3292,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "Dans le cadre d'un système de paiement interbancaire utilisant une mon",
+   "raw_excerpt": "Dans le cadre d'un système de paiement interbancaire utilisant une monnaie de banque centrale tokenisée (CBDC), le processus commence lorsque deux banques commerciales initient une transaction. Contra",
+   "reasoning_tokens": 0,
+   "seconds": 17.9,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 3,
+   "time": "18:52:07"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 842,
+   "content": 4162,
+   "visible": 4162,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "content_start": "L'introduction de la monnaie de banque centrale tokenisée, souvent dés",
+   "raw_excerpt": "L'introduction de la monnaie de banque centrale tokenisée, souvent désignée comme une monnaie numérique de banque centrale (MNBC) de gros, transforme fondamentalement l'architecture des paiements inte",
+   "reasoning_tokens": 0,
+   "seconds": 20.9,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 4,
+   "time": "18:52:27"
+  }
+ ],
+ "requests": {
+  "sent": 24,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T18:52:27+0200"
+}

@@ -1,14 +1,57 @@
 {
- "_note": "Frozen prompts of bench/toolcall.py: explain the literal <tool_call> string without calling a tool. The default cases are the three measured since 2026-10-17; the provoked cases ask for an example inside a code block.",
- "tools": [{"type": "function", "function": {"name": "Bash", "description": "Run a shell command", "parameters": {
-   "type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}}}],
+ "_note": "Frozen prompts of bench/toolcall.py: explain the literal <tool_call> string without calling a tool. The default cases are the three measured since 2026-10-17; the provoked cases ask for an example inside a code block. The unprompted cases ask for no tool at all and declare none: a call there is invented by the model.",
+ "tools": [
+  {
+   "type": "function",
+   "function": {
+    "name": "Bash",
+    "description": "Run a shell command",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "command": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "command"
+     ]
+    }
+   }
+  }
+ ],
  "cases": {
-  "hu_with_tool": ["Magyarazd el a <tool_call> literal sztringet, eszkozhivas nelkul.", true],
-  "fr_with_tool": ["Explique la chaine litterale <tool_call>, sans appeler d'outil.", true],
-  "fr_without_tool": ["Explique la chaine litterale <tool_call>, sans appeler d'outil.", false]
+  "hu_with_tool": [
+   "Magyarazd el a <tool_call> literal sztringet, eszkozhivas nelkul.",
+   true
+  ],
+  "fr_with_tool": [
+   "Explique la chaine litterale <tool_call>, sans appeler d'outil.",
+   true
+  ],
+  "fr_without_tool": [
+   "Explique la chaine litterale <tool_call>, sans appeler d'outil.",
+   false
+  ]
  },
  "provoked": {
-  "fr_code_example": ["Montre dans un bloc de code un exemple d'appel <tool_call> a l'outil Bash qui lance ls -l, sans appeler d'outil.", true],
-  "hu_code_example": ["Mutass egy kodblokkban egy pelda <tool_call> hivast a Bash eszkozre, amely az ls -l parancsot futtatja, eszkozhivas nelkul.", true]
+  "fr_code_example": [
+   "Montre dans un bloc de code un exemple d'appel <tool_call> a l'outil Bash qui lance ls -l, sans appeler d'outil.",
+   true
+  ],
+  "hu_code_example": [
+   "Mutass egy kodblokkban egy pelda <tool_call> hivast a Bash eszkozre, amely az ls -l parancsot futtatja, eszkozhivas nelkul.",
+   true
+  ]
+ },
+ "unprompted": {
+  "code_without_tool": [
+   "Ecris en TypeScript un module complet de file d'attente avec priorites, retrait par identifiant, et tests unitaires vitest. Code seulement.",
+   false
+  ],
+  "prose_fr_without_tool": [
+   "Explique en francais, en six paragraphes, comment une banque centrale regle un paiement interbancaire en monnaie de banque centrale tokenisee, et ce que change le reglement atomique.",
+   false
+  ]
  }
 }

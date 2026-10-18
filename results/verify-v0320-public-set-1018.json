@@ -1,0 +1,171 @@
+{
+ "kind": "verify",
+ "label": "v0320-public-set-1018",
+ "measured_at": "2026-10-18T18:23:07+0200",
+ "repo_commit": "adcc08e022346c1b3f79d782a4416d8ef7f09660",
+ "source": "console output of serve/verify.sh on the Spark, transcribed; the bind address is not kept",
+ "container": {
+  "image": "vllm/vllm-openai:v0.32.0",
+  "started_at": "2026-10-18T18:10:55+0200",
+  "first_completion": "2026-10-18T18:22:36+0200",
+  "kv_pool_tokens_logged": 1273270
+ },
+ "info": [
+  "INFO  draft vocabulary mounted: draft_vocab_public_65536.npy, sha256 19a4415d6146a0fc"
+ ],
+ "checks": [
+  {
+   "ok": true,
+   "check": "image vllm/vllm-openai:v0.32.0"
+  },
+  {
+   "ok": true,
+   "check": "entrypoint vllm"
+  },
+  {
+   "ok": true,
+   "check": "arguments: the same 41, in the same order"
+  },
+  {
+   "ok": true,
+   "check": "environment: the same 13 variables"
+  },
+  {
+   "ok": true,
+   "check": "mounts: the same 24 (source, target, read-only)"
+  },
+  {
+   "ok": true,
+   "check": "CPU set 5-9,15-19"
+  },
+  {
+   "ok": true,
+   "check": "IPC host, shared memory 32 GiB"
+  },
+  {
+   "ok": true,
+   "check": "ulimits memlock unlimited, stack 64 MiB"
+  },
+  {
+   "ok": true,
+   "check": "restart unless-stopped"
+  },
+  {
+   "ok": true,
+   "check": "all GPUs"
+  },
+  {
+   "ok": true,
+   "check": "port 8000 published on <bind address>"
+  },
+  {
+   "ok": true,
+   "check": "key file given"
+  },
+  {
+   "ok": true,
+   "check": "overlay files equal to the published ones: 20"
+  },
+  {
+   "ok": true,
+   "check": "setting  1: context 524288"
+  },
+  {
+   "ok": true,
+   "check": "setting  2: YaRN factor 2.0 over 262144"
+  },
+  {
+   "ok": true,
+   "check": "setting  3: MTP 2, max_model_len in the speculative config"
+  },
+  {
+   "ok": true,
+   "check": "setting  4: GPU memory 0.80"
+  },
+  {
+   "ok": true,
+   "check": "setting  5: KV cache fp8"
+  },
+  {
+   "ok": true,
+   "check": "setting  6: image digest sha256:befccf0e7e40"
+  },
+  {
+   "ok": true,
+   "check": "setting  7: 16 sequences, 4096 tokens per batch"
+  },
+  {
+   "ok": true,
+   "check": "setting  8: pinned on 5-9,15-19 (Cortex-X925)"
+  },
+  {
+   "ok": true,
+   "check": "setting  9: recurrent state in bfloat16"
+  },
+  {
+   "ok": true,
+   "check": "setting 10: quantization modelopt, TP 1"
+  },
+  {
+   "ok": true,
+   "check": "setting 11: PLE checkpoint_mapped"
+  },
+  {
+   "ok": true,
+   "check": "setting 12: PLE prefetch with MADV_WILLNEED (ple_pageable.py mounted)"
+  },
+  {
+   "ok": true,
+   "check": "setting 13: tool parser qwen3_xml, reasoning parser qwen3"
+  },
+  {
+   "ok": true,
+   "check": "setting 14: FlashInfer autotune off"
+  },
+  {
+   "ok": true,
+   "check": "setting 15: converted FP8 checkpoint mounted, marked prepared and verified"
+  },
+  {
+   "ok": true,
+   "check": "setting 16: VLLM_USE_DEEP_GEMM=0 and VLLM_FP8_HYBRID=1"
+  },
+  {
+   "ok": true,
+   "check": "setting 17: FP8 shim, modelopt.py and qsa.py (indexer projection kept apart) mounted"
+  },
+  {
+   "ok": true,
+   "check": "setting 18: reduced draft vocabulary: VLLM_MTP_DRAFT_VOCAB"
+  },
+  {
+   "ok": true,
+   "check": "setting 19: draft head mtp.py and vocabulary mounted"
+  },
+  {
+   "ok": true,
+   "check": "setting 20: NVFP4 draft rows: VLLM_MTP_DRAFT_NVFP4=1"
+  },
+  {
+   "ok": true,
+   "check": "setting 21: target head in BF16 (no VLLM_FP8_HEAD, no model.py mounted)"
+  },
+  {
+   "ok": true,
+   "check": "setting 22: prefix cache repaired (scheduler.py; the worker half is in vLLM v0.32.0)"
+  },
+  {
+   "ok": true,
+   "check": "setting 23: deterministic QSA top-k (qsa_indexer.py, _C_det.so, VLLM_QSA_DET_TOPK=1)"
+  },
+  {
+   "ok": true,
+   "check": "setting 24: tool parser repaired: nine files mounted"
+  },
+  {
+   "ok": true,
+   "check": "setting 25: MTP-layer KV in BF16 (--kv-cache-dtype-skip-layers 48, honoured by vLLM v0.32.0)"
+  }
+ ],
+ "summary": "38 OK, 0 FAIL"
+}

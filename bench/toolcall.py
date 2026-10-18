@@ -2,7 +2,8 @@
 """Witness of the literal <tool_call>: what the model emits, against what the parser returns (read-only).
 
 Three cases (prompts/toolcall.json): French with a declared tool, French without tool, Hungarian with a tool. The
-prompt asks to explain the literal string <tool_call> without calling a tool. N series of 4 requests per case,
+prompt asks to explain the literal string <tool_call> without calling a tool. Unprompted cases (--cases
+code_without_tool,prose_fr_without_tool): the probe's prompts, no tool declared; any call there is invented. N series of 4 requests per case,
 temperature 0.7, one request at a time. --reasoning {default,off,low,medium,xhigh} (reasoning_modes.py).
 
 Chat path (default): /v1/chat/completions with return_token_ids; the generated tokens are decoded again by
@@ -210,7 +211,7 @@ def main():
     import common as c
     mode = rm.resolve(a.reasoning)
     p = c.prompts("toolcall.json")
-    known = dict(p["cases"], **p["provoked"])
+    known = dict(p["cases"], **p["provoked"], **p.get("unprompted", {}))
     names = a.cases.split(",")
     unknown = [n for n in names if n not in known]
     if unknown:

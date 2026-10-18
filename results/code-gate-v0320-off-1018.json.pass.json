@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I code_gate.py v0320-off-1018 --reasoning off",
+ "result": "code-gate-v0320-off-1018.json",
+ "waited_for_rest_s": 26,
+ "start": "2026-10-18T18:33:44+0200",
+ "end": "2026-10-18T18:34:44+0200",
+ "rc": 0,
+ "sent": 4,
+ "errors": 0,
+ "finished_by_engine": 4,
+ "peak_running": 1.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

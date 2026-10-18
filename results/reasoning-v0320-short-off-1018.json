@@ -1,0 +1,180 @@
+{
+ "kind": "reasoning",
+ "label": "v0320-short-off-1018",
+ "measured_at": "2026-10-18T18:35:11+0200",
+ "repo_commit": "834b427103d18c8471d2d0a2ddf727bf7f109d95",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "reasoning": "off",
+  "max_tokens": 2048,
+  "temperature": 0,
+  "depths": "128000,300000",
+  "deep_items": 3
+ },
+ "short": {
+  "ok": 15,
+  "total": 15,
+  "accuracy": 1.0,
+  "length_finishes": 0,
+  "detail": [
+   {
+    "id": "r01",
+    "ok": true,
+    "prompt_tokens": 71,
+    "reasoning_tokens": 0,
+    "answer_tokens": 536,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 10.2
+   },
+   {
+    "id": "r02",
+    "ok": true,
+    "prompt_tokens": 64,
+    "reasoning_tokens": 0,
+    "answer_tokens": 578,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 11.1
+   },
+   {
+    "id": "r03",
+    "ok": true,
+    "prompt_tokens": 71,
+    "reasoning_tokens": 0,
+    "answer_tokens": 519,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 10.6
+   },
+   {
+    "id": "r04",
+    "ok": true,
+    "prompt_tokens": 54,
+    "reasoning_tokens": 0,
+    "answer_tokens": 492,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 9.6
+   },
+   {
+    "id": "r05",
+    "ok": true,
+    "prompt_tokens": 55,
+    "reasoning_tokens": 0,
+    "answer_tokens": 378,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 8.0
+   },
+   {
+    "id": "r06",
+    "ok": true,
+    "prompt_tokens": 103,
+    "reasoning_tokens": 0,
+    "answer_tokens": 382,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 7.6
+   },
+   {
+    "id": "r07",
+    "ok": true,
+    "prompt_tokens": 82,
+    "reasoning_tokens": 0,
+    "answer_tokens": 319,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 6.6
+   },
+   {
+    "id": "r08",
+    "ok": true,
+    "prompt_tokens": 83,
+    "reasoning_tokens": 0,
+    "answer_tokens": 802,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 15.1
+   },
+   {
+    "id": "r09",
+    "ok": true,
+    "prompt_tokens": 65,
+    "reasoning_tokens": 0,
+    "answer_tokens": 624,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 11.9
+   },
+   {
+    "id": "r10",
+    "ok": true,
+    "prompt_tokens": 67,
+    "reasoning_tokens": 0,
+    "answer_tokens": 167,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 3.7
+   },
+   {
+    "id": "r11",
+    "ok": true,
+    "prompt_tokens": 57,
+    "reasoning_tokens": 0,
+    "answer_tokens": 275,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 5.3
+   },
+   {
+    "id": "r12",
+    "ok": true,
+    "prompt_tokens": 56,
+    "reasoning_tokens": 0,
+    "answer_tokens": 203,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 4.1
+   },
+   {
+    "id": "r13",
+    "ok": true,
+    "prompt_tokens": 59,
+    "reasoning_tokens": 0,
+    "answer_tokens": 109,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 2.6
+   },
+   {
+    "id": "r14",
+    "ok": true,
+    "prompt_tokens": 63,
+    "reasoning_tokens": 0,
+    "answer_tokens": 77,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 1.6
+   },
+   {
+    "id": "r15",
+    "ok": true,
+    "prompt_tokens": 68,
+    "reasoning_tokens": 0,
+    "answer_tokens": 208,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 4.5
+   }
+  ]
+ },
+ "deep": {},
+ "verdict": "PASS",
+ "reasons": [],
+ "requests": {
+  "sent": 15,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T18:37:04+0200"
+}

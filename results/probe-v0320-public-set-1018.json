@@ -1,0 +1,148 @@
+{
+ "kind": "probe",
+ "label": "v0320-public-set-1018",
+ "measured_at": "2026-10-18T18:24:08+0200",
+ "repo_commit": "834b427103d18c8471d2d0a2ddf727bf7f109d95",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "max_tokens": 600,
+  "temperature": 0,
+  "reasoning": "off",
+  "passes": 2,
+  "rest_s": 20,
+  "prompts": {
+   "prose_fr": "Explique en francais, en six paragraphes, comment une banque centrale regle un paiement interbancaire en monnaie de banque centrale tokenisee, et ce que change le reglement atomique.",
+   "prose_en": "Explain in English, in six paragraphs, how a central bank settles an interbank payment in tokenised central bank money, and what atomic settlement changes.",
+   "code": "Ecris en TypeScript un module complet de file d'attente avec priorites, retrait par identifiant, et tests unitaires vitest. Code seulement."
+  }
+ },
+ "generations": [
+  {
+   "prompt": "prose_fr",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 40.05,
+   "tokens_per_step": 1.98,
+   "acceptance_by_position": [
+    0.637,
+    0.343
+   ],
+   "mean_itl_ms": 49.4,
+   "finished_requests": 1.0,
+   "text": "Dans le système financier traditionnel, le règlement d’un paiement interbancaire repose sur des comptes de réserve détenus par les banques commerciales auprès de la banque centrale. Ces comptes sont des passifs numériques classiques, gérés via des infrastructures centralisées comme TARGET2 en Europe ou Fedwire aux États-Unis. Le processus implique généralement une séparation entre l’ordre de paiement et le règlement effectif, ce qui peut introduire des délais, des risques de contrepartie et une complexité opérationnelle, surtout lorsque plusieurs intermédiaires ou systèmes de compensation sont impliqués dans la chaîne de transaction.\n\nLa tokenisation de la monnaie de banque centrale (MNBC) transforme ces passifs en jetons numériques natifs, souvent hébergés sur une infrastructure distribuée ou un registre décentralisé. Chaque token représente une unité exacte de la monnaie légale, mais il est programmable et transférable directement entre les participants sans nécessiter de réconciliation constante avec un grand livre centralisé. Cette approche permet aux banques de détenir et d’échanger des actifs liquides sous forme de tokens, qui peuvent être intégrés plus facilement dans des environnements numériques modernes, y compris ceux utilisant des contrats intelligents.\n\nLorsqu’une banque A souhaite payer une banque B en MNBC tokenisée, la transaction commence par la création d’une instruction de transfert cryptographiquement signée. Cette instruction spécifie le montant, les identifiants des comptes tokenisés des deux parties et les conditions de l’échange. Contrairement au système traditionnel où l’ordre est traité par un opérateur central, ici, la transaction est soumise à un réseau de nœuds validés, qui vérifient la solvabilité de la banque A et l’existence des tokens correspondants dans son portefeuille numérique.\n\nLe règlement atomique est la caractéristique fondamentale qui distingue ce nouveau modèle. Il signifie que le transfert de valeur et la contrepartie (par exemple, un titre financier ou un autre token) s’échangent simultanément et de manière indivisible. Si une partie de la transaction échoue, l’ensemble de l’opération est annulée automatiquement, garantissant qu’aucune banque ne se retrouve avec un actif sans avoir payé, ou inversement. Cette simultanéité élimine le risque de règlement, où une banque pourrait avoir livré un actif mais ne pas recevoir le paiement en temps voulu.\n\nCe mécanisme réduit considérablement les besoins en liquidités intrajournalières et les coûts de financement associés. Dans le système traditionnel, les banques doivent souvent immobiliser des réserves importantes pour couvrir les risques de délai entre l’ordre et le règlement. Avec le règlement atomique en MNBC tokenisée, la confiance est assurée par la technologie plutôt que par des garanties collatérales excessives. Cela permet une circulation plus fluide des fonds, une meilleure transparence en temps réel et une réduction des",
+   "major_faults": 1447,
+   "nvme_read_mb": 64.6,
+   "engine_cpu_s": 16.7,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "prose_fr",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 41.11,
+   "tokens_per_step": 1.98,
+   "acceptance_by_position": [
+    0.637,
+    0.343
+   ],
+   "mean_itl_ms": 48.1,
+   "finished_requests": 1.0,
+   "text": "Dans le système financier traditionnel, le règlement d’un paiement interbancaire repose sur des comptes de réserve détenus par les banques commerciales auprès de la banque centrale. Ces comptes sont des passifs numériques classiques, gérés via des infrastructures centralisées comme TARGET2 en Europe ou Fedwire aux États-Unis. Le processus implique généralement une séparation entre l’ordre de paiement et le règlement effectif, ce qui peut introduire des délais, des risques de contrepartie et une complexité opérationnelle, surtout lorsque plusieurs intermédiaires ou systèmes de compensation sont impliqués dans la chaîne de transaction.\n\nLa tokenisation de la monnaie de banque centrale (MNBC) transforme ces passifs en jetons numériques natifs, souvent hébergés sur une infrastructure distribuée ou un registre décentralisé. Chaque token représente une unité exacte de la monnaie légale, mais il est programmable et transférable directement entre les participants sans nécessiter de réconciliation constante avec un grand livre centralisé. Cette approche permet aux banques de détenir et d’échanger des actifs liquides sous forme de tokens, qui peuvent être intégrés plus facilement dans des environnements numériques modernes, y compris ceux utilisant des contrats intelligents.\n\nLorsqu’une banque A souhaite payer une banque B en MNBC tokenisée, la transaction commence par la création d’une instruction de transfert cryptographiquement signée. Cette instruction spécifie le montant, les identifiants des comptes tokenisés des deux parties et les conditions de l’échange. Contrairement au système traditionnel où l’ordre est traité par un opérateur central, ici, la transaction est soumise à un réseau de nœuds validés, qui vérifient la solvabilité de la banque A et l’existence des tokens correspondants dans son portefeuille numérique.\n\nLe règlement atomique est la caractéristique fondamentale qui distingue ce nouveau modèle. Il signifie que le transfert de valeur et la contrepartie (par exemple, un titre financier ou un autre token) s’échangent simultanément et de manière indivisible. Si une partie de la transaction échoue, l’ensemble de l’opération est annulée automatiquement, garantissant qu’aucune banque ne se retrouve avec un actif sans avoir payé, ou inversement. Cette simultanéité élimine le risque de règlement, où une banque pourrait avoir livré un actif mais ne pas recevoir le paiement en temps voulu.\n\nCe mécanisme réduit considérablement les besoins en liquidités intrajournalières et les coûts de financement associés. Dans le système traditionnel, les banques doivent souvent immobiliser des réserves importantes pour couvrir les risques de délai entre l’ordre et le règlement. Avec le règlement atomique en MNBC tokenisée, la confiance est assurée par la technologie plutôt que par des garanties collatérales excessives. Cela permet une circulation plus fluide des fonds, une meilleure transparence en temps réel et une réduction des",
+   "major_faults": 389,
+   "nvme_read_mb": 2.9,
+   "engine_cpu_s": 16.6,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "prose_en",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 43.93,
+   "tokens_per_step": 2.21,
+   "acceptance_by_position": [
+    0.749,
+    0.461
+   ],
+   "mean_itl_ms": 50.4,
+   "finished_requests": 1.0,
+   "text": "In a traditional central bank money system, interbank payments are typically settled through a ledger-based process where the central bank acts as the trusted intermediary. When Bank A needs to pay Bank B, it instructs the central bank to debit its reserve account and credit Bank B’s account. This process is often asynchronous, meaning the transfer of value and the settlement of the underlying asset or obligation may happen at different times, creating a window of settlement risk where one party fulfills its obligation but the other does not.\n\nTokenised central bank money (CBM) fundamentally alters this mechanism by representing central bank liabilities as digital tokens on a distributed ledger or a specialized token infrastructure. Instead of merely updating balances in a centralized database, the central bank issues digital tokens that can be transferred directly between participating banks. These tokens are programmable and carry the same legal status as traditional central bank reserves, ensuring that the value being transferred is risk-free and backed directly by the central bank.\n\nThe settlement process in a tokenised CBM environment involves the direct transfer of these digital tokens from the payer’s wallet to the payee’s wallet. When Bank A initiates a payment to Bank B, it sends a specific amount of tokenised CBM to Bank B’s address. The central bank’s infrastructure validates the transaction to ensure that Bank A has sufficient tokens and that the tokens are authentic. Once validated, the tokens are moved from Bank A’s balance to Bank B’s balance on the ledger, effectively completing the transfer of value.\n\nAtomic settlement is the critical innovation enabled by this tokenised infrastructure, particularly when combined with smart contracts or hash time-locked contracts (HTLCs). Atomic settlement ensures that the exchange of assets occurs simultaneously and indivisibly. In a typical scenario, such as a foreign exchange trade or a securities settlement, the transfer of tokenised CBM and the transfer of the corresponding asset (like a tokenised bond or foreign currency) are linked in a single transaction. If one part of the transaction fails, the entire transaction is rolled back, ensuring that neither party is exposed to the risk of paying without receiving.\n\nThis atomicity eliminates the settlement risk inherent in traditional systems, where there is a time lag between the payment instruction and the final settlement. By using cryptographic proofs and conditional logic, the system guarantees that the transfer of value is contingent upon the transfer of the asset. This means that the moment the tokens are transferred, the corresponding asset is also transferred, or neither is transferred at all. This \"all-or-nothing\" approach ensures that the finality of the payment is immediate and irrevocable.\n\nConsequently, atomic settlement in tokenised CBM systems enhances financial stability and efficiency by reducing counterparty risk and freeing up liquidity. Banks no longer need to hold large buffers of capital to cover potential settlement failures, as the risk of one party defaulting after the other has paid is virtually eliminated. This leads to faster settlement cycles, lower operational costs, and a more resilient financial",
+   "major_faults": 1108,
+   "nvme_read_mb": 53.3,
+   "engine_cpu_s": 15.4,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "prose_en",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 45.27,
+   "tokens_per_step": 2.21,
+   "acceptance_by_position": [
+    0.749,
+    0.461
+   ],
+   "mean_itl_ms": 48.8,
+   "finished_requests": 1.0,
+   "text": "In a traditional central bank money system, interbank payments are typically settled through a ledger-based process where the central bank acts as the trusted intermediary. When Bank A needs to pay Bank B, it instructs the central bank to debit its reserve account and credit Bank B’s account. This process is often asynchronous, meaning the transfer of value and the settlement of the underlying asset or obligation may happen at different times, creating a window of settlement risk where one party fulfills its obligation but the other does not.\n\nTokenised central bank money (CBM) fundamentally alters this mechanism by representing central bank liabilities as digital tokens on a distributed ledger or a specialized token infrastructure. Instead of merely updating balances in a centralized database, the central bank issues digital tokens that can be transferred directly between participating banks. These tokens are programmable and carry the same legal status as traditional central bank reserves, ensuring that the value being transferred is risk-free and backed directly by the central bank.\n\nThe settlement process in a tokenised CBM environment involves the direct transfer of these digital tokens from the payer’s wallet to the payee’s wallet. When Bank A initiates a payment to Bank B, it sends a specific amount of tokenised CBM to Bank B’s address. The central bank’s infrastructure validates the transaction to ensure that Bank A has sufficient tokens and that the tokens are authentic. Once validated, the tokens are moved from Bank A’s balance to Bank B’s balance on the ledger, effectively completing the transfer of value.\n\nAtomic settlement is the critical innovation enabled by this tokenised infrastructure, particularly when combined with smart contracts or hash time-locked contracts (HTLCs). Atomic settlement ensures that the exchange of assets occurs simultaneously and indivisibly. In a typical scenario, such as a foreign exchange trade or a securities settlement, the transfer of tokenised CBM and the transfer of the corresponding asset (like a tokenised bond or foreign currency) are linked in a single transaction. If one part of the transaction fails, the entire transaction is rolled back, ensuring that neither party is exposed to the risk of paying without receiving.\n\nThis atomicity eliminates the settlement risk inherent in traditional systems, where there is a time lag between the payment instruction and the final settlement. By using cryptographic proofs and conditional logic, the system guarantees that the transfer of value is contingent upon the transfer of the asset. This means that the moment the tokens are transferred, the corresponding asset is also transferred, or neither is transferred at all. This \"all-or-nothing\" approach ensures that the finality of the payment is immediate and irrevocable.\n\nConsequently, atomic settlement in tokenised CBM systems enhances financial stability and efficiency by reducing counterparty risk and freeing up liquidity. Banks no longer need to hold large buffers of capital to cover potential settlement failures, as the risk of one party defaulting after the other has paid is virtually eliminated. This leads to faster settlement cycles, lower operational costs, and a more resilient financial",
+   "major_faults": 180,
+   "nvme_read_mb": 21.7,
+   "engine_cpu_s": 14.6,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "code",
+   "pass": 1,
+   "tokens": 148,
+   "tok_s": 89.87,
+   "tokens_per_step": 2.94,
+   "acceptance_by_position": [
+    0.98,
+    0.96
+   ],
+   "mean_itl_ms": 51.9,
+   "finished_requests": 1.0,
+   "text": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n\n\n",
+   "major_faults": 380,
+   "nvme_read_mb": 8.4,
+   "engine_cpu_s": 3.0,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "code",
+   "pass": 2,
+   "tokens": 148,
+   "tok_s": 90.2,
+   "tokens_per_step": 2.94,
+   "acceptance_by_position": [
+    0.98,
+    0.96
+   ],
+   "mean_itl_ms": 50.9,
+   "finished_requests": 1.0,
+   "text": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n\n\n",
+   "major_faults": 132,
+   "nvme_read_mb": 0.8,
+   "engine_cpu_s": 3.0,
+   "swap_used_mb": 0.0
+  }
+ ],
+ "tool": {
+  "well_formed": true,
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-9f6ecc456b53bd71",
+    "type": "function",
+    "function": {
+     "name": "solde_compte",
+     "arguments": "{\"iban\": \"FR7630006000011234567890189\"}"
+    }
+   }
+  ],
+  "content": null
+ },
+ "requests": {
+  "sent": 7,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T18:27:29+0200"
+}
