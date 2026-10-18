@@ -48,7 +48,7 @@ VLLM_MTP_DRAFT_VOCAB=/opt/draft-vocab/draft_vocab_public_65536.npy
 -v
 <repo>/patches/fp8-hybrid/vllm-overlay/model_executor/layers/quantization/modelopt.py:/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/quantization/modelopt.py:ro
 -v
-<repo>/patches/cache-det/vllm-overlay/v1/worker/gpu/model_states/mamba_hybrid.py:/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/model_states/mamba_hybrid.py:ro
+<repo>/patches/fp8-hybrid/vllm-overlay/models/qwen4_exp/nvidia/qsa.py:/usr/local/lib/python3.12/dist-packages/vllm/models/qwen4_exp/nvidia/qsa.py:ro
 -v
 <repo>/patches/cache-det/vllm-overlay/v1/core/sched/scheduler.py:/usr/local/lib/python3.12/dist-packages/vllm/v1/core/sched/scheduler.py:ro
 -v
@@ -59,8 +59,6 @@ VLLM_MTP_DRAFT_VOCAB=/opt/draft-vocab/draft_vocab_public_65536.npy
 <repo>/patches/draft-nvfp4-head/vllm-overlay/models/qwen4_exp/nvidia/mtp.py:/usr/local/lib/python3.12/dist-packages/vllm/models/qwen4_exp/nvidia/mtp.py:ro
 -v
 <repo>/build/draft_vocab_public_65536.npy:/opt/draft-vocab/draft_vocab_public_65536.npy:ro
--v
-<repo>/patches/mtp-kv-bf16/vllm-overlay/models/qwen4_exp/nvidia/qsa.py:/usr/local/lib/python3.12/dist-packages/vllm/models/qwen4_exp/nvidia/qsa.py:ro
 -v
 <repo>/patches/tool-parser/vllm-overlay/entrypoints/openai/responses/protocol.py:/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/responses/protocol.py:ro
 -v
@@ -97,7 +95,7 @@ VLLM_MTP_DRAFT_VOCAB=/opt/draft-vocab/draft_vocab_public_65536.npy
 127.0.0.1:8000:8000
 --entrypoint
 vllm
-vllm/vllm-openai:v0.31.0
+vllm/vllm-openai:v0.32.0
 serve
 /models/flashnext
 --served-model-name

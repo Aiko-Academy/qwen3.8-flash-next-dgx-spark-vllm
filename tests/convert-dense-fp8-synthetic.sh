@@ -7,7 +7,7 @@
 #   tests/convert-dense-fp8-synthetic.sh
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE="${IMAGE:-vllm/vllm-openai:v0.31.0}"
+IMAGE="${IMAGE:-vllm/vllm-openai:v0.32.0}"
 P="$REPO/patches/fp8-hybrid"
 W="$(mktemp -d /var/tmp/test-fp8conv.XXXXXX)"
 trap 'docker run --rm -v "$W":/w --entrypoint rm "$IMAGE" -rf /w/src /w/a /w/dst >/dev/null 2>&1; rm -rf "$W"' EXIT

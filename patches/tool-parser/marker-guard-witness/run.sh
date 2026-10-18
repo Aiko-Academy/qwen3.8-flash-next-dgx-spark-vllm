@@ -5,7 +5,7 @@
 #   patches/tool-parser/marker-guard-witness/run.sh
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IMAGE="${IMAGE:-vllm/vllm-openai:v0.31.0}"
+IMAGE="${IMAGE:-vllm/vllm-openai:v0.32.0}"
 VP=/usr/local/lib/python3.12/dist-packages/vllm
 M=()
 for f in entrypoints/openai/responses/protocol.py entrypoints/openai/responses/serving.py parser/abstract_parser.py \

@@ -15,7 +15,7 @@ if [ -n "${SERVE_CONFIG:-}" ]; then
   . "$SERVE_CONFIG"
 fi
 LABEL="${1:?usage: $(basename "$0") <label>}"
-IMAGE="${IMAGE:-vllm/vllm-openai:v0.31.0}"
+IMAGE="${IMAGE:-vllm/vllm-openai:v0.32.0}"
 BIND="${BIND:-127.0.0.1}"; PORT="${PORT:-8000}"
 SOURCE_DIR="${SOURCE_DIR:-/var/tmp/models/Qwen3.8-Flash-Next-NVFP4-nvidia}"
 VERSION=0.4.0

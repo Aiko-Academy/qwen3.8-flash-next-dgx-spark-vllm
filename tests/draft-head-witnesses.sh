@@ -9,7 +9,7 @@
 #   tests/draft-head-witnesses.sh [--gpu]
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE="${IMAGE:-vllm/vllm-openai:v0.31.0}"
+IMAGE="${IMAGE:-vllm/vllm-openai:v0.32.0}"
 N=/usr/local/lib/python3.12/dist-packages/vllm/models/qwen4_exp/nvidia
 W="$(mktemp -d /var/tmp/test-draft-head.XXXXXX)"
 trap 'docker run --rm -v "$W":/w --entrypoint rm "$IMAGE" -rf /w/ckpt >/dev/null 2>&1; rm -rf "$W"' EXIT

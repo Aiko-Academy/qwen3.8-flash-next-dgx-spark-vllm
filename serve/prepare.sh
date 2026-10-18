@@ -20,8 +20,8 @@ if [ -n "${SERVE_CONFIG:-}" ]; then
   # shellcheck disable=SC1090
   . "$SERVE_CONFIG"
 fi
-IMAGE="${IMAGE:-vllm/vllm-openai:v0.31.0}"
-IMAGE_DIGEST="${IMAGE_DIGEST:-sha256:c1c9f6fd5c109ba7f0546a59f5b2f15fb87f64c77782e90a27b648b42a8e67c3}"
+IMAGE="${IMAGE:-vllm/vllm-openai:v0.32.0}"
+IMAGE_DIGEST="${IMAGE_DIGEST:-sha256:befccf0e7e4089aa23926bb6f887a85c0d46c2a99e6de5c5ffdf5cb7957c5b34}"
 HF_REPO="nvidia/Qwen3.8-Flash-Next-NVFP4"
 HF_REVISION="fc694b54fb0174e0913e6adf86691ef85a4ead47"
 SOURCE_DIR="${SOURCE_DIR:-/var/tmp/models/Qwen3.8-Flash-Next-NVFP4-nvidia}"

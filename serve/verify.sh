@@ -17,19 +17,19 @@ if [ -n "${SERVE_CONFIG:-}" ]; then
   . "$SERVE_CONFIG"
 fi
 CONTAINER="${CONTAINER:-vllm-flashnext}"
-IMAGE="${IMAGE:-vllm/vllm-openai:v0.31.0}"
+IMAGE="${IMAGE:-vllm/vllm-openai:v0.32.0}"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 
 "$REPO/serve/serve.sh" --print > "$TMP/expected"
 env -u SERVE_CONFIG -u PATCHES -u BUILD -u PLE_OVERLAY -u FP8_HYBRID -u CACHE_DET -u DET_LIB -u DRAFT_HEAD \
-  -u DRAFT_VOCAB -u MTP_KV -u TOOL_PARSER CONTAINER="$CONTAINER" "$REPO/serve/serve.sh" --print > "$TMP/published"
+  -u DRAFT_VOCAB -u TOOL_PARSER CONTAINER="$CONTAINER" "$REPO/serve/serve.sh" --print > "$TMP/published"
 docker inspect "$CONTAINER" > "$TMP/inspect.json" || { echo "FAIL  container $CONTAINER absent"; exit 1; }
 docker image inspect "$IMAGE" --format '{{json .Config.Env}}' > "$TMP/image-env.json"
 KEYS=""
 [ -n "${API_KEY_FILE:-}" ] && KEYS="$(sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' "$API_KEY_FILE" | tr '\n' ' ')"
 
 python3 -I - "$TMP" "$KEYS" "${MODEL_DIR:-/var/tmp/models/Qwen3.8-Flash-Next-NVFP4-nvidia-fp8hybrid}" \
-  "${VERIFIED_MARKER:-.verified}" "${IMAGE_DIGEST:-sha256:c1c9f6fd5c109ba7f0546a59f5b2f15fb87f64c77782e90a27b648b42a8e67c3}" <<'PY'
+  "${VERIFIED_MARKER:-.verified}" "${IMAGE_DIGEST:-sha256:befccf0e7e4089aa23926bb6f887a85c0d46c2a99e6de5c5ffdf5cb7957c5b34}" <<'PY'
 import hashlib, json, os, re, subprocess, sys
 
 tmp, keyfile_names, model_dir, marker, digest = sys.argv[1], sys.argv[2].split(), sys.argv[3], sys.argv[4], sys.argv[5]
@@ -158,18 +158,20 @@ settings = [
     ("converted FP8 checkpoint mounted, marked prepared and verified", src.get("/models/flashnext") == model_dir
      and os.path.exists(os.path.join(model_dir, ".prepared")) and os.path.exists(os.path.join(model_dir, marker))),
     ("VLLM_USE_DEEP_GEMM=0 and VLLM_FP8_HYBRID=1", "VLLM_USE_DEEP_GEMM=0" in env and "VLLM_FP8_HYBRID=1" in env),
-    ("FP8 shim and modelopt.py mounted", ends("vllm_fp8_hybrid_modelopt.py") and ends("quantization/modelopt.py")),
+    ("FP8 shim, modelopt.py and qsa.py (indexer projection kept apart) mounted", ends("vllm_fp8_hybrid_modelopt.py")
+     and ends("quantization/modelopt.py") and ends("qwen4_exp/nvidia/qsa.py")),
     ("reduced draft vocabulary: VLLM_MTP_DRAFT_VOCAB", any(x.startswith("VLLM_MTP_DRAFT_VOCAB=/") for x in env)),
     ("draft head mtp.py and vocabulary mounted", ends("qwen4_exp/nvidia/mtp.py") and bool(vsrc)),
     ("NVFP4 draft rows: VLLM_MTP_DRAFT_NVFP4=1", "VLLM_MTP_DRAFT_NVFP4=1" in env),
     ("target head in BF16 (no VLLM_FP8_HEAD, no model.py mounted)", not any(x.startswith("VLLM_FP8_HEAD") for x in env)
      and not ends("qwen4_exp/nvidia/model.py")),
-    ("prefix cache repaired (mamba_hybrid.py, scheduler.py)", ends("model_states/mamba_hybrid.py") and ends("core/sched/scheduler.py")),
+    ("prefix cache repaired (scheduler.py; the worker half is in vLLM v0.32.0)", ends("core/sched/scheduler.py")
+     and not ends("model_states/mamba_hybrid.py")),
     ("deterministic QSA top-k (qsa_indexer.py, _C_det.so, VLLM_QSA_DET_TOPK=1)", "VLLM_QSA_DET_TOPK=1" in env
      and ends("ops/qsa_indexer.py") and "/opt/kernel-det/_C_det.so" in src),
     ("tool parser repaired: nine files mounted", sum(any(t.endswith(p) for t in src) for p in parser_files) == 9),
-    ("MTP-layer KV in BF16 (--kv-cache-dtype-skip-layers 48, qsa.py)", val("--kv-cache-dtype-skip-layers") == "48"
-     and ends("qwen4_exp/nvidia/qsa.py")),
+    ("MTP-layer KV in BF16 (--kv-cache-dtype-skip-layers 48, honoured by vLLM v0.32.0)",
+     val("--kv-cache-dtype-skip-layers") == "48"),
 ]
 assert len(settings) == 25
 for n, (name, ok) in enumerate(settings, 1):

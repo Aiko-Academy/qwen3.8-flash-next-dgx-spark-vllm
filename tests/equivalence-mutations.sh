@@ -25,5 +25,5 @@ mutate() {  # $1 = name, $2 = sed expression applied to serve.sh in a copy of th
   else non "$1: verify.sh green on a mutated recipe"; fi
 }
 mutate "argument removed (--no-enable-flashinfer-autotune)" '/^  --no-enable-flashinfer-autotune$/d'
-mutate "mount removed (qsa.py of mtp-kv-bf16)" '/-v "\$MTP_KV\/vllm-overlay\/models\/qwen4_exp\/nvidia\/qsa.py/s/^  -v "\$MTP_KV[^)]*)/  )/'
+mutate "mount removed (qsa.py of fp8-hybrid)" '/-v "\$FP8_HYBRID\/vllm-overlay\/models\/qwen4_exp\/nvidia\/qsa.py/d'
 printf '\n%d OK, %d FAIL\n' "$PASS" "$FAIL"; [ "$FAIL" -eq 0 ]

@@ -5,7 +5,7 @@
 #   serve/serve.sh --print    print the docker run, one argument per line; start nothing, check nothing
 #   serve/serve.sh --check    run every check below and stop there; the running container is not touched
 #
-# Image vllm/vllm-openai:v0.31.0 (pinned by digest), the NVIDIA NVFP4 checkpoint with its dense layers in block FP8
+# Image vllm/vllm-openai:v0.32.0 (pinned by digest), the NVIDIA NVFP4 checkpoint with its dense layers in block FP8
 # (serve/prepare.sh), 524 288 tokens of context (YaRN factor 2), MTP 2 with a 65 536-row NVFP4 draft head, 16
 # sequences on the ten Cortex-X925 cores, and the overlays of patches/ mounted read-only on the image.
 #
@@ -20,8 +20,8 @@ if [ -n "${SERVE_CONFIG:-}" ]; then
   . "$SERVE_CONFIG"
 fi
 
-IMAGE="${IMAGE:-vllm/vllm-openai:v0.31.0}"
-IMAGE_DIGEST="${IMAGE_DIGEST:-sha256:c1c9f6fd5c109ba7f0546a59f5b2f15fb87f64c77782e90a27b648b42a8e67c3}"
+IMAGE="${IMAGE:-vllm/vllm-openai:v0.32.0}"
+IMAGE_DIGEST="${IMAGE_DIGEST:-sha256:befccf0e7e4089aa23926bb6f887a85c0d46c2a99e6de5c5ffdf5cb7957c5b34}"
 CONTAINER="${CONTAINER:-vllm-flashnext}"
 MODEL_DIR="${MODEL_DIR:-/var/tmp/models/Qwen3.8-Flash-Next-NVFP4-nvidia-fp8hybrid}"
 CACHE_DIR="${CACHE_DIR:-/var/tmp/qwen38fn-vllm-cache}"
@@ -38,7 +38,6 @@ DET_LIB="${DET_LIB:-$BUILD/_C_det.so}"
 DRAFT_HEAD="${DRAFT_HEAD:-$PATCHES/draft-nvfp4-head}"
 DRAFT_VOCAB="${DRAFT_VOCAB:-$BUILD/draft_vocab_public_65536.npy}"
 DRAFT_VOCAB_DIR="${DRAFT_VOCAB_DIR:-/opt/draft-vocab}"
-MTP_KV="${MTP_KV:-$PATCHES/mtp-kv-bf16}"
 TOOL_PARSER="${TOOL_PARSER:-$PATCHES/tool-parser}"
 VERIFIED_MARKER="${VERIFIED_MARKER:-.verified}"
 
@@ -50,17 +49,17 @@ ENVS=(-e VLLM_USE_DEEP_GEMM=0 -e VLLM_FP8_HYBRID=1 -e VLLM_MTP_DRAFT_NVFP4=1
   -e VLLM_QSA_DET_TOPK=1 -e VLLM_QSA_DET_LIB=/opt/kernel-det/_C_det.so
   -e VLLM_MTP_DRAFT_VOCAB="$VOCAB_IN")
 
-# Mounts, in the order of the reference container: dense FP8 shim, prefix cache and deterministic top-k, draft
-# head and its vocabulary, MTP-layer KV in BF16, repaired tool parser; then checkpoint, cache, and the PLE overlay.
+# Mounts: dense FP8 shim (with the QSA indexer projection kept apart), prefix cache and deterministic top-k, draft
+# head and its vocabulary, repaired tool parser; then checkpoint, cache, and the PLE overlay. vLLM v0.32.0 carries
+# the MTP-layer KV fix (vllm#60023) and the worker half of the prefix-cache fix (vllm#55601) itself.
 MOUNTS=(-v "$FP8_HYBRID/vllm_fp8_hybrid_modelopt.py:${VP%/vllm}/vllm_fp8_hybrid_modelopt.py:ro"
   -v "$FP8_HYBRID/vllm-overlay/model_executor/layers/quantization/modelopt.py:$VP/model_executor/layers/quantization/modelopt.py:ro"
-  -v "$CACHE_DET/vllm-overlay/v1/worker/gpu/model_states/mamba_hybrid.py:$VP/v1/worker/gpu/model_states/mamba_hybrid.py:ro"
+  -v "$FP8_HYBRID/vllm-overlay/models/qwen4_exp/nvidia/qsa.py:$VP/models/qwen4_exp/nvidia/qsa.py:ro"
   -v "$CACHE_DET/vllm-overlay/v1/core/sched/scheduler.py:$VP/v1/core/sched/scheduler.py:ro"
   -v "$CACHE_DET/vllm-overlay/models/qwen4_exp/nvidia/ops/qsa_indexer.py:$VP/models/qwen4_exp/nvidia/ops/qsa_indexer.py:ro"
   -v "$DET_LIB:/opt/kernel-det/_C_det.so:ro"
   -v "$DRAFT_HEAD/vllm-overlay/models/qwen4_exp/nvidia/mtp.py:$VP/models/qwen4_exp/nvidia/mtp.py:ro"
-  -v "$DRAFT_VOCAB:$VOCAB_IN:ro"
-  -v "$MTP_KV/vllm-overlay/models/qwen4_exp/nvidia/qsa.py:$VP/models/qwen4_exp/nvidia/qsa.py:ro")
+  -v "$DRAFT_VOCAB:$VOCAB_IN:ro")
 for f in entrypoints/openai/responses/protocol.py entrypoints/openai/responses/serving.py parser/abstract_parser.py \
          parser/engine/adapters.py parser/engine/parser_engine.py parser/engine/parser_engine_config.py \
          parser/engine/streaming_parser_engine.py parser/nemotron_v3.py parser/qwen3.py; do
