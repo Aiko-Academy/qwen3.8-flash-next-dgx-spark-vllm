@@ -12,8 +12,7 @@ This product includes software developed by third parties, under the Apache Lice
   - Jürgen Schmied (https://github.com/jschmied): Copyright 2026 Jürgen Schmied. patches/cache-det/kernel-det/ and
     patches/ple-checkpoint-mapped/ (vllm-project/vllm#58439).
   - Mike Waychison (https://github.com/waych): commit b2cc913 in patches/ple-checkpoint-mapped/.
-  - stecasta (https://github.com/stecasta): vllm-project/vllm#60023 and #59973, in patches/mtp-kv-bf16/ and
-    patches/draft-nvfp4-head/.
+  - stecasta (https://github.com/stecasta): vllm-project/vllm#59973, in patches/draft-nvfp4-head/.
 
 bench/prompts/long-fr-verne.txt is an excerpt of Jules Verne, "Le tour du monde en quatre-vingts jours" (1873),
 in the public domain, from Project Gutenberg eBook #800.

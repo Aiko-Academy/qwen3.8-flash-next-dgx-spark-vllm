@@ -11,13 +11,17 @@ the full text. This patch changes no decoding, no kernel, no weight, no KV.
 | repository | https://github.com/blazux/qwen3.8-Flash-DGX, commit `a9ec989cdaaa813fcd3755ba87ff6c43ed7c2156` (2026-10-16), Apache-2.0 (`LICENSE-blazux`, abbreviated; full text in `../../LICENSES/blazux-Apache-2.0.txt`) |
 | patch 19 | original fixes and fixtures by Chaos2522 in blazux/qwen3.8-Flash-DGX issue #31, ported by blazux; Apache-2.0 (`tests/issue31_safe_output/LICENSE` and `NOTICE` of the commit above) |
 | upstream patches | `upstream-patches/`: `qwen-tool-preamble.patch` (12), `qwen-tool-marker-guard.patch` (13, requires 12), `qwen-safe-output.patch` (19, requires 12 and 13), verbatim |
-| base | image `vllm/vllm-openai:v0.31.0`, files under `/usr/local/lib/python3.12/dist-packages/vllm/` (`../../serve/image-base.sha`) |
+| base | image `vllm/vllm-openai:v0.32.0`, files under `/usr/local/lib/python3.12/dist-packages/vllm/` (`../../serve/image-base.sha`) |
 
 ## How the overlay was made
 
-The nine files were read from the image with `docker run --rm --entrypoint cat`, then the three patches applied in
-the order 12, 13, 19 with `patch --batch --forward --fuzz=0 -p1`: three successes, no offset. The nine files compile
-(`py_compile`). `vllm-overlay/` holds the result (modified files of vLLM, Apache-2.0), mounted read-only on the image
+The nine files were read from the v0.32.0 image with `docker run --rm --entrypoint cat`, then the three patches
+applied in the order 12, 13, 19 with GNU `patch --batch --forward --fuzz=0 -p1`: no fuzz, line offsets only, except
+two hunks of patch 19 in `responses/serving.py` (the Responses API changed in v0.32.0). Aiko Academy ported those two
+by hand: the non-streaming path wraps `_make_response_output_items` (now called only when no streamed items exist)
+in the `GenerationError` handler, and the streaming checks sit before `maybe_filter_parallel_tool_calls`. A second,
+independent port (the overlay's whole diff against v0.31.0 applied to v0.32.0) gives the same eight other files. The
+nine files import in the image (`tests/overlay-import.sh`). On v0.31.0 the three patches applied with no offset. `vllm-overlay/` holds the result (modified files of vLLM, Apache-2.0), mounted read-only on the image
 path. `EMPREINTES.sha256` lists the sha256 of the result. The upstream tests (67 methods, 21 fixtures) target a source
 tree that the image does not ship: not replayed here.
 

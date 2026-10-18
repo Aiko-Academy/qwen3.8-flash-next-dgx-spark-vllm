@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.32.0-1 (2026-10-18)
+
+The recipe moves to vLLM v0.32.0 (image pinned by digest `sha256:befccf0e...`). Same checkpoint, same converted
+dense layers, same settings.
+
+- Dropped, because v0.32.0 carries the fix: the MTP-layer KV overlay (vllm-project/vllm#60023) and the worker half of
+  the prefix-cache fix (vllm-project/vllm#55601). 24 mounts instead of 25.
+- New: `patches/fp8-hybrid/.../qsa.py` keeps the QSA indexer projection apart under `VLLM_FP8_HYBRID=1`; v0.32.0 merges
+  it with q, k and v (vllm-project/vllm#59533) and the converted checkpoint holds them in different formats.
+- Replayed on the v0.32.0 files: the FP8 shim hook, the scheduler half of the prefix-cache fix, the deterministic
+  top-k hook, the draft head, the tool parser (two Responses API hunks ported by hand), the PLE files of
+  vllm-project/vllm#58439 (now its head of 2026-10-13).
+- `tests/overlay-import.sh`: every overlay imports in the pinned image.
+
 ## v0.31.0-1 (2026-10-18)
 
 First version, on vLLM v0.31.0.
@@ -13,5 +27,4 @@ First version, on vLLM v0.31.0.
   bench, code gate and its judge, warm-up, clean-pass wrapper.
 - `results/`: measurements of 2026-10-18 (README table).
 
-Waiting for: vLLM v0.32.0 (then the overlays are to be redone or dropped where upstream has merged them:
-vllm-project/vllm#58439, #55122, #60023, #59973).
+Tag `v0.31.0-1`.

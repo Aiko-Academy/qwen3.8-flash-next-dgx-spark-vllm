@@ -22,12 +22,14 @@ Two defects of vLLM v0.31.0 on this model, both fixed by third-party code mounte
 | `patch_mamba_block_size.py` | blazux, `src/`, verbatim | two lines: the worker divides by `mamba_block_size`, the scheduler takes its own `block_size` (least common multiple of the groups) |
 | `patch_qsadet.py` | blazux, `src/`, verbatim | in `ops/qsa_indexer.py::_topk`, under `VLLM_QSA_DET_TOPK=1`, loads `_C_det.so` and calls its `persistent_topk`; inert without the variable |
 | `kernel-det/*` | jschmied, `patches/kernel-det/`, verbatim | deterministic kernel and its build (`torch.utils.cpp_extension.load`, sm_121a). `persistent_topk.cuh` carries its own attribution comments to sglang and flashinfer |
-| `vllm-overlay/v1/worker/gpu/model_states/mamba_hybrid.py` | image `vllm/vllm-openai:v0.31.0` (`1ddd7dc9...`) + `patch_mamba_block_size.py` | mounted read-only; a modified file of vLLM (Apache-2.0) |
-| `vllm-overlay/v1/core/sched/scheduler.py` | image (`f820bee4...`) + `patch_mamba_block_size.py` | mounted read-only; a modified file of vLLM |
-| `vllm-overlay/models/qwen4_exp/nvidia/ops/qsa_indexer.py` | image (`4d09eb2f...`) + `patch_qsadet.py` | mounted read-only; a modified file of vLLM |
-| `_C_det.so` | built on the Spark by `serve/prepare.sh kernel`, not versioned | the build is not reproducible to the byte; the witness is the op `torch.ops._C_det.persistent_topk` resolved at the end of the build |
+| `vllm-overlay/v1/core/sched/scheduler.py` | image `vllm/vllm-openai:v0.32.0` + the scheduler half of `patch_mamba_block_size.py` | mounted read-only; a modified file of vLLM (Apache-2.0) |
+| `vllm-overlay/models/qwen4_exp/nvidia/ops/qsa_indexer.py` | image + `patch_qsadet.py` (the file is the same in v0.31.0 and v0.32.0) | mounted read-only; a modified file of vLLM |
+| `_C_det.so` | built on the Spark by `serve/prepare.sh kernel`, not versioned | built twice on 2026-10-18, in the v0.31.0 and the v0.32.0 images, with the same sha256 (`ad33bf46...`); the witness is the op `torch.ops._C_det.persistent_topk` resolved at the end of the build |
 
-Image hashes before the hooks: `../../serve/image-base.sha`. sha256 of every file here: `../../MANIFEST.sha256`.
+vLLM v0.32.0 fixed the worker half of the prefix-cache defect itself (vllm-project/vllm#55601: the state slot is
+seeded with `mamba_block_size`), so `mamba_hybrid.py` is no longer mounted. The scheduler still computes the last
+cacheable position with `cache_config.block_size`, the smallest block of the KV groups: its half of the fix stays.
+Witness after the change: `bench/prefix_cache.py` (`results/`). Image hashes before the hooks: `../../serve/image-base.sha`. sha256 of every file here: `../../MANIFEST.sha256`.
 
 ## Review (2026-10-13)
 

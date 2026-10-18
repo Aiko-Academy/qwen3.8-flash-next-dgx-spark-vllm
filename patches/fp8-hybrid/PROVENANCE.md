@@ -20,7 +20,8 @@ projections) in BF16. This patch serves them in FP8 e4m3 with 128x128 block scal
 |---|---|---|
 | `vllm_fp8_hybrid_modelopt.py` | blazux, `src/`, verbatim | under `VLLM_FP8_HYBRID=1`, sends to vLLM's block `Fp8Config` every `LinearBase` whose checkpoint weight is F8_E4M3 with a `weight_scale_inv` |
 | `fp8_convert.py` | blazux, `tools/`, verbatim | target regex and `block_quant` (e4m3, fp32 scale, relative error asserted below 0.10). Its `main()` is not called: it loads a whole shard in memory |
-| `vllm-overlay/model_executor/layers/quantization/modelopt.py` | `modelopt.py` of `vllm/vllm-openai:v0.31.0` (sha256 `ee775557...`, `serve/image-base.sha`) plus the three lines that blazux's Dockerfile adds | imports and applies the shim; without `VLLM_FP8_HYBRID=1`, it does nothing. A modified file of vLLM (Apache-2.0) |
+| `vllm-overlay/model_executor/layers/quantization/modelopt.py` | `modelopt.py` of `vllm/vllm-openai:v0.32.0` (`serve/image-base.sha`) plus the three lines that blazux's Dockerfile adds (replayed without fuzz on the v0.32.0 file) | imports and applies the shim; without `VLLM_FP8_HYBRID=1`, it does nothing. A modified file of vLLM (Apache-2.0) |
+| `vllm-overlay/models/qwen4_exp/nvidia/qsa.py` | `qsa.py` of `vllm/vllm-openai:v0.32.0` plus 13 lines by Aiko Academy | under `VLLM_FP8_HYBRID=1`, keeps the QSA indexer projection apart from `qkv_proj` (see below). A modified file of vLLM (Apache-2.0) |
 | `convertir_denses_fp8.py` | Aiko Academy, Apache-2.0 | streaming conversion: one tensor in memory at a time, output header computed first, untouched files hard-linked, index rewritten as a real copy; `verifier` and `etat-source` sub-commands (French messages) |
 | `LICENSE-blazux` | blazux | licence, as published |
 
@@ -38,11 +39,20 @@ sha256 of every file: `../../MANIFEST.sha256`.
 
 - No network, no `subprocess`, no `eval` or `exec`, no write outside the output directory, in either third-party
   file. The shim only reads safetensors headers of the model directory.
-- Hook points present in v0.31.0: `ModelOptMixedPrecisionConfig`, `apply_vllm_mapper`, `get_quant_method`,
+- Hook points present in v0.31.0, and again in v0.32.0 (2026-10-18): `ModelOptMixedPrecisionConfig`, `apply_vllm_mapper`, `get_quant_method`,
   `get_safetensors_params_metadata`, `WeightsMapper.apply_list`, `Fp8Config(weight_block_size=...)`. Fused modules
   `in_proj_qkvz`, `qkv_proj`, `gate_up_proj`: all their members are converted.
 - The 1 536 `weight_scale_inv` already present (FP8 experts of the MTP drafter) belong to `RoutedExperts`; the shim
   only intercepts `LinearBase`, so the drafter keeps its path.
+
+## vLLM v0.32.0: the indexer projection
+
+v0.32.0 merges the QSA indexer projection (`indexer.index_qk_proj`) with q, k and v in one GEMM (vllm-project/vllm#59533)
+and lists it among the members of `qkv_proj`. The converted checkpoint holds q, k and v in block FP8 and the indexer
+projection in BF16: the shim, which sends a fused module to FP8 only when all its members are FP8 in the checkpoint,
+would have left the merged module in BF16 over FP8 weights. The `qsa.py` overlay keeps the indexer projection apart
+under `VLLM_FP8_HYBRID=1` (the path vLLM already takes with LoRA) and removes it from the members of `qkv_proj` for
+that configuration. Read back at start-up on 2026-10-18: 192 modules sent to FP8, as on v0.31.0.
 
 ## Witness
 

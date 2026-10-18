@@ -18,7 +18,7 @@ greedy text (measured on 2026-10-18, `docs/method.md`).
 | file | origin | role |
 |---|---|---|
 | `patch_mtp_draft_vocab.py` | blazux, `src/`, verbatim | appends the hook to `mtp.py`; played once, here, to make the mounted file |
-| `vllm-overlay/models/qwen4_exp/nvidia/mtp.py` | `mtp.py` of `vllm/vllm-openai:v0.31.0` (`35dc7e4b...`) plus the hook, nothing else | under `VLLM_MTP_DRAFT_VOCAB=<ids.npy>`, replaces `Qwen4ExpMTP.compute_logits`. Kept for reference: `serve.sh` mounts `../draft-nvfp4-head/`, whose first 457 lines are this file |
+| `vllm-overlay/models/qwen4_exp/nvidia/mtp.py` | `mtp.py` of `vllm/vllm-openai:v0.32.0` plus the hook, nothing else (replayed without fuzz) | under `VLLM_MTP_DRAFT_VOCAB=<ids.npy>`, replaces `Qwen4ExpMTP.compute_logits`. Kept for reference: `serve.sh` mounts `../draft-nvfp4-head/`, which starts with this file |
 | `build_draft_vocab.py` | blazux, `tools/`, verbatim | the original builder, kept for reference |
 | `draft_vocab_65536.npy` | blazux, `src/`, verbatim | blazux's published set (English and code); used here as the complement of the public set |
 | `build_draft_vocab_public.py` | Aiko Academy, Apache-2.0 | rule of `build_draft_vocab.py` plus a complement: remaining slots filled from blazux's set by decreasing id |
@@ -43,7 +43,7 @@ is, and the `.npy` holds token ids only.
 
 - No network, no `subprocess`, no `eval` or `exec` in the two third-party Python files. The hook only reads the
   `.npy` named by the variable (`np.load` without pickle: int32 only).
-- Replaced function in v0.31.0: `return self.logits_processor(self.lm_head, hidden_states)`, with
+- Replaced function (unchanged from v0.31.0 to v0.32.0): `return self.logits_processor(self.lm_head, hidden_states)`, with
   `LogitsProcessor(config.vocab_size)` (scale 1, no soft cap), TP 1: same logits, restricted to the set.
 - The drafter samples greedily (`draft_sample_method = "greedy"`, default, read back on the serving container):
   the set only changes the drafter's argmax. Greedy texts were identical when the set first went into service
