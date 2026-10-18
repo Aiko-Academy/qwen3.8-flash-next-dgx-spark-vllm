@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I load_bench.py v0320-private-set-1018 --clients 1,4,8,16",
+ "result": "load-v0320-private-set-1018.json",
+ "waited_for_rest_s": 26,
+ "start": "2026-10-18T20:02:14+0200",
+ "end": "2026-10-18T20:04:45+0200",
+ "rc": 0,
+ "sent": 35,
+ "errors": 0,
+ "finished_by_engine": 35,
+ "peak_running": 16.0,
+ "peak_waiting": 1.0,
+ "verdict": "contaminated"
+}
