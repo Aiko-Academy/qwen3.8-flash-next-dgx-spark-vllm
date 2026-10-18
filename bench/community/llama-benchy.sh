@@ -31,7 +31,9 @@ docker run --rm --network host --cap-drop ALL --security-opt no-new-privileges -
     echo '$WHEEL_SHA  /tmp/w/llama_benchy-$VERSION-py3-none-any.whl' | sha256sum -c --quiet
     pip install -q /tmp/w/llama_benchy-$VERSION-py3-none-any.whl >/dev/null 2>&1
     llama-benchy --base-url http://$host:$PORT/v1 --api-key \"\${VLLM_API_KEY:-EMPTY}\" --model qwen3.8-flash-next \
-      --tokenizer /tok $ARGS" 2>&1 | grep -v -i -E 'warning|notice' | tee "$OUT.md"
+      --tokenizer /tok $ARGS" 2>&1 | tee "$OUT.raw" | grep -E '^\|' || true
+# Only the table, the tool version and its date are kept: the raw output names the server address.
+grep -E '^\||^llama-benchy \(|^date: ' "$OUT.raw" > "$OUT.md"; rm -f "$OUT.raw"
 python3 -I - "$OUT" "$start" "$VERSION" "$ARGS" "$(git -C "$REPO" rev-parse HEAD 2>/dev/null || echo unknown)" <<'PY'
 import json, re, sys, time
 out, start, version, args, commit = sys.argv[1:6]
