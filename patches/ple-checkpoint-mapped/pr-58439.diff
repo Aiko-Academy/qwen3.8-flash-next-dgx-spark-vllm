@@ -1,0 +1,1733 @@
+diff --git a/.buildkite/test_areas/models_basic.yaml b/.buildkite/test_areas/models_basic.yaml
+index 7c03db5cb4b9..80f7da5be837 100644
+--- a/.buildkite/test_areas/models_basic.yaml
++++ b/.buildkite/test_areas/models_basic.yaml
+@@ -204,7 +204,7 @@ steps:
+   - vllm/v1/attention/backends/short_conv_attn.py
+   - tests/models/qwen4_exp/
+   commands:
+-    - pytest -v -s models/qwen4_exp/test_config.py models/qwen4_exp/test_ple.py
++    - pytest -v -s models/qwen4_exp/test_config.py models/qwen4_exp/test_ple.py models/qwen4_exp/test_ple_pageable.py
+ 
+ - label: ":computer: (CPU) Basic Models Other"
+   key: basic-models-test-other-cpu
+diff --git a/docs/features/engram.md b/docs/features/engram.md
+index 73dc05e9f144..0952fb7621d8 100644
+--- a/docs/features/engram.md
++++ b/docs/features/engram.md
+@@ -99,6 +99,42 @@ vllm serve deepseek-ai/DeepSeek-V4.1-Flash \
+ or equivalently `VLLM_PLE_CPU_OFFLOAD=0`. CPU offload requires a GPU with UVA
+ support; vLLM fails fast when it is unavailable.
+ 
++## Unified-memory systems: checkpoint-mapped tables (Qwen4Exp)
++
++On a unified-memory machine such as DGX Spark (GB10, 128 GB shared by CPU and
++GPU), neither storage above suits Qwen3.8-Flash-Next: the device-resident table
++does not fit next to the weights, and a 47.7 GiB host copy of its FP8 table is
++anonymous memory in the same physical pool as the weights and the KV cache. It
++cannot be cheaply dropped and recreated under memory pressure.
++
++`checkpoint_mapped` instead reads the table **in place from the checkpoint's
++safetensors files**. The files are mapped read-only and the lookup kernel reads
++the mapped rows directly, which requires a GPU that accesses pageable host
++memory through the host page tables (checked at startup through
++`CU_DEVICE_ATTRIBUTE_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES`). There is
++then no table-sized GPU or pinned allocation, no resident duplicate of the table
++and no CPU-gather/host-to-device staging path: the rows live in the page cache
++as clean, file-backed pages that the kernel can drop and re-read, shared by every
++process that maps the same files. Because GPU page faults on rows that are not yet resident
++are serviced one page at a time, CPU threads fault in each step's rows before
++the forward pass reads them.
++
++```bash
++vllm serve Qwen/Qwen3.8-Flash-Next-FP8 \
++  --engram-config '{"checkpoint_mapped": true}'
++```
++
++`checkpoint_mapped` overrides `cpu_offload`, is incompatible with
++`dp_shared_memory` (mapped pages are already shared between processes) and with
++`embedding_across_dp`, and requires a safetensors checkpoint whose PLE table is
++stored in the dtype the model uses (FP8 or BF16). Reloading weights from disk
++(`weights_path`) remaps the new checkpoint: every incoming PLE shard is compared
++with the newly mapped files, and the new mapping takes effect during reload
++processing or at the latest on the next lookup. PLE weights delivered from
++memory (e.g. weight sync) differ from the files and are rejected. It is implemented for Qwen4Exp only and has been
++validated only on DGX Spark; other GPUs that report the attribute (for example
++Grace Hopper or Grace Blackwell over NVLink-C2C) are accepted with a warning.
++
+ ## Data-parallel topologies (DeepSeek V4.1)
+ 
+ By default (`embedding_across_dp: false`), each DP replica keeps its own
+@@ -118,7 +154,8 @@ vllm serve deepseek-ai/DeepSeek-V4.1-Flash \
+ ```
+ 
+ `embedding_across_dp` is not supported with elastic expert parallelism yet.
+-Qwen4Exp PLE tables are ETP-sharded instead and honor `cpu_offload` only.
++Qwen4Exp PLE tables are ETP-sharded instead and honor `cpu_offload` and
++`checkpoint_mapped` only.
+ 
+ ## Sharing host tables across DP replicas
+ 
+@@ -146,3 +183,6 @@ IPC namespace across the co-located replicas.
+   `--enable-dbo` and set `--ubatch-size 0`.
+ - `dp_shared_memory` requires `cpu_offload`, `data_parallel_size > 1`, and is
+   unsupported with elastic expert parallelism.
++- `checkpoint_mapped` is Qwen4Exp-only and CUDA-only, requires a GPU that
++  reads pageable host memory through the host page tables, and has been
++  validated only on DGX Spark.
+diff --git a/tests/models/qwen4_exp/test_ple_pageable.py b/tests/models/qwen4_exp/test_ple_pageable.py
+new file mode 100644
+index 000000000000..7ded1982aa8c
+--- /dev/null
++++ b/tests/models/qwen4_exp/test_ple_pageable.py
+@@ -0,0 +1,563 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Checkpoint-mapped (pageable-host) PLE storage."""
++
++import glob
++import json
++import os
++import struct
++import time
++from types import SimpleNamespace
++
++import numpy as np
++import pytest
++import torch
++
++import vllm.models.qwen4_exp.nvidia.ngram_embedding as ngram_embedding_module
++from vllm.config.engram import EngramConfig
++from vllm.model_executor.model_loader.weight_utils import (
++    filter_duplicate_safetensors_files,
++)
++from vllm.models.qwen4_exp.nvidia.ngram_embedding import (
++    Qwen4ExpPLEPageableHostEmbedding,
++)
++from vllm.models.qwen4_exp.nvidia.ple_pageable import (
++    MappedTable,
++    PagePrefetcher,
++    PrefetchSource,
++    discover_table_layout,
++    require_pageable_access,
++)
++
++ROW = 160
++PREFIX = "model.language_model.layers.{layer}.ple.ple_embedding.ngram_embedding"
++
++
++def _shard_bytes(
++    layer: int, shard: int, rows: int, width: int, salt: int = 0
++) -> np.ndarray:
++    base = np.arange(rows * width, dtype=np.int64) * 7 + shard * 131 + layer * 17
++    base += salt
++    return base.astype(np.uint8).reshape(rows, width)
++
++
++def _write(path, tensors: dict[str, tuple[str, list[int], bytes]], pad: int = 7):
++    """Write a safetensors file whose data section starts unaligned."""
++    header, blobs, offset = {}, [], 0
++    for name, (dtype, shape, blob) in tensors.items():
++        header[name] = {
++            "dtype": dtype,
++            "shape": shape,
++            "data_offsets": [offset, offset + len(blob)],
++        }
++        offset += len(blob)
++        blobs.append(blob)
++    raw = json.dumps(header).encode() + b" " * pad
++    with open(path, "wb") as f:
++        f.write(struct.pack("<Q", len(raw)))
++        f.write(raw)
++        f.write(b"".join(blobs))
++
++
++def _checkpoint(tmp_path, shards_by_file, layer=1, dtype="F8_E4M3", width=ROW, salt=0):
++    """shards_by_file: [{shard_index: rows}, ...], one dict per file."""
++    for i, shards in enumerate(shards_by_file):
++        tensors = {
++            f"{PREFIX.format(layer=layer)}.shard_{s}.weight": (
++                dtype,
++                [rows, width // (2 if dtype == "BF16" else 1)],
++                _shard_bytes(layer, s, rows, width, salt).tobytes(),
++            )
++            for s, rows in shards.items()
++        }
++        _write(tmp_path / f"model-{i:05d}.safetensors", tensors, pad=5 + i)
++    return str(tmp_path)
++
++
++def _files(model: str) -> list[str]:
++    """What the loader hands over: every safetensors file, index-filtered."""
++    return filter_duplicate_safetensors_files(
++        sorted(glob.glob(os.path.join(model, "*.safetensors"))),
++        model,
++        "model.safetensors.index.json",
++    )
++
++
++def _reference(shards: dict[int, int], layer=1, width=ROW) -> np.ndarray:
++    return np.concatenate(
++        [_shard_bytes(layer, s, r, width) for s, r in sorted(shards.items())]
++    )
++
++
++# ---------------------------------------------------------------- discovery
++
++
++def test_layout_spans_files_and_accepts_short_last_shard(tmp_path):
++    model = _checkpoint(tmp_path, [{0: 3, 2: 3}, {1: 3, 3: 2}])
++    layout = discover_table_layout(_files(model), 1, 11, ROW, torch.float8_e4m3fn, 4)
++    assert layout.rows_per_shard == 3
++    assert [s.rows for s in layout.shards] == [3, 3, 3, 2]
++    assert len({s.path for s in layout.shards}) == 2
++
++
++def test_layout_ignores_other_layers(tmp_path):
++    _checkpoint(tmp_path, [{0: 3, 1: 3, 2: 3, 3: 3}], layer=5)
++    model = str(tmp_path)
++    (tmp_path / "model-00000.safetensors").rename(tmp_path / "other.safetensors")
++    _checkpoint(tmp_path, [{0: 3, 1: 3, 2: 3, 3: 3}], layer=1)
++    layout = discover_table_layout(_files(model), 1, 12, ROW, torch.float8_e4m3fn, 4)
++    assert all("model-00000" in s.path for s in layout.shards)
++
++
++@pytest.mark.parametrize(
++    ("shards", "rows", "match"),
++    [
++        ({0: 3, 1: 3, 3: 3}, 12, "missing \\[2\\]"),
++        ({0: 3, 1: 3, 2: 2}, 12, "missing \\[3\\]"),
++        ({0: 3, 1: 3, 2: 3, 3: 3, 4: 3}, 12, "unexpected \\[4\\]"),
++        ({0: 3, 1: 2, 2: 3, 3: 3}, 12, "shard 1 has shape"),
++    ],
++    ids=["missing", "short-coverage", "extra", "short-interior"],
++)
++def test_layout_refuses_inconsistent_shards(tmp_path, shards, rows, match):
++    model = _checkpoint(tmp_path, [shards])
++    with pytest.raises(ValueError, match=match):
++        discover_table_layout(_files(model), 1, rows, ROW, torch.float8_e4m3fn, 4)
++
++
++def test_layout_refuses_duplicate_shard(tmp_path):
++    model = _checkpoint(tmp_path, [{0: 3, 1: 3}, {1: 3, 2: 3, 3: 3}])
++    with pytest.raises(ValueError, match="appears twice"):
++        discover_table_layout(_files(model), 1, 12, ROW, torch.float8_e4m3fn, 4)
++
++
++def test_layout_refuses_dtype_mismatch(tmp_path):
++    model = _checkpoint(tmp_path, [{0: 3, 1: 3, 2: 3, 3: 3}], dtype="BF16", width=320)
++    with pytest.raises(ValueError, match="cannot convert"):
++        discover_table_layout(_files(model), 1, 12, ROW, torch.float8_e4m3fn, 4)
++
++
++def test_cpu_views_address_the_checkpoint_rows(tmp_path):
++    shards = {0: 3, 1: 3, 2: 3, 3: 2}
++    model = _checkpoint(tmp_path, [{0: 3, 3: 2}, {1: 3, 2: 3}])
++    layout = discover_table_layout(_files(model), 1, 11, ROW, torch.float8_e4m3fn, 4)
++    table = MappedTable(layout, torch.device("cpu"))
++    ref = _reference(shards)
++    rows = np.arange(11)
++    got = np.stack([table.views[r // 3][r % 3] for r in rows])
++    np.testing.assert_array_equal(got, ref)
++    table.touch(rows, pool=None)  # CPU fault-in path must not raise
++
++
++def _indexed_checkpoint_with_stale_file(tmp_path) -> str:
++    """One indexed file plus a stale extra file holding the same four shards."""
++    model = _checkpoint(tmp_path, [{0: 3, 1: 3, 2: 3, 3: 3}])
++    _write(
++        tmp_path / "model-stale.safetensors",
++        {
++            f"{PREFIX.format(layer=1)}.shard_{s}.weight": (
++                "F8_E4M3",
++                [3, ROW],
++                _shard_bytes(1, s, 3, ROW).tobytes(),
++            )
++            for s in range(4)
++        },
++    )
++    weight_map = {
++        f"{PREFIX.format(layer=1)}.shard_{s}.weight": "model-00000.safetensors"
++        for s in range(4)
++    }
++    (tmp_path / "model.safetensors.index.json").write_text(
++        json.dumps({"weight_map": weight_map})
++    )
++    return model
++
++
++def test_layout_follows_the_safetensors_index(tmp_path):
++    """A stale extra file with duplicate shards is ignored when the index excludes it,
++    exactly as the loader ignores it."""
++    model = _indexed_checkpoint_with_stale_file(tmp_path)
++    layout = discover_table_layout(_files(model), 1, 12, ROW, torch.float8_e4m3fn, 4)
++    assert all(s.path.endswith("model-00000.safetensors") for s in layout.shards)
++    all_files = sorted(glob.glob(os.path.join(model, "*.safetensors")))
++    with pytest.raises(ValueError, match="appears twice"):
++        discover_table_layout(all_files, 1, 12, ROW, torch.float8_e4m3fn, 4)
++
++
++def test_resolve_checkpoint_files_through_the_real_loader(tmp_path):
++    """The default loader's own preparation (not the test stand-in) resolves the
++    files, so a change to its interface fails here rather than at serve time."""
++    from vllm.config.load import LoadConfig
++
++    model = _indexed_checkpoint_with_stale_file(tmp_path)
++    model_config = SimpleNamespace(model=model, model_weights=None, revision=None)
++    files = ngram_embedding_module.resolve_checkpoint_files(model_config, LoadConfig())
++    assert [os.path.basename(f) for f in files] == ["model-00000.safetensors"]
++
++
++def _rss_kib() -> int:
++    with open("/proc/self/status") as f:
++        for line in f:
++            if line.startswith("VmRSS:"):
++                return int(line.split()[1])
++    return 0
++
++
++def test_zero_mapping_commits_no_memory_when_read():
++    rows, width = (32 << 20) // ROW, ROW
++    table = MappedTable.zeros(rows, width, torch.device("cpu"))
++    before = _rss_kib()
++    assert int(table.views[0][:: 4096 // width].sum()) == 0  # touch every page
++    table.touch(np.arange(0, rows, 4096 // width), pool=None)
++    grown_kib = _rss_kib() - before
++    assert grown_kib < 4096, f"touching 32 MiB of zeros committed {grown_kib} KiB"
++
++
++def _mapped_embedding(
++    files_ref: dict, rows: int = 12, parts: int = 4
++) -> Qwen4ExpPLEPageableHostEmbedding:
++    """A CPU-only embedding with just the state binding needs."""
++    emb = object.__new__(Qwen4ExpPLEPageableHostEmbedding)
++    torch.nn.Module.__init__(emb)
++    emb.register_parameter(
++        "weight",
++        torch.nn.Parameter(
++            torch.empty(0, ROW, dtype=torch.float8_e4m3fn), requires_grad=False
++        ),
++    )
++    emb.org_vocab_size, emb.embedding_dim, emb.layer_index = rows, ROW, 1
++    emb.table, emb._rebind_pending = None, False
++    emb._pending_table, emb._reload_error = None, None
++    emb._prefetch_buffer = torch.empty(0)
++    emb._load_format = "auto"
++    emb._model_config = SimpleNamespace(
++        hf_text_config=SimpleNamespace(split_ngram_parts=parts)
++    )
++    emb._load_config = None
++    return emb
++
++
++def _mapped_rows(emb) -> np.ndarray:
++    t = emb.table
++    return np.stack(
++        [
++            t.views[r // t.rows_per_shard][r % t.rows_per_shard]
++            for r in range(emb.org_vocab_size)
++        ]
++    )
++
++
++def test_reload_from_disk_remaps_to_the_new_checkpoint(tmp_path, monkeypatch):
++    """Load A, then reload_weights(weights_path=B): the table must follow B."""
++    shards = {0: 3, 1: 3, 2: 3, 3: 3}
++    (tmp_path / "a").mkdir()
++    (tmp_path / "b").mkdir()
++    a = _checkpoint(tmp_path / "a", [shards])
++    b = _checkpoint(tmp_path / "b", [shards], salt=97)
++    source = {"dir": a}
++    monkeypatch.setattr(
++        ngram_embedding_module,
++        "resolve_checkpoint_files",
++        lambda model_config, load_config: _files(source["dir"]),
++    )
++    emb = _mapped_embedding(source)
++    emb.bind_storage_after_loading()  # first load: A
++    np.testing.assert_array_equal(_mapped_rows(emb), _reference(shards))
++    # The reload streams B's shards through load_weights, then rebinds.
++    source["dir"] = b
++    for s, rows in shards.items():
++        raw = torch.from_numpy(_shard_bytes(1, s, rows, ROW, salt=97).copy())
++        emb.record_incoming_shard(s * 3, raw.view(torch.float8_e4m3fn))
++    assert emb._rebind_pending
++    emb.bind_storage_after_loading()
++    np.testing.assert_array_equal(
++        _mapped_rows(emb),
++        np.concatenate([_shard_bytes(1, s, 3, ROW, salt=97) for s in range(4)]),
++    )
++    assert not emb._rebind_pending
++
++
++def _shard_tensor(shard: int, rows: int, salt: int = 0) -> torch.Tensor:
++    raw = torch.from_numpy(_shard_bytes(1, shard, rows, ROW, salt).copy())
++    return raw.view(torch.float8_e4m3fn)
++
++
++def test_reload_from_memory_is_rejected(tmp_path, monkeypatch):
++    """Weights delivered from memory cannot be mapped; never serve the old table."""
++    shards = {0: 3, 1: 3, 2: 3, 3: 3}
++    a = _checkpoint(tmp_path, [shards])
++    monkeypatch.setattr(
++        ngram_embedding_module,
++        "resolve_checkpoint_files",
++        lambda model_config, load_config: _files(a),
++    )
++    emb = _mapped_embedding({})
++    emb.bind_storage_after_loading()
++    old = emb.table
++    with pytest.raises(ValueError, match="differs from the mapped checkpoint"):
++        emb.record_incoming_shard(0, _shard_tensor(0, 3, salt=5))
++    # A rejected reload stays rejected: binding again raises, and the previous
++    # mapping is neither kept silently in use nor replaced.
++    for _ in range(2):
++        with pytest.raises(RuntimeError, match="rejected"):
++            emb.bind_storage_after_loading()
++    assert emb.table is old
++
++
++def test_reload_rejects_a_single_changed_row(tmp_path, monkeypatch):
++    """One changed row in the middle of a shard (no sample would hit it) is caught."""
++    shards = {0: 10, 1: 10}
++    a = _checkpoint(tmp_path, [shards])
++    monkeypatch.setattr(
++        ngram_embedding_module,
++        "resolve_checkpoint_files",
++        lambda model_config, load_config: _files(a),
++    )
++    emb = _mapped_embedding({}, rows=20, parts=2)
++    emb.bind_storage_after_loading()
++    incoming = _shard_tensor(0, 10).view(torch.uint8).clone()
++    incoming[3, 17] ^= 0x5A
++    with pytest.raises(ValueError, match="PLE row 3 received"):
++        emb.record_incoming_shard(0, incoming.view(torch.float8_e4m3fn))
++
++
++def test_reload_from_disk_after_a_rejection_recovers(tmp_path, monkeypatch):
++    """A new load attempt after a rejection is verified from scratch."""
++    shards = {0: 3, 1: 3, 2: 3, 3: 3}
++    a = _checkpoint(tmp_path, [shards])
++    monkeypatch.setattr(
++        ngram_embedding_module,
++        "resolve_checkpoint_files",
++        lambda model_config, load_config: _files(a),
++    )
++    emb = _mapped_embedding({})
++    emb.bind_storage_after_loading()
++    with pytest.raises(ValueError):
++        emb.record_incoming_shard(0, _shard_tensor(0, 3, salt=5))
++    for s, rows in shards.items():  # reload from disk: the same files stream in
++        emb.record_incoming_shard(s * 3, _shard_tensor(s, rows))
++    emb.bind_storage_after_loading()
++    np.testing.assert_array_equal(_mapped_rows(emb), _reference(shards))
++
++
++# ------------------------------------------------------------------- config
++
++
++@pytest.mark.parametrize(
++    "arch",
++    ["DeepseekV41ForCausalLM"],
++)
++def test_config_rejects_architectures_without_mapped_storage(arch, monkeypatch):
++    import vllm.platforms
++
++    monkeypatch.setattr(
++        vllm.platforms.current_platform, "is_cuda_alike", lambda: True, raising=False
++    )
++    model_config = SimpleNamespace(
++        architecture=arch,
++        hf_text_config=SimpleNamespace(engram_layer_ids=[1]),
++    )
++    EngramConfig(checkpoint_mapped=False).verify_model_config(model_config)
++    with pytest.raises(ValueError, match="checkpoint_mapped is implemented for"):
++        EngramConfig(checkpoint_mapped=True).verify_model_config(model_config)
++
++
++@pytest.mark.parametrize("is_cuda", [True, False])
++def test_config_rejects_mapping_off_cuda(is_cuda, monkeypatch):
++    import vllm.platforms
++
++    platform = vllm.platforms.current_platform
++    monkeypatch.setattr(platform, "is_cuda_alike", lambda: True, raising=False)
++    monkeypatch.setattr(platform, "is_cuda", lambda: is_cuda, raising=False)
++    model_config = SimpleNamespace(
++        architecture="Qwen4ExpForCausalLM",
++        hf_text_config=SimpleNamespace(ple_layer_ids=[1]),
++    )
++    EngramConfig(checkpoint_mapped=False).verify_model_config(model_config)
++    if is_cuda:
++        EngramConfig(checkpoint_mapped=True).verify_model_config(model_config)
++    else:
++        with pytest.raises(ValueError, match="implemented for CUDA only"):
++            EngramConfig(checkpoint_mapped=True).verify_model_config(model_config)
++
++
++def test_config_rejects_shared_memory_with_mapping():
++    with pytest.raises(ValueError, match="checkpoint_mapped"):
++        EngramConfig(checkpoint_mapped=True, dp_shared_memory=True)
++
++
++def test_config_rejects_embedding_across_dp_with_mapping():
++    with pytest.raises(ValueError, match="embedding_across_dp"):
++        EngramConfig(checkpoint_mapped=True, embedding_across_dp=True)
++
++
++def test_config_does_not_default_shared_memory_when_mapped():
++    config = EngramConfig(checkpoint_mapped=True)
++
++    class _Parallel:
++        data_parallel_size = 4
++        enable_elastic_ep = False
++
++    config.resolve_dp_shared_memory(_Parallel())
++    assert config.dp_shared_memory is False
++
++
++# ---------------------------------------------------------------------- GPU
++
++
++def _pageable_gpu() -> bool:
++    if not torch.cuda.is_available():
++        return False
++    try:
++        require_pageable_access(0)
++    except RuntimeError:
++        return False
++    return True
++
++
++requires_pageable = pytest.mark.skipif(
++    not _pageable_gpu(), reason="needs a GPU with pageable host-page-table access"
++)
++
++
++def _poison_allocator(rows: int, width: int) -> None:
++    for _ in range(4):
++        junk = torch.full((rows, width), 0xFF, dtype=torch.uint8, device="cuda")
++        del junk
++
++
++@requires_pageable
++@pytest.mark.parametrize(
++    ("dtype", "st_dtype", "width"),
++    [(torch.float8_e4m3fn, "F8_E4M3", ROW), (torch.bfloat16, "BF16", 2 * ROW)],
++    ids=["fp8", "bf16"],
++)
++def test_gather_is_bit_exact_with_etp_range(tmp_path, dtype, st_dtype, width):
++    shards = {0: 3, 1: 3, 2: 3, 3: 2}
++    model = _checkpoint(
++        tmp_path, [{0: 3, 3: 2}, {1: 3, 2: 3}], dtype=st_dtype, width=width
++    )
++    layout = discover_table_layout(
++        _files(model), 1, 11, width // dtype.itemsize, dtype, 4
++    )
++    table = MappedTable(layout, torch.device("cuda"))
++    ref = _reference(shards, width=width)
++    ids = torch.tensor([0, 2, 3, 5, 9, 10, 11, 12, -1, 10**9], device="cuda")
++    _poison_allocator(ids.numel(), width)
++    # This rank owns rows [3, 10): everything else must come back as zeros.
++    out = torch.empty(ids.numel(), width, dtype=torch.uint8, device="cuda")
++    out.fill_(0xAB)
++    table.gather_into(ids, out, 3, 10)
++    got = out.cpu().numpy()
++    owned = [i for i, r in enumerate(ids.tolist()) if 3 <= r < 10]
++    np.testing.assert_array_equal(got[owned], ref[ids.cpu().numpy()[owned]])
++    assert not np.delete(got, owned, axis=0).any()
++
++
++@requires_pageable
++def test_graph_replay_zeroes_rows_that_become_invalid(tmp_path):
++    model = _checkpoint(tmp_path, [{0: 3, 1: 3, 2: 3, 3: 2}])
++    layout = discover_table_layout(_files(model), 1, 11, ROW, torch.float8_e4m3fn, 4)
++    table = MappedTable(layout, torch.device("cuda"))
++    ids = torch.tensor([0, 4, 8, 10], device="cuda")
++    out = torch.empty(4, ROW, dtype=torch.uint8, device="cuda")
++    stream = torch.cuda.Stream()
++    stream.wait_stream(torch.cuda.current_stream())
++    with torch.cuda.stream(stream):
++        table.gather_into(ids, out, 0, 11)
++    torch.cuda.current_stream().wait_stream(stream)
++    graph = torch.cuda.CUDAGraph()
++    with torch.cuda.graph(graph):
++        table.gather_into(ids, out, 0, 11)
++    graph.replay()
++    torch.accelerator.synchronize()
++    assert out.any()
++    ids.copy_(torch.tensor([11, -5, 10**12, 10], device="cuda"))
++    graph.replay()
++    torch.accelerator.synchronize()
++    got = out.cpu().numpy()
++    assert not got[:3].any()
++    np.testing.assert_array_equal(got[3], _reference({0: 3, 1: 3, 2: 3, 3: 2})[10])
++
++
++@requires_pageable
++def test_full_graph_captures_prefetch_and_forward(tmp_path, monkeypatch):
++    """start_prefetch + forward fit in one FULL cudagraph and replay new ids.
++
++    The pinned backend joins its side stream in _finalize_prefetch; this
++    backend looks up on the current stream, and joining the (uncaptured) side
++    stream anyway fails the capture with cudaErrorStreamCaptureIsolation.
++    """
++    shards = {0: 3, 1: 3, 2: 3, 3: 3}
++    model = _checkpoint(tmp_path, [shards])
++    monkeypatch.setattr(
++        ngram_embedding_module,
++        "resolve_checkpoint_files",
++        lambda model_config, load_config: _files(model),
++    )
++    emb = _mapped_embedding({"dir": model})
++    heads, tokens = 2, 3
++    emb._prefetch_buffer = torch.empty(
++        4, heads, ROW, dtype=torch.float8_e4m3fn, device="cuda"
++    )
++    emb._output_dim = heads * ROW
++    emb._prefetch_stream = torch.cuda.Stream()
++    emb.tp_size, emb.etp_data_parallel_size = 1, 1
++    emb.shard_indices = SimpleNamespace(org_vocab_start_index=0, org_vocab_end_index=12)
++    emb.bind_storage_after_loading()
++    hidden = torch.empty(tokens, 8, device="cuda")
++    ids = torch.tensor([[0, 5], [7, 11], [3, 3]], device="cuda")
++
++    def step():
++        emb.start_prefetch(hidden, ids)
++        return emb.forward(hidden)
++
++    ref = _reference(shards)
++    eager = step().view(torch.uint8).cpu().numpy()
++    np.testing.assert_array_equal(
++        eager, ref[ids.cpu().numpy()].reshape(tokens, heads * ROW)
++    )
++    graph = torch.cuda.CUDAGraph()
++    with torch.cuda.graph(graph):
++        out = step()
++    ids.copy_(torch.tensor([[1, 2], [4, 6], [9, 10]], device="cuda"))
++    graph.replay()
++    torch.accelerator.synchronize()
++    np.testing.assert_array_equal(
++        out.view(torch.uint8).cpu().numpy(),
++        ref[ids.cpu().numpy()].reshape(tokens, heads * ROW),
++    )
++
++
++@requires_pageable
++def test_zero_mapping_reads_zeros_without_committing_memory():
++    table = MappedTable.zeros(1 << 20, ROW, torch.device("cuda"))
++    ids = torch.tensor([0, 12345, (1 << 20) - 1], device="cuda")
++    out = torch.full((3, ROW), 0xFF, dtype=torch.uint8, device="cuda")
++    table.gather_into(ids, out, 0, 1 << 20)
++    assert not out.any()
++
++
++@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs CUDA events")
++def test_prefetcher_staging_survives_short_then_long_steps():
++    """The per-step input_ids view changes size; staging must be at capacity."""
++    table = MappedTable.zeros(1000, ROW, torch.device("cuda"))
++    source = PrefetchSource(
++        lambda: table,
++        (0, 1000),
++        lambda: (lambda ids, qsl, ctx: torch.zeros(ids.shape[0], 16, dtype=torch.long)),
++    )
++    prefetcher = PagePrefetcher([source], torch.device("cuda"), 4096, 16, 2)
++    qsl = torch.zeros(17, dtype=torch.int32, device="cuda")
++    ctx = torch.zeros(16, 2, dtype=torch.int32, device="cuda")
++    for num_tokens in (64, 4096, 7):
++        ids = torch.zeros(num_tokens, dtype=torch.int32, device="cuda")
++        qsl[1:] = num_tokens
++        prefetcher.prepare(ids, qsl, ctx, 1, num_tokens)
++        torch.accelerator.synchronize()
++        deadline = time.monotonic() + 10
++        while prefetcher.free.qsize() < prefetcher.SLOTS:  # worker released the slot
++            assert time.monotonic() < deadline
++            time.sleep(0.01)
++    assert prefetcher.slots[0][0].shape[0] == 4096
++    assert prefetcher.skipped == 0
+diff --git a/vllm/config/engram.py b/vllm/config/engram.py
+index fd95bc2acd2b..21c688cd3d5a 100644
+--- a/vllm/config/engram.py
++++ b/vllm/config/engram.py
+@@ -21,6 +21,12 @@
+ }
+ 
+ 
++# Architectures whose Engram embedding implements checkpoint_mapped storage.
++_CHECKPOINT_MAPPED_ARCHITECTURES = frozenset(
++    {"Qwen4ExpForCausalLM", "Qwen4ExpForConditionalGeneration"}
++)
++
++
+ def model_has_engram_layers(model_config: "ModelConfig | None") -> bool:
+     """Whether the model carries n-gram embedding layers."""
+     if model_config is None:
+@@ -42,6 +48,16 @@ class EngramConfig:
+     """Shard embeddings across TP and all DP ranks when enabled.
+     Otherwise, each DP rank has a separate TP-sharded embedding replica."""
+ 
++    checkpoint_mapped: bool = False
++    """Read embedding rows in place from the checkpoint's safetensors files
++    instead of storing the table (overrides cpu_offload). Requires a GPU that
++    reads pageable host memory through the host page tables (checked through
++    the CUDA device attributes at startup): there is no table-sized device or
++    pinned allocation, and the table's clean, file-backed page-cache pages can
++    be dropped and re-read and are shared between processes. Qwen4Exp on CUDA
++    only, not with embedding_across_dp; validated on DGX Spark (GB10, unified
++    memory) only."""
++
+     dp_shared_memory: bool | None = None
+     """Share CPU-offloaded embedding weights between co-located
+     DP replicas. Each node stores one copy of every TP shard, reducing host
+@@ -63,6 +79,16 @@ def _validate_shared_memory(self) -> Self:
+             raise ValueError(
+                 "use_thp requires cpu_offload=True and dp_shared_memory=False"
+             )
++        if self.embedding_across_dp and self.checkpoint_mapped:
++            raise ValueError(
++                "checkpoint_mapped does not support embedding_across_dp: its host "
++                "page prefetch only sees this DP rank's requests."
++            )
++        if self.dp_shared_memory and self.checkpoint_mapped:
++            raise ValueError(
++                "dp_shared_memory does not apply to checkpoint_mapped: mapped "
++                "checkpoint pages are already shared between processes"
++            )
+         return self
+ 
+     def verify_model_config(self, model_config: "ModelConfig | None") -> None:
+@@ -81,6 +107,24 @@ def verify_model_config(self, model_config: "ModelConfig | None") -> None:
+                 "EngramConfig requires a model with supported Engram "
+                 "embeddings and non-empty n-gram layer ids."
+             )
++        if (
++            self.checkpoint_mapped
++            and model_config.architecture not in _CHECKPOINT_MAPPED_ARCHITECTURES
++        ):
++            raise ValueError(
++                "Engram checkpoint_mapped is implemented for "
++                f"{sorted(_CHECKPOINT_MAPPED_ARCHITECTURES)} only, not "
++                f"{model_config.architecture}."
++            )
++        if self.checkpoint_mapped:
++            from vllm.platforms import current_platform
++
++            if not current_platform.is_cuda():
++                # The ROCm Qwen4Exp path has no mapped backend and would
++                # silently store the full pinned table instead.
++                raise ValueError(
++                    "Engram checkpoint_mapped is implemented for CUDA only."
++                )
+ 
+     def resolve_dp_shared_memory(self, parallel_config: "ParallelConfig") -> None:
+         """Share host tables by default wherever the configuration permits."""
+@@ -88,6 +132,7 @@ def resolve_dp_shared_memory(self, parallel_config: "ParallelConfig") -> None:
+             self.dp_shared_memory = (
+                 self.cpu_offload
+                 and not self.use_thp
++                and not self.checkpoint_mapped
+                 and parallel_config.data_parallel_size > 1
+                 and not parallel_config.enable_elastic_ep
+             )
+diff --git a/vllm/models/qwen4_exp/common/ngram_embedding.py b/vllm/models/qwen4_exp/common/ngram_embedding.py
+index e7371770f8ad..81f26b626687 100644
+--- a/vllm/models/qwen4_exp/common/ngram_embedding.py
++++ b/vllm/models/qwen4_exp/common/ngram_embedding.py
+@@ -217,6 +217,12 @@ def apply(
+     def embedding(self, layer: nn.Module, input_: torch.Tensor) -> torch.Tensor:
+         return F.embedding(input_, layer.weight)
+ 
++    def process_weights_after_loading(self, layer: nn.Module) -> None:
++        """Let storage that is bound after loading (checkpoint-mapped) attach."""
++        bind = getattr(layer, "bind_storage_after_loading", None)
++        if bind is not None:
++            bind()
++
+     @abstractmethod
+     def dequantize(
+         self,
+@@ -306,6 +312,7 @@ def process_weights_after_loading(self, layer: nn.Module) -> None:
+         sentinel = torch.finfo(torch.float32).min
+         if torch.any(layer.weight_scale == sentinel):
+             raise ValueError("FP8 PLE checkpoint is missing its global scale")
++        super().process_weights_after_loading(layer)
+ 
+     def dequantize(
+         self,
+@@ -552,10 +559,7 @@ def _finalize_prefetch(
+         output: torch.Tensor,
+     ) -> None:
+         """Join the side stream, reduce ETP shards, and select local rows."""
+-        prefetch_stream = self._prefetch_stream
+-        if prefetch_stream is None:
+-            raise RuntimeError("pinned PLE finalize requires a prior start_prefetch")
+-        torch.cuda.current_stream().wait_stream(prefetch_stream)
++        self._join_prefetch_stream()
+         slot_size, slot_offset = self._get_dp_gather_slot(output.shape[0])
+         active_output = prefetch_output[: slot_size * self.etp_data_parallel_size]
+         embeddings = self._reduce_etp_embeddings(active_output)
+@@ -566,6 +570,12 @@ def _finalize_prefetch(
+         )
+         output.copy_(embeddings.flatten(-2))
+ 
++    def _join_prefetch_stream(self) -> None:
++        prefetch_stream = self._prefetch_stream
++        if prefetch_stream is None:
++            raise RuntimeError("pinned PLE finalize requires a prior start_prefetch")
++        torch.cuda.current_stream().wait_stream(prefetch_stream)
++
+     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+         """Finish the pinned lookup into graph-owned output storage."""
+         buffer = self._prefetch_buffer
+diff --git a/vllm/models/qwen4_exp/nvidia/model_state.py b/vllm/models/qwen4_exp/nvidia/model_state.py
+index 246168509bb1..1e78a2338491 100644
+--- a/vllm/models/qwen4_exp/nvidia/model_state.py
++++ b/vllm/models/qwen4_exp/nvidia/model_state.py
+@@ -13,6 +13,12 @@
+ from vllm.v1.worker.gpu.model_states.mamba_hybrid import MambaHybridModelState
+ from vllm.v1.worker.gpu.states import RequestState
+ 
++from .ngram_embedding import (
++    Qwen4ExpNGramEmbedding,
++    Qwen4ExpPLEPageableHostEmbedding,
++)
++from .ple_pageable import PagePrefetcher, PrefetchSource
++
+ 
+ class Qwen4ExpModelState(MambaHybridModelState):
+     """Add rollback-safe PLE n-gram context to the model inputs."""
+@@ -58,6 +64,13 @@ def __init__(
+             dtype=torch.int64,
+             device=self.device,
+         )
++        engram_config = vllm_config.engram_config
++        # Only checkpoint-mapped PLE tables are prefetched on the host.
++        self._checkpoint_mapped = bool(
++            engram_config is not None and engram_config.checkpoint_mapped
++        )
++        self._page_prefetcher: PagePrefetcher | None = None
++        self._page_prefetcher_resolved = False
+         self.ple_query_start_loc = torch.zeros(
+             self.max_num_reqs + 1,
+             dtype=torch.int32,
+@@ -106,12 +119,59 @@ def prepare_inputs(
+         query_start_loc[: num_reqs_padded + 1].copy_(input_batch.query_start_loc)
+         # Represent unused capacity as trailing zero-length requests.
+         query_start_loc[num_reqs_padded + 1 :].copy_(input_batch.query_start_loc[-1])
++        ngram_context = self._prepare_ngram_context(input_batch, req_states)
+         model_inputs.update(
+             query_start_loc=query_start_loc,
+-            ngram_context=self._prepare_ngram_context(input_batch, req_states),
++            ngram_context=ngram_context,
+         )
++        prefetcher = self._get_page_prefetcher()
++        if prefetcher is not None:
++            prefetcher.prepare(
++                input_batch.input_ids,
++                query_start_loc,
++                ngram_context,
++                num_reqs_padded,
++                input_batch.input_ids.shape[0],
++            )
+         return model_inputs
+ 
++    def _get_page_prefetcher(self) -> PagePrefetcher | None:
++        """Fault in checkpoint-mapped PLE rows before the step reads them."""
++        if not getattr(self, "_checkpoint_mapped", False):
++            return None
++        if self._page_prefetcher_resolved:
++            return self._page_prefetcher
++        sources = []
++        for module in self.model.modules():
++            if not isinstance(module, Qwen4ExpNGramEmbedding):
++                continue
++            embedding = module.ngram_embedding
++            if not isinstance(embedding, Qwen4ExpPLEPageableHostEmbedding):
++                continue
++            sources.append(
++                PrefetchSource(
++                    embedding.current_table,
++                    (
++                        embedding.shard_indices.org_vocab_start_index,
++                        embedding.shard_indices.org_vocab_end_index,
++                    ),
++                    module.cpu_ngram_ids_fn,
++                )
++            )
++        self._page_prefetcher_resolved = True
++        self._page_prefetcher = (
++            PagePrefetcher(
++                sources,
++                self.device,
++                self.max_num_tokens,
++                self.max_num_reqs,
++                self.ngram_context_len,
++            )
++            if sources
++            else None
++        )
++        return self._page_prefetcher
++
+     def prepare_dummy_inputs(
+         self,
+         num_reqs: int,
+diff --git a/vllm/models/qwen4_exp/nvidia/ngram_embedding.py b/vllm/models/qwen4_exp/nvidia/ngram_embedding.py
+index 0b6fd650b101..883cd0572572 100644
+--- a/vllm/models/qwen4_exp/nvidia/ngram_embedding.py
++++ b/vllm/models/qwen4_exp/nvidia/ngram_embedding.py
+@@ -1,12 +1,14 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+-"""Qwen4Exp n-gram embeddings with device and pinned-host storage."""
++"""Qwen4Exp n-gram embeddings with device, pinned-host and checkpoint-mapped storage."""
+ 
+ from collections.abc import Iterable
+ 
++import regex as re
+ import torch
+ from torch import nn
+ 
++from vllm.compilation.breakable_cudagraph import eager_break_during_capture
+ from vllm.config import get_current_vllm_config
+ from vllm.logger import init_logger
+ from vllm.model_executor.layers.quantization.base_config import (
+@@ -26,6 +28,12 @@
+     Qwen4ExpPLEUnquantizedEmbeddingMethod,
+ )
+ from .ops.ple import ple_ngram_ids
++from .ple_pageable import (
++    MappedTable,
++    discover_table_layout,
++    require_pageable_access,
++    verify_shard_bytes,
++)
+ 
+ logger = init_logger(__name__)
+ 
+@@ -34,12 +42,259 @@
+     "Qwen4ExpPLEEmbedding",
+     "Qwen4ExpPLEEmbeddingMethod",
+     "Qwen4ExpPLEFp8EmbeddingMethod",
++    "Qwen4ExpPLEPageableHostEmbedding",
+     "Qwen4ExpPLEPinnedHostEmbedding",
+     "Qwen4ExpPLEUnquantizedEmbeddingMethod",
+     "Qwen4ExpNGramEmbedding",
+ ]
+ 
+ 
++class Qwen4ExpPLEPageableHostEmbedding(Qwen4ExpPLEPinnedHostEmbedding):
++    """PLE table read in place from the checkpoint's safetensors files.
++
++    For GPUs that dereference pageable host memory through the host page tables
++    (e.g. unified-memory GB10). There is no table-sized device or pinned
++    allocation and no resident duplicate of the table: its rows stay in the page
++    cache as clean, file-backed pages that the kernel can drop and re-read, shared
++    between processes. The prefetch buffer, ETP reduction and finalize path are
++    inherited from the pinned-host backend; the lookup itself runs on the current
++    stream (not the pinned backend's side stream) and gathers from the mapping.
++    """
++
++    def __init__(
++        self,
++        num_embeddings: int,
++        embedding_dim: int,
++        *,
++        params_dtype: torch.dtype,
++        padding_size: int,
++        prefix: str,
++        embedding_method: Qwen4ExpPLEEmbeddingMethod,
++        num_ngram_heads: int = 1,
++        max_total_tokens: int = 0,
++        data_parallel_rank: int = 0,
++    ) -> None:
++        device = torch.device("cuda", torch.accelerator.current_device_index())
++        require_pageable_access(device.index)
++        if not torch.cuda.get_device_properties(device).is_integrated:
++            logger.warning_once(
++                "Engram checkpoint_mapped has been validated only on integrated "
++                "unified-memory GPUs (DGX Spark / GB10). This device also reads "
++                "pageable host memory through the host page tables (e.g. Grace "
++                "Hopper / Grace Blackwell over NVLink-C2C), but performance and "
++                "correctness there are untested."
++            )
++        # Skip the pinned-host constructor: there is no host tensor to view.
++        Qwen4ExpPLEEmbedding.__init__(
++            self,
++            num_embeddings,
++            embedding_dim,
++            params_dtype=params_dtype,
++            padding_size=padding_size,
++            prefix=prefix,
++            embedding_method=embedding_method,
++            num_ngram_heads=num_ngram_heads,
++            max_total_tokens=max_total_tokens,
++            data_parallel_rank=data_parallel_rank,
++        )
++        layer_match = re.search(r"layers\.(\d+)\.", prefix)
++        if layer_match is None:
++            raise ValueError(f"Cannot derive the decoder layer index from {prefix}")
++        self.layer_index = int(layer_match.group(1))
++        vllm_config = get_current_vllm_config()
++        self._model_config = vllm_config.model_config
++        self._load_config = vllm_config.load_config
++        self._load_format = str(vllm_config.load_config.load_format)
++        self.table: MappedTable | None = None
++        self._rebind_pending = False
++        self._pending_table: MappedTable | None = None
++        self._reload_error: Exception | None = None
++        self._prefetch_stream = torch.cuda.Stream(device=device)
++        self._prefetch_buffer = torch.empty(
++            max_total_tokens * self.etp_data_parallel_size,
++            num_ngram_heads,
++            self.embedding_dim,
++            dtype=self.weight.dtype,
++            device=device,
++        )
++        self._output_dim = num_ngram_heads * self.embedding_dim
++
++    def allocate_embedding_weight(
++        self,
++        num_embeddings: int,
++        embedding_dim: int,
++        dtype: torch.dtype,
++    ) -> torch.Tensor:
++        """No storage: rows are read from the mapped checkpoint files."""
++        del num_embeddings
++        return torch.empty(0, embedding_dim, dtype=dtype, device="cpu")
++
++    def current_table(self) -> MappedTable | None:
++        """The mapping in use now (rebuilt when a reload remaps the files)."""
++        return self.table
++
++    def record_incoming_shard(
++        self, checkpoint_start: int, loaded_weight: torch.Tensor
++    ) -> None:
++        """Account for a shard delivered by a (re)load.
++
++        On the first load the loader streams the very files that get mapped, so
++        nothing is compared. On a reload (a table is already bound), the files
++        the loader now points at are mapped and every incoming shard is compared
++        with them in full: a reload from disk (``weights_path``) streams those
++        same files and matches, while PLE weights delivered from memory (e.g.
++        weight sync) cannot be served from a file mapping and are rejected.
++        """
++        if self._reload_error is not None:
++            # A rejected load raised out of load_weights; a shard arriving now
++            # starts a new load attempt, verified from scratch.
++            self._reload_error = None
++            self._pending_table = None
++        self._rebind_pending = True
++        if self.table is None:
++            return
++        try:
++            if self._pending_table is None:
++                self._pending_table = self._map_checkpoint_files()
++            verify_shard_bytes(self._pending_table, checkpoint_start, loaded_weight)
++        except Exception as e:
++            self._reload_error = e
++            raise
++
++    def bind_storage_after_loading(self) -> None:
++        """(Re)map this layer's shards once the checkpoint is on local disk."""
++        if self.table is not None and not self._rebind_pending:
++            return
++        self._bind()
++
++    def _map_checkpoint_files(self) -> MappedTable:
++        layout = discover_table_layout(
++            resolve_checkpoint_files(self._model_config, self._load_config),
++            self.layer_index,
++            self.org_vocab_size,
++            self.embedding_dim,
++            self.weight.dtype,
++            int(getattr(self._model_config.hf_text_config, "split_ngram_parts", 512)),
++        )
++        return MappedTable(layout, self._prefetch_buffer.device)
++
++    def _bind(self) -> None:
++        if self._reload_error is not None:
++            # A rejected reload stays rejected until a load succeeds; never fall
++            # back to the previous mapping.
++            raise RuntimeError(
++                "The last weight load was rejected by checkpoint_mapped PLE storage"
++            ) from self._reload_error
++        if self._load_format == "dummy":
++            table = MappedTable.zeros(
++                self.org_vocab_size,
++                self.embedding_dim * self.weight.dtype.itemsize,
++                self._prefetch_buffer.device,
++            )
++        else:
++            table = self._pending_table or self._map_checkpoint_files()
++        # Commit only after everything above succeeded.
++        self.table = table
++        self._pending_table = None
++        self._rebind_pending = False
++        if table.layout is not None:
++            logger.info(
++                "Mapped PLE table of layer %d in place: %d rows x %d B from %d "
++                "files; no table-sized device or pinned allocation",
++                self.layer_index,
++                table.layout.num_rows,
++                table.layout.row_bytes,
++                len({shard.path for shard in table.layout.shards}),
++            )
++
++    def _lookup_on_current_stream(self, ngram_ids: torch.Tensor) -> None:
++        if self._rebind_pending or self._reload_error is not None:
++            # A reload delivered shards but its processing did not rebind (a
++            # layer without loadable elements is only restored): rebind now,
++            # or raise if that reload was rejected.
++            self._bind()
++        slot_size, _ = self._get_dp_gather_slot(ngram_ids.shape[0])
++        gathered_ids = self._gather_dp_ids(ngram_ids, slot_size)
++        self._lookup(
++            gathered_ids, output=self._prefetch_buffer[: gathered_ids.shape[0]]
++        )
++
++    @eager_break_during_capture
++    def start_prefetch(
++        self,
++        hidden_states: torch.Tensor,
++        ngram_ids: torch.Tensor,
++    ) -> None:
++        """Look up on the current stream, not the pinned backend's side stream.
++
++        With the side-stream lookup, greedy outputs on GB10 were not reproducible
++        within one server start (identical prompts matched in 2 of 8, logprobs
++        differed by up to 1.4); on the current stream they matched in 8 of 8 with
++        zero logprob difference. The CPU page prefetch already runs ahead of the
++        step, so the side stream buys no overlap worth keeping here.
++        """
++        self._lookup_on_current_stream(ngram_ids)
++
++    def _join_prefetch_stream(self) -> None:
++        """Nothing to join: start_prefetch ran the lookup on the current stream.
++
++        Joining the side stream anyway fails a FULL cudagraph capture, because
++        that stream is never part of the capture
++        (cudaErrorStreamCaptureIsolation).
++        """
++
++    def _lookup(
++        self,
++        input_ids: torch.Tensor,
++        output: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        """Gather this rank's rows from the mapped files; zeros elsewhere."""
++        if self.table is None:
++            raise RuntimeError("PLE checkpoint mapping was not bound after loading")
++        expected_shape = (*input_ids.shape, self.embedding_dim)
++        if output is None:
++            output = torch.empty(
++                expected_shape, dtype=self.weight.dtype, device=input_ids.device
++            )
++        elif (
++            tuple(output.shape) != expected_shape
++            or output.dtype != self.weight.dtype
++            or output.device != input_ids.device
++        ):
++            raise ValueError(
++                "PLE prefetch output must match the input shape, weight dtype, "
++                "and input device"
++            )
++        self.table.gather_into(
++            input_ids.reshape(-1).long(),
++            output.view(torch.uint8).reshape(-1, self.table.row_bytes),
++            self.shard_indices.org_vocab_start_index,
++            self.shard_indices.org_vocab_end_index,
++        )
++        return output
++
++
++def resolve_checkpoint_files(model_config, load_config) -> list[str]:
++    """The safetensors files the loader read, resolved exactly as it resolves them.
++
++    Reuses the default loader's preparation so ``--download-dir``, subfolders
++    and the ``model.safetensors.index.json`` filter all apply. The weights are
++    already local by the time the storage is bound, so nothing is downloaded.
++    """
++    from vllm.model_executor.model_loader.default_loader import DefaultModelLoader
++
++    _, files, use_safetensors, _ = DefaultModelLoader(load_config)._prepare_weights(
++        model_config.model_weights or model_config.model,
++        None,
++        model_config.revision,
++        fall_back_to_pt=False,
++        allow_patterns_overrides=None,
++    )
++    if not use_safetensors:
++        raise ValueError("Engram checkpoint_mapped requires a safetensors checkpoint")
++    return files
++
++
+ class Qwen4ExpNGramEmbedding(nn.Module):
+     _MASK64 = (1 << 64) - 1
+     _SPLITMIX_GAMMA = 0x9E3779B97F4A7C15
+@@ -208,11 +463,13 @@ def __init__(
+         if params_dtype is None:
+             params_dtype = torch.get_default_dtype()
+         engram_config = get_current_vllm_config().engram_config
+-        embedding_cls = (
+-            Qwen4ExpPLEPinnedHostEmbedding
+-            if engram_config is not None and engram_config.cpu_offload
+-            else Qwen4ExpPLEDeviceEmbedding
+-        )
++        embedding_cls: type[Qwen4ExpPLEEmbedding]
++        if engram_config is not None and engram_config.checkpoint_mapped:
++            embedding_cls = Qwen4ExpPLEPageableHostEmbedding
++        elif engram_config is not None and engram_config.cpu_offload:
++            embedding_cls = Qwen4ExpPLEPinnedHostEmbedding
++        else:
++            embedding_cls = Qwen4ExpPLEDeviceEmbedding
+         self.ngram_embedding = embedding_cls(
+             padded_vocab_size,
+             self.head_dim,
+@@ -363,6 +620,13 @@ def forward(
+         ngram_ids = self.compute_ngram_ids(input_ids, query_start_loc, ngram_context)
+         return self.ngram_embedding(ngram_ids).flatten(-2)
+ 
++    def cpu_ngram_ids_fn(self):
++        """A CPU-only ``compute_ngram_ids`` for host-side page prefetching."""
++        cpu = copy_module_for_cpu_ids(self)
++        return lambda ids, qsl, ctx: Qwen4ExpNGramEmbedding.compute_ngram_ids(
++            cpu, ids, qsl, ctx
++        )
++
+     def start_prefetch(
+         self,
+         hidden_states: torch.Tensor,
+@@ -434,6 +698,12 @@ def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+                         f"expected {expected_shape}, got "
+                         f"{tuple(loaded_weight.shape)}"
+                     )
++                if isinstance(embedding, Qwen4ExpPLEPageableHostEmbedding):
++                    # Rows are read in place from the checkpoint files; sample
++                    # this shard so the mapping can be checked against it.
++                    embedding.record_incoming_shard(checkpoint_start, loaded_weight)
++                    loaded.add("ngram_embedding.weight")
++                    continue
+                 embedding.weight.weight_loader(
+                     embedding.weight,
+                     loaded_weight,
+@@ -448,6 +718,23 @@ def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+         return loaded
+ 
+ 
++def copy_module_for_cpu_ids(module: "Qwen4ExpNGramEmbedding"):
++    """An object with CPU copies of the hash buffers ``compute_ngram_ids`` reads."""
++    from types import SimpleNamespace
++
++    return SimpleNamespace(
++        layer_multipliers=module.layer_multipliers.cpu(),
++        ngram_heads_vocab_sizes=module.ngram_heads_vocab_sizes.cpu(),
++        ngram_heads_offsets=module.ngram_heads_offsets.cpu(),
++        eos_token_id=module.eos_token_id,
++        ngram_size=module.ngram_size,
++        heads_per_ngram=module.heads_per_ngram,
++        _shift_precompute=Qwen4ExpNGramEmbedding._shift_precompute,
++        _shift_apply=Qwen4ExpNGramEmbedding._shift_apply,
++    )
++
++
+ __all__ = [
+     "Qwen4ExpNGramEmbedding",
++    "Qwen4ExpPLEPageableHostEmbedding",
+ ]
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_pageable.py b/vllm/models/qwen4_exp/nvidia/ple_pageable.py
+new file mode 100644
+index 000000000000..614f11d466c0
+--- /dev/null
++++ b/vllm/models/qwen4_exp/nvidia/ple_pageable.py
+@@ -0,0 +1,492 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Read the Qwen4Exp PLE n-gram table in place from the checkpoint files.
++
++On GPUs that dereference pageable host memory through the host page tables
++(``CU_DEVICE_ATTRIBUTE_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES``, e.g. the
++unified-memory GB10), a kernel can read a read-only ``mmap`` of the checkpoint's
++safetensors files directly. There is then no table-sized device or pinned
++allocation, no resident duplicate of the table and no CPU-gather/host-to-device
++staging path: its pages live in the page cache as clean, file-backed pages that
++the kernel can drop and re-read, shared by every process mapping the same files.
++
++GPU faults on non-resident file pages are serviced one page at a time, so the
++rows a step needs are faulted in ahead of the lookup by CPU threads
++(:class:`PagePrefetcher`). The prefetch is only a hint: the lookup is correct
++whether or not it has finished.
++"""
++
++import ctypes
++import json
++import mmap
++import os
++import queue
++import struct
++import threading
++from collections.abc import Callable
++from concurrent.futures import ThreadPoolExecutor
++from dataclasses import dataclass
++
++import numpy as np
++import regex as re
++import torch
++
++from vllm.logger import init_logger
++from vllm.triton_utils import tl, triton
++
++logger = init_logger(__name__)
++
++_PAGE = 4096
++_MADV_RANDOM = 1
++_CU_PAGEABLE_MEMORY_ACCESS = 88
++_CU_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES = 100
++_SAFETENSORS_DTYPES = {
++    "F8_E4M3": torch.float8_e4m3fn,
++    "BF16": torch.bfloat16,
++    "F16": torch.float16,
++    "F32": torch.float32,
++}
++_SHARD_RE = re.compile(
++    r"layers\.(\d+)\.ple\.ple_embedding\.ngram_embedding\.shard_(\d+)\.weight$"
++)
++
++
++def require_pageable_access(device_index: int) -> None:
++    """Raise unless the GPU reads pageable host memory via host page tables.
++
++    Being an integrated GPU is not sufficient, and an attribute that cannot be
++    queried is treated as unsupported.
++    """
++    try:
++        cuda = ctypes.CDLL("libcuda.so.1")
++    except OSError as e:
++        raise RuntimeError("Cannot load the CUDA driver to query the GPU") from e
++    device = ctypes.c_int()
++    if cuda.cuInit(0) != 0 or cuda.cuDeviceGet(ctypes.byref(device), device_index):
++        raise RuntimeError("Cannot query the CUDA driver for the device")
++    for name, attribute in (
++        ("PAGEABLE_MEMORY_ACCESS", _CU_PAGEABLE_MEMORY_ACCESS),
++        (
++            "PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES",
++            _CU_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES,
++        ),
++    ):
++        value = ctypes.c_int(0)
++        rc = cuda.cuDeviceGetAttribute(ctypes.byref(value), attribute, device)
++        if rc != 0 or value.value != 1:
++            raise RuntimeError(
++                "Engram checkpoint_mapped requires a GPU that reads pageable host "
++                f"memory through the host page tables; device {device_index} "
++                f"reports CU_DEVICE_ATTRIBUTE_{name}={value.value} (rc={rc})"
++            )
++
++
++@dataclass(frozen=True)
++class ShardLocation:
++    path: str
++    offset: int
++    rows: int
++
++
++@dataclass(frozen=True)
++class TableLayout:
++    """Where every checkpoint shard of one layer's table lives."""
++
++    num_rows: int
++    row_bytes: int
++    rows_per_shard: int
++    shards: tuple[ShardLocation, ...]
++
++
++def discover_table_layout(
++    files: list[str],
++    layer_index: int,
++    num_rows: int,
++    embedding_dim: int,
++    dtype: torch.dtype,
++    split_parts: int,
++) -> TableLayout:
++    """Locate and validate one layer's PLE shards among the loader's files.
++
++    Mirrors ``Qwen4ExpNGramEmbedding.load_weights``: shard ``i`` holds rows
++    ``[i * S, min((i + 1) * S, num_rows))`` with ``S = ceil(num_rows /
++    split_parts)``. Every shard that owns rows must exist exactly once, with
++    exactly that shape and ``dtype``; nothing is truncated or padded.
++    """
++    found: dict[int, tuple[str, int, list[int], str]] = {}
++    if not files:
++        raise FileNotFoundError("No safetensors files to map the PLE table from")
++    # ``files`` is the loader's list: already filtered by the safetensors index,
++    # so files the index excludes are never considered.
++    for path in sorted(files):
++        with open(path, "rb") as f:
++            header_len = struct.unpack("<Q", f.read(8))[0]
++            header = json.loads(f.read(header_len))
++        for name, meta in header.items():
++            match = _SHARD_RE.search(name)
++            if match is None or int(match.group(1)) != layer_index:
++                continue
++            shard = int(match.group(2))
++            if shard in found:
++                raise ValueError(
++                    f"PLE shard {shard} of layer {layer_index} appears twice "
++                    f"({found[shard][0]} and {path})"
++                )
++            found[shard] = (
++                path,
++                8 + header_len + meta["data_offsets"][0],
++                meta["shape"],
++                meta["dtype"],
++            )
++
++    rows_per_shard = (num_rows + split_parts - 1) // split_parts
++    needed = [i for i in range(split_parts) if i * rows_per_shard < num_rows]
++    missing = [i for i in needed if i not in found]
++    unexpected = sorted(set(found) - set(needed))
++    if missing or unexpected:
++        raise ValueError(
++            f"PLE shards of layer {layer_index} do not cover "
++            f"{num_rows} rows in {split_parts} parts: missing {missing[:8]}, "
++            f"unexpected {unexpected[:8]}"
++        )
++    shards = []
++    for i in needed:
++        path, offset, shape, st_dtype = found[i]
++        want = [min(rows_per_shard, num_rows - i * rows_per_shard), embedding_dim]
++        if list(shape) != want:
++            raise ValueError(f"PLE shard {i} has shape {shape}, expected {want}")
++        if _SAFETENSORS_DTYPES.get(st_dtype) != dtype:
++            raise ValueError(
++                f"PLE shard {i} is stored as {st_dtype}, but the embedding uses "
++                f"{dtype}; checkpoint_mapped cannot convert rows"
++            )
++        shards.append(ShardLocation(path, offset, want[0]))
++    return TableLayout(
++        num_rows=num_rows,
++        row_bytes=embedding_dim * dtype.itemsize,
++        rows_per_shard=rows_per_shard,
++        shards=tuple(shards),
++    )
++
++
++@triton.jit
++def _gather_mapped_rows_kernel(
++    ids_ptr,
++    shard_base_ptr,
++    out_ptr,
++    rows_per_shard,
++    vocab_start,
++    vocab_end,
++    ROW_BYTES: tl.constexpr,
++    BLOCK: tl.constexpr,
++):
++    """Copy owned rows byte-wise from mapped shards; write zeros otherwise."""
++    pid = tl.program_id(0)
++    row = tl.load(ids_ptr + pid).to(tl.int64)
++    owned = (row >= vocab_start) & (row < vocab_end)
++    row = tl.where(owned, row, 0)
++    shard = row // rows_per_shard
++    local = row - shard * rows_per_shard
++    base = tl.load(shard_base_ptr + shard).to(tl.pointer_type(tl.uint8))
++    offsets = tl.arange(0, BLOCK)
++    in_row = offsets < ROW_BYTES
++    values = tl.load(base + local * ROW_BYTES + offsets, mask=in_row & owned, other=0)
++    # The store is unmasked by ownership so rows this rank does not own are zero,
++    # never allocator residue or a previous graph replay's bytes.
++    tl.store(out_ptr + pid.to(tl.int64) * ROW_BYTES + offsets, values, mask=in_row)
++
++
++def verify_shard_bytes(
++    table: "MappedTable",
++    checkpoint_start: int,
++    shard: torch.Tensor,
++    chunk_rows: int = 65536,
++) -> None:
++    """Raise unless an incoming checkpoint shard equals the mapped rows exactly.
++
++    Compares every byte, chunk by chunk, without copying the mapping. The
++    mapping serves rows from the checkpoint files; weights that differ from
++    those files (e.g. delivered from memory by a weight sync) cannot be served
++    and must not be silently ignored.
++    """
++    if shard.numel() == 0:
++        return
++    index, offset = divmod(checkpoint_start, table.rows_per_shard)
++    view = table.views[index] if index < len(table.views) else None
++    rows = shard.shape[0]
++    if view is None or offset != 0 or view.shape[0] != rows:
++        raise ValueError(
++            f"Incoming PLE shard at row {checkpoint_start} ({rows} rows) does not "
++            "line up with the mapped checkpoint shards"
++        )
++    raw = shard.detach().contiguous().view(torch.uint8).reshape(rows, -1)
++    for start in range(0, rows, chunk_rows):
++        end = min(rows, start + chunk_rows)
++        incoming = raw[start:end].cpu().numpy()
++        if not np.array_equal(view[start:end], incoming):
++            bad = start + int(np.flatnonzero((view[start:end] != incoming).any(1))[0])
++            raise ValueError(
++                f"PLE row {checkpoint_start + bad} received from the weights source "
++                "differs from the mapped checkpoint files. checkpoint_mapped serves "
++                "the table from disk and cannot load it from in-memory weights; "
++                "reload from a checkpoint on disk (weights_path) or disable "
++                "checkpoint_mapped."
++            )
++
++
++class MappedTable:
++    """Read-only mappings of a layer's shards plus the GPU and CPU accessors."""
++
++    def __init__(self, layout: TableLayout, device: torch.device) -> None:
++        self.layout: TableLayout | None = layout
++        self.row_bytes = layout.row_bytes
++        self.rows_per_shard = layout.rows_per_shard
++        self.num_rows = layout.num_rows
++        self._maps: dict[str, tuple[mmap.mmap, np.ndarray]] = {}
++        libc = ctypes.CDLL(None, use_errno=True)
++        for path in sorted({s.path for s in layout.shards}):
++            fd = os.open(path, os.O_RDONLY)
++            try:
++                size = os.fstat(fd).st_size
++                mapping = mmap.mmap(fd, size, mmap.MAP_SHARED, mmap.PROT_READ)
++            finally:
++                os.close(fd)
++            array = np.frombuffer(mapping, dtype=np.uint8)
++            address = array.__array_interface__["data"][0]
++            # Rows are read at random; readahead would only evict useful pages.
++            libc.madvise(ctypes.c_void_p(address), ctypes.c_size_t(size), _MADV_RANDOM)
++            self._maps[path] = (mapping, array)
++        self.views = [
++            self._maps[s.path][1][
++                s.offset : s.offset + s.rows * self.row_bytes
++            ].reshape(s.rows, self.row_bytes)
++            for s in layout.shards
++        ]
++        bases = [v.__array_interface__["data"][0] for v in self.views]
++        self.shard_base = torch.tensor(bases, dtype=torch.int64, device=device)
++        self._block = triton.next_power_of_2(self.row_bytes)
++
++    @classmethod
++    def zeros(
++        cls, num_rows: int, row_bytes: int, device: torch.device
++    ) -> "MappedTable":
++        """An anonymous, never-written mapping: every row reads as zero.
++
++        Used when no checkpoint is loaded (``--load-format dummy``); the zero
++        page backs every read, so no memory is committed.
++        """
++        self = cls.__new__(cls)
++        self.row_bytes = row_bytes
++        self.rows_per_shard = max(num_rows, 1)
++        self.num_rows = num_rows
++        # Private and anonymous: every read is served by the shared zero page, so
++        # touching the table commits no memory (a MAP_SHARED anonymous mapping
++        # would allocate shmem pages on read).
++        mapping = mmap.mmap(
++            -1,
++            max(num_rows * row_bytes, _PAGE),
++            flags=mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS,
++            prot=mmap.PROT_READ,
++        )
++        array = np.frombuffer(mapping, dtype=np.uint8)
++        self._maps = {"<zeros>": (mapping, array)}
++        self.views = [array[: num_rows * row_bytes].reshape(num_rows, row_bytes)]
++        self.layout = None
++        self.shard_base = torch.tensor(
++            [array.__array_interface__["data"][0]], dtype=torch.int64, device=device
++        )
++        self._block = triton.next_power_of_2(row_bytes)
++        return self
++
++    def gather_into(
++        self,
++        ids: torch.Tensor,
++        out: torch.Tensor,
++        vocab_start: int,
++        vocab_end: int,
++    ) -> None:
++        """Write rows ``ids`` into ``out`` (``[len(ids), row_bytes]`` uint8)."""
++        if ids.numel() == 0:
++            return
++        _gather_mapped_rows_kernel[(ids.numel(),)](
++            ids,
++            self.shard_base,
++            out,
++            self.rows_per_shard,
++            vocab_start,
++            min(vocab_end, self.num_rows),
++            ROW_BYTES=self.row_bytes,
++            BLOCK=self._block,
++        )
++
++    def touch(self, rows: np.ndarray, pool: ThreadPoolExecutor | None) -> None:
++        """Fault in both ends of every row (a row may straddle a page)."""
++        rows = np.sort(rows)
++        shard = rows // self.rows_per_shard
++        local = rows - shard * self.rows_per_shard
++        last = self.row_bytes - 1
++
++        def groups(index: np.ndarray) -> list[tuple[np.ndarray, np.ndarray]]:
++            s = shard[index]
++            cuts = np.flatnonzero(np.diff(s)) + 1
++            return [
++                (self.views[int(group[0])], rows_in_shard)
++                for group, rows_in_shard in zip(
++                    np.split(s, cuts), np.split(local[index], cuts)
++                )
++                if group.size
++            ]
++
++        # Index the per-shard 2-D views: fancy-indexing the flat byte arrays is
++        # ~12x slower cold with identical tasks.
++        def fault(task: tuple[np.ndarray, np.ndarray]) -> int:
++            view, index = task
++            return int(view[index, 0].sum()) + int(view[index, last].sum())
++
++        if pool is None or rows.size <= 4096:
++            for task in groups(np.arange(rows.size)):
++                fault(task)
++            return
++        tasks = []
++        for chunk in np.array_split(np.arange(rows.size), 64):
++            if chunk.size:
++                tasks.extend(groups(chunk))
++        list(pool.map(fault, tasks))
++
++
++class PagePrefetcher:
++    """Fault in each step's PLE rows from CPU threads before the GPU reads them.
++
++    ``prepare`` copies the step's inputs to pinned staging buffers on the current
++    stream and returns; a worker thread waits for the copy, computes the n-gram
++    ids on the CPU, and touches the rows this rank owns. Each source's table is
++    re-read on every step, so a remap (weight reload) takes effect here too.
++    """
++
++    SLOTS = 4
++    THREADS = 64
++
++    def __init__(
++        self,
++        sources: list["PrefetchSource"],
++        device: torch.device,
++        max_num_tokens: int,
++        max_num_reqs: int,
++        ngram_context_len: int,
++    ) -> None:
++        self.sources = sources
++        if device.index is None:  # e.g. torch.device("cuda"): pin to the current GPU
++            device = torch.device(device.type, torch.accelerator.current_device_index())
++        self.device = device
++        self.capacity = (max_num_tokens, max_num_reqs, ngram_context_len)
++        # Pinned staging slots at full capacity (allocated on the first step,
++        # with the dtypes of the model state's buffers): the per-step input_ids
++        # view changes size between steps.
++        self.slots: list[tuple[torch.Tensor, ...]] = []
++        self.free: queue.Queue[int] = queue.Queue()
++        for i in range(self.SLOTS):
++            self.free.put(i)
++        self.work: queue.Queue = queue.Queue()
++        self.pool = ThreadPoolExecutor(self.THREADS, thread_name_prefix="ple-touch")
++        self.skipped = 0
++        threading.Thread(target=self._loop, name="ple-prefetch", daemon=True).start()
++
++    def prepare(
++        self,
++        input_ids: torch.Tensor,
++        query_start_loc: torch.Tensor,
++        ngram_context: torch.Tensor,
++        num_reqs: int,
++        num_tokens: int,
++    ) -> None:
++        max_tokens, max_reqs, ctx_len = self.capacity
++        if (
++            num_tokens > max_tokens
++            or num_reqs > max_reqs
++            or ngram_context.shape[1] > ctx_len
++        ):
++            logger.warning_once(
++                "PLE page prefetch skipped a step larger than its staging "
++                "capacity; lookups are unaffected"
++            )
++            return
++        if not self.slots:
++            self.slots = [
++                (
++                    torch.empty(max_tokens, dtype=input_ids.dtype).pin_memory(),
++                    torch.empty(max_reqs + 1, dtype=query_start_loc.dtype).pin_memory(),
++                    torch.empty(
++                        max_reqs, ctx_len, dtype=ngram_context.dtype
++                    ).pin_memory(),
++                )
++                for _ in range(self.SLOTS)
++            ]
++        try:
++            slot = self.free.get_nowait()
++        except queue.Empty:
++            self.skipped += 1  # a hint only: the lookup stays correct
++            return
++        ids, qsl, ctx = self.slots[slot]
++        ids[:num_tokens].copy_(input_ids[:num_tokens], non_blocking=True)
++        qsl[: num_reqs + 1].copy_(query_start_loc[: num_reqs + 1], non_blocking=True)
++        ctx[:num_reqs, : ngram_context.shape[1]].copy_(
++            ngram_context[:num_reqs], non_blocking=True
++        )
++        event = torch.cuda.Event()
++        event.record(torch.cuda.current_stream(self.device))
++        self.work.put((slot, event, num_reqs, num_tokens, ngram_context.shape[1]))
++
++    def _loop(self) -> None:
++        try:
++            self._serve()
++        except Exception:
++            # Never die silently: without the prefetch, cold rows fault one page
++            # at a time on the GPU (correct, but slow).
++            logger.exception("PLE page prefetch thread stopped")
++
++    def _serve(self) -> None:
++        torch.accelerator.set_device_index(self.device.index)
++        while True:
++            slot, event, num_reqs, num_tokens, ctx_len = self.work.get()
++            try:
++                event.synchronize()
++                ids, qsl, ctx = self.slots[slot]
++                ids = ids[:num_tokens].clone()
++                qsl = qsl[: num_reqs + 1].clone()
++                ctx = ctx[:num_reqs, :ctx_len].clone()
++            finally:
++                self.free.put(slot)
++            try:
++                for source in self.sources:
++                    source.touch(ids, qsl, ctx, self.pool)
++            except Exception:
++                logger.exception("PLE page prefetch failed; lookups are unaffected")
++
++
++class PrefetchSource:
++    """One mapped embedding and a CPU hash of its ids, refreshed on remap."""
++
++    def __init__(
++        self,
++        get_table: Callable[[], "MappedTable | None"],
++        vocab_range: tuple[int, int],
++        make_cpu_ids: Callable[[], Callable[..., torch.Tensor]],
++    ) -> None:
++        self.get_table = get_table
++        self.vocab_range = vocab_range
++        self.make_cpu_ids = make_cpu_ids
++        self._table: MappedTable | None = None
++        self._cpu_ids: Callable[..., torch.Tensor] | None = None
++
++    def touch(self, ids, qsl, ctx, pool: ThreadPoolExecutor) -> None:
++        table = self.get_table()
++        if table is None:
++            return
++        if table is not self._table or self._cpu_ids is None:
++            # First step, or the mapping was rebuilt: refresh the CPU hash buffers.
++            self._cpu_ids = self.make_cpu_ids()
++            self._table = table
++        rows = self._cpu_ids(ids, qsl, ctx).reshape(-1).numpy()
++        start, end = self.vocab_range
++        rows = rows[(rows >= start) & (rows < min(end, table.num_rows))]
++        table.touch(rows, pool)

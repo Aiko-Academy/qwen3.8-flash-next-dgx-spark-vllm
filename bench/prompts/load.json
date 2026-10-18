@@ -1,0 +1,23 @@
+{
+ "_note": "Frozen prompts of bench/load_bench.py and bench/nvme_reads.py. The prefill prompts are prefixes of long-fr-verne.txt (Jules Verne, Le tour du monde en quatre-vingts jours, 1873, public domain, Project Gutenberg eBook #800, Project Gutenberg header and licence removed); character counts end on a paragraph break and give 7 980 and 23 363 tokens of text with the tokenizer of the checkpoint.",
+ "prefill_chars": [27307, 80519],
+ "prefill_question": "Donne en une phrase le sujet de ce document.",
+ "load_subjects": [
+  "Explique en francais, en trois paragraphes, le role d'une banque centrale dans le reglement de gros.",
+  "Ecris une fonction Python qui fusionne deux listes triees en une seule, avec ses tests pytest.",
+  "Redige en francais une note de deux paragraphes sur les risques operationnels d'un registre partage.",
+  "Ecris en TypeScript un client HTTP minimal avec reessai exponentiel et delai maximal, commente.",
+  "Decris en francais les etapes d'un reglement livraison contre paiement, de l'ordre a la finalite.",
+  "Ecris en Rust une structure de file circulaire bornee avec push, pop et ses tests unitaires.",
+  "Resume en francais les avantages et limites du chiffrement de bout en bout pour une messagerie.",
+  "Ecris un script bash qui sauvegarde un dossier par rsync, garde sept versions et journalise."
+ ],
+ "story_subjects": [
+  "la migration des oiseaux", "un port de commerce au XVIIe siecle", "la fermentation du pain",
+  "une gare de montagne en hiver", "la reparation d'une horloge", "un marche de nuit a Hanoi",
+  "la culture du riz en terrasses", "un atelier de verrier", "la navigation a voile sans instruments",
+  "une bibliotheque apres un incendie", "la tonte des moutons", "un phare sur une ile",
+  "la fabrication du papier", "un orchestre qui repete", "la cueillette des champignons",
+  "un village de pecheurs au petit matin", "la taille des pierres", "une ecluse sur un canal"
+ ]
+}

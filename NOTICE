@@ -1,0 +1,22 @@
+qwen3.8-flash-next-dgx-spark-vllm
+Copyright 2026 Aiko Academy
+
+This product includes software developed by third parties, under the Apache License, Version 2.0:
+
+  - The vLLM project (https://github.com/vllm-project/vllm): modified files under patches/*/vllm-overlay/.
+  - blazux (https://github.com/blazux/qwen3.8-Flash-DGX): Copyright 2026 blazux. Files under
+    patches/fp8-hybrid/, patches/cache-det/, patches/draft-vocab/ and patches/tool-parser/; full licence text
+    with this copyright line in LICENSES/blazux-Apache-2.0.txt.
+  - Saren Arterius (https://github.com/Saren-Arterius/qwen3.8-Flash-DGX-AutoRound): patches/fp8-hybrid/fp8_convert.py.
+  - Chaos2522, through blazux/qwen3.8-Flash-DGX issue #31: patches/tool-parser/upstream-patches/qwen-safe-output.patch.
+  - Jürgen Schmied (https://github.com/jschmied): Copyright 2026 Jürgen Schmied. patches/cache-det/kernel-det/ and
+    patches/ple-checkpoint-mapped/ (vllm-project/vllm#58439).
+  - Mike Waychison (https://github.com/waych): commit b2cc913 in patches/ple-checkpoint-mapped/.
+  - stecasta (https://github.com/stecasta): vllm-project/vllm#60023 and #59973, in patches/mtp-kv-bf16/ and
+    patches/draft-nvfp4-head/.
+
+bench/prompts/long-fr-verne.txt is an excerpt of Jules Verne, "Le tour du monde en quatre-vingts jours" (1873),
+in the public domain, from Project Gutenberg eBook #800.
+
+Each patch directory states what was taken and what was changed in its PROVENANCE.md; CREDITS.md lists every
+third-party file.

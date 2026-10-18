@@ -1,0 +1,1037 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+"""Streaming parser engine that orchestrates token ID scanning,
+incremental lexing, and state-machine-driven semantic event emission."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+from vllm.parser.engine.events import EventType, SemanticEvent
+from vllm.parser.engine.incremental_lexer import (
+    CONTENT_TERMINAL,
+    IncrementalLexer,
+    LexerShape,
+    LexToken,
+    TerminalDef,
+)
+from vllm.parser.engine.parser_engine_config import (
+    ParserEngineConfig,
+    ParserState,
+    Transition,
+)
+from vllm.parser.engine.token_id_scanner import (
+    DROP_TERMINAL,
+    LexerInput,
+    PreLexedTerminal,
+    TextChunk,
+    TokenIDScanner,
+)
+
+
+@dataclass(slots=True)
+class _DropInfo:
+    lexer_shape: LexerShape
+    extra_token_ids: dict[int, str]
+
+
+def _build_drop_info(
+    config: ParserEngineConfig,
+    tokenizer,
+) -> _DropInfo | None:
+    try:
+        special_tokens: list[str] = list(tokenizer.all_special_tokens)
+        special_ids: list[int] = list(tokenizer.all_special_ids)
+    except (AttributeError, NotImplementedError):
+        return None
+
+    if not special_tokens:
+        return None
+
+    configured_texts = (
+        set(config.token_id_terminals.values())
+        | config.terminal_literals
+        | config.preserve_tokens
+    )
+
+    extra_token_ids: dict[int, str] = {}
+    drop_texts: set[str] = set()
+    for text, tid in zip(special_tokens, special_ids):
+        if text not in configured_texts:
+            extra_token_ids[tid] = DROP_TERMINAL
+            drop_texts.add(text)
+
+    if not drop_texts:
+        return None
+
+    import regex as re
+
+    drop_terminal_defs = [
+        TerminalDef(
+            name=DROP_TERMINAL,
+            pattern=re.compile(re.escape(text)),
+            is_literal=True,
+            literal=text,
+        )
+        for text in drop_texts
+    ]
+
+    all_terminal_defs = list(config.terminal_defs) + drop_terminal_defs
+    lexer_shape = LexerShape(all_terminal_defs)
+
+    return _DropInfo(
+        lexer_shape=lexer_shape,
+        extra_token_ids=extra_token_ids,
+    )
+
+
+class StreamingParserEngine:
+    """Consumes ``(delta_text, delta_token_ids)`` pairs and produces a
+    stream of :class:`SemanticEvent` instances.
+
+    This is the main entry point for streaming parsing.
+    Create one per request (it is stateful).
+
+    The pipeline is::
+
+        delta_text + delta_token_ids
+            → TokenIDScanner  (special token pre-lexing)
+            → IncrementalLexer  (text → terminal tokens with prefix buffering)
+            → State Machine  (terminal → semantic events)
+            → list[SemanticEvent]
+
+    Usage::
+
+        engine = StreamingParserEngine(config, tokenizer)
+        for each streaming delta:
+            events = engine.feed(delta_text, delta_token_ids)
+            # convert events to DeltaMessage
+    """
+
+    def __init__(
+        self,
+        config: ParserEngineConfig,
+        tokenizer,
+        initial_state: ParserState | None = None,
+        vocab: dict[str, int] | None = None,
+    ) -> None:
+        self.config = config
+        self.defer_reasoning_tool_start = config.defer_reasoning_tool_start
+
+        resolved_token_ids: dict[int, str] = {}
+        if tokenizer is not None:
+            if vocab is None:
+                vocab = tokenizer.get_vocab()
+            if config.token_id_terminals:
+                for terminal_name, token_text in config.token_id_terminals.items():
+                    tid = vocab.get(token_text)
+                    if tid is not None:
+                        resolved_token_ids[tid] = terminal_name
+
+        drop_info: _DropInfo | None = None
+        if tokenizer is not None:
+            drop_info = _build_drop_info(config, tokenizer)
+
+        lexer_shape = config.lexer_shape
+        if drop_info is not None:
+            resolved_token_ids.update(drop_info.extra_token_ids)
+            lexer_shape = drop_info.lexer_shape
+
+        self._resolved_token_ids = resolved_token_ids
+        self._has_drops = drop_info is not None
+
+        self._scanner = TokenIDScanner(
+            resolved_token_ids,
+            tokenizer,
+        )
+
+        self._token_id_terminal_names: frozenset[str] = frozenset(
+            resolved_token_ids.values()
+        )
+
+        self._lexer = IncrementalLexer(lexer_shape, content_terminal=CONTENT_TERMINAL)
+
+        self._tool_terminals: frozenset[str] = frozenset(
+            terminal
+            for (state, terminal), tr in config.transitions.items()
+            if tr.next_state in self._TOOL_STATES or state in self._TOOL_STATES
+        )
+        # TOOL_CALL_END may close an inner call rather than its lexical wrapper,
+        # as in MiniMax, so identify exits from state transitions instead.
+        self._tool_exit_terminals: frozenset[str] = frozenset(
+            terminal
+            for (state, terminal), tr in config.transitions.items()
+            if state in self._TOOL_STATES and tr.next_state not in self._TOOL_STATES
+        )
+        # Headers that open a call with no wrapper before them — qwen3's
+        # ``<function=`` fallback. Only credible at the start of a line.
+        self._bare_tool_headers: frozenset[str] = frozenset(
+            terminal
+            for (state, terminal), tr in config.transitions.items()
+            if state in (ParserState.CONTENT, ParserState.REASONING)
+            and tr.next_state == ParserState.TOOL_NAME
+        )
+
+        self._reasoning_markup_terminals: frozenset[str] = (
+            self._compute_reasoning_markup_terminals()
+        )
+
+        self.skip_tool_parsing = False
+        self.skip_reasoning_parsing = False
+        self.reset(initial_state=initial_state)
+
+    @property
+    def reasoning_token_count(self) -> int:
+        return self._reasoning_token_count
+
+    def _record_reasoning_tokens(self, events: Sequence[SemanticEvent]) -> None:
+        self._reasoning_token_count += sum(
+            event.token_count
+            for event in events
+            if event.type == EventType.REASONING_CHUNK
+        )
+
+    def _reset_args_state(self) -> None:
+        self._args_buffer: str = ""
+        self._args_safe_end: int = 0
+        self._args_brace_depth: int = 0
+        self._args_in_string: bool = False
+        self._args_escape_next: bool = False
+
+    def _reset_array_state(self) -> None:
+        # State for ``tool_call_body_array``: whether the opening ``[`` has been
+        # seen, and whether a ``{...}`` element is currently being streamed.
+        self._array_started: bool = False
+        self._array_in_element: bool = False
+
+    def reset(self, initial_state: ParserState | None = None) -> None:
+        """Reset mutable state for reuse across requests.
+
+        Preserves cached immutable structures (compiled terminals,
+        resolved token IDs, lexer shape, token text cache) to avoid
+        redundant initialization work.
+        """
+        self.state = (
+            initial_state if initial_state is not None else self.config.initial_state
+        )
+        self.tool_index = -1
+        self._ever_had_token_ids = False
+        self._reasoning_token_count = 0
+        # DO NOT reset skip_tool_parsing here — callers set it before
+        # calling methods that trigger reset() (e.g. extract_reasoning),
+        # and clearing it silently breaks non-streaming tool-call-as-
+        # implicit-reasoning-end (content returns None).
+        self._scanner.reset()
+        self._lexer.reset()
+        self._message_header_buffer = ""
+        self._message_header_token_count = 0
+        self._in_skipped_tool_span = False
+        self._pending_reasoning_tool_tokens: list[tuple[str, str, int]] | None = None
+        self.has_unresolved_reasoning_tool_candidate = False
+        self._saw_reasoning_tool_literal = False
+        self._pending_tool_start: tuple[str, str, int] | None = None
+        self._tool_preamble_buffer = ""
+        self._tool_preamble_token_count = 0
+        self._reset_marker_guard()
+        self._reset_args_state()
+        self._reset_array_state()
+
+    def feed(
+        self,
+        delta_text: str,
+        delta_token_ids: Sequence[int],
+    ) -> list[SemanticEvent]:
+        if delta_token_ids:
+            self._ever_had_token_ids = True
+
+        # Fast path: skip scanner and lexer when the delta is plain
+        # content with no special tokens and no terminal-starting chars.
+        if (
+            delta_text
+            and not self._lexer.buffer
+            and not self._scanner._deferred_terminals
+            and self._pending_reasoning_tool_tokens is None
+            and self._lexer._literal_first_chars.isdisjoint(delta_text)
+        ):
+            has_special = False
+            for tid in delta_token_ids:
+                if tid in self._resolved_token_ids:
+                    has_special = True
+                    break
+            if not has_special:
+                events = self._emit_for_state(
+                    delta_text, token_count=len(delta_token_ids)
+                )
+                self._record_reasoning_tokens(events)
+                return events
+
+        scanner_items = self._scanner.scan(delta_text, delta_token_ids)
+
+        if len(scanner_items) == 1 and isinstance(scanner_items[0], TextChunk):
+            item = scanner_items[0]
+            lex_tokens = self._lexer.feed(item.text, item.token_texts, item.token_count)
+            if len(lex_tokens) == 1 and lex_tokens[0].terminal == CONTENT_TERMINAL:
+                events = self._emit_for_state(
+                    lex_tokens[0].value,
+                    token_count=lex_tokens[0].token_count,
+                )
+            else:
+                events = self._process_lex_tokens(lex_tokens)
+            self._record_reasoning_tokens(events)
+            return events
+
+        events = self._process_scanner_items(scanner_items)
+        self._record_reasoning_tokens(events)
+        return events
+
+    def _process_scanner_items(
+        self, items: Sequence[LexerInput]
+    ) -> list[SemanticEvent]:
+        events: list[SemanticEvent] = []
+        for item in items:
+            if isinstance(item, PreLexedTerminal):
+                events.extend(self._process_lex_tokens(self._lexer.flush()))
+                events.extend(self._on_terminal(item.terminal, item.text))
+            elif isinstance(item, TextChunk):
+                if not item.text and item.token_count:
+                    events.extend(
+                        self._emit_for_state("", token_count=item.token_count)
+                    )
+                else:
+                    events.extend(
+                        self._process_lex_tokens(
+                            self._lexer.feed(
+                                item.text, item.token_texts, item.token_count
+                            )
+                        )
+                    )
+        return events
+
+    @staticmethod
+    def _has_complete_deferred_function_header(
+        pending: list[tuple[str, str, int]],
+    ) -> bool:
+        name: str | None = None
+        for terminal, value, _ in pending:
+            if terminal == "FUNC_PREFIX":
+                name = ""
+            elif name is not None:
+                if terminal == "CLOSE_ANGLE" and name.strip():
+                    return True
+                if terminal == CONTENT_TERMINAL:
+                    name += value
+                else:
+                    name = None
+        return False
+
+    def finish(
+        self, *, resolve_deferred_tool_start: bool = False
+    ) -> list[SemanticEvent]:
+        events = self._process_scanner_items(self._scanner.flush_pending())
+
+        events.extend(self._process_lex_tokens(self._lexer.flush()))
+
+        # Without an explicit reasoning closer, a genuine tool opener ends
+        # reasoning implicitly. Replay only after that ambiguity is resolved.
+        if self._pending_reasoning_tool_tokens is not None:
+            pending = self._pending_reasoning_tool_tokens
+            self._pending_reasoning_tool_tokens = None
+            skip_tool_parsing = self.skip_tool_parsing
+            defer_reasoning_tool_start = self.defer_reasoning_tool_start
+            self.defer_reasoning_tool_start = False
+            if resolve_deferred_tool_start:
+                self.skip_tool_parsing = False
+            try:
+                # Replay in the original channel. Only a confirmed function
+                # preamble may perform the implicit reasoning-end transition.
+                if self._has_complete_deferred_function_header(pending):
+                    for terminal, value, token_count in pending:
+                        if terminal == CONTENT_TERMINAL:
+                            events.extend(self._on_content(value, token_count))
+                        else:
+                            events.extend(self._on_terminal(terminal, value, token_count))
+                else:
+                    for terminal, value, token_count in pending:
+                        if terminal != DROP_TERMINAL:
+                            events.extend(self._emit_for_state(value, token_count))
+                if self.state is ParserState.REASONING:
+                    events.extend(self._flush_tool_preamble())
+                self.has_unresolved_reasoning_tool_candidate = self.state in (
+                    ParserState.REASONING,
+                    ParserState.TOOL_PREAMBLE,
+                    ParserState.TOOL_NAME,
+                )
+            finally:
+                self.skip_tool_parsing = skip_tool_parsing
+                self.defer_reasoning_tool_start = defer_reasoning_tool_start
+
+        events.extend(self._confirm_tool_preamble())
+
+        if self._args_buffer:
+            events.append(
+                SemanticEvent(
+                    EventType.ARG_VALUE_CHUNK,
+                    value=self._args_buffer,
+                    tool_index=self.tool_index,
+                )
+            )
+            self._args_buffer = ""
+            self._args_safe_end = 0
+
+        if self.state in (
+            ParserState.TOOL_PREAMBLE,
+            ParserState.TOOL_ARGS,
+            ParserState.TOOL_NAME,
+            ParserState.TOOL_BETWEEN,
+        ):
+            # In array mode a closed element has already emitted its
+            # TOOL_CALL_END; only a truncated (still-open) element needs one.
+            end_open_call = (
+                self._array_in_element if self.config.tool_call_body_array else True
+            )
+            if end_open_call and self.tool_index >= 0:
+                events.append(
+                    SemanticEvent(
+                        EventType.TOOL_CALL_END,
+                        tool_index=self.tool_index,
+                    )
+                )
+            self.state = ParserState.CONTENT
+        elif self.state == ParserState.REASONING:
+            if self._saw_reasoning_tool_literal:
+                self.has_unresolved_reasoning_tool_candidate = True
+            events.append(
+                SemanticEvent(EventType.REASONING_END, tool_index=self.tool_index)
+            )
+            self.state = ParserState.CONTENT
+        elif self.state == ParserState.MESSAGE_HEADER:
+            if self._message_header_buffer:
+                events.append(
+                    SemanticEvent(
+                        EventType.TEXT_CHUNK,
+                        value=self._message_header_buffer,
+                        tool_index=self.tool_index,
+                        token_count=self._message_header_token_count,
+                    )
+                )
+                self._message_header_buffer = ""
+                self._message_header_token_count = 0
+            self.state = ParserState.CONTENT
+
+        self._record_reasoning_tokens(events)
+        return events
+
+    def parse_complete(self, text: str) -> list[SemanticEvent]:
+        token_ids: list[int] = []
+        events = self.feed(text, token_ids)
+        events.extend(self.finish())
+        return events
+
+    def _process_lex_tokens(self, tokens: list[LexToken]) -> list[SemanticEvent]:
+        events: list[SemanticEvent] = []
+        strict = self._token_id_terminal_names if self._ever_had_token_ids else None
+        for tok in tokens:
+            if tok.terminal == CONTENT_TERMINAL or (strict and tok.terminal in strict):
+                events.extend(self._on_content(tok.value, tok.token_count))
+            else:
+                events.extend(
+                    self._on_terminal(tok.terminal, tok.value, tok.token_count)
+                )
+        return events
+
+    _TOOL_STATES = frozenset(
+        {
+            ParserState.TOOL_PREAMBLE,
+            ParserState.TOOL_NAME,
+            ParserState.TOOL_ARGS,
+            ParserState.TOOL_BETWEEN,
+        }
+    )
+
+    _PLAIN_STATES = frozenset({ParserState.CONTENT, ParserState.REASONING})
+
+    _REASONING_EVENTS = frozenset({EventType.REASONING_START, EventType.REASONING_END})
+
+    def _compute_reasoning_markup_terminals(self) -> frozenset[str]:
+        """Terminals the ``skip_reasoning_parsing`` bypass may neutralize.
+
+        Only reasoning-exclusive markers qualify: every transition they
+        participate in stays within CONTENT/REASONING and emits nothing
+        but reasoning events. Inkling's ``<|end_message|>`` is labelled
+        THINK_END yet also closes text, header, and tool blocks;
+        bypassing a shared marker would eat that structure, so one impure
+        marker disables the bypass for the whole config.
+        """
+        markers = frozenset(
+            terminal
+            for (state, terminal), tr in self.config.transitions.items()
+            if ParserState.REASONING in (state, tr.next_state)
+            and tr.next_state not in self._TOOL_STATES
+        )
+        for (state, terminal), tr in self.config.transitions.items():
+            if terminal not in markers:
+                continue
+            if (
+                state not in self._PLAIN_STATES
+                or tr.next_state not in self._PLAIN_STATES
+                or not self._REASONING_EVENTS.issuperset(tr.events)
+            ):
+                return frozenset()
+        return markers
+
+    def _on_terminal(
+        self,
+        terminal: str,
+        value: str,
+        token_count: int = 0,
+        *,
+        confirmed_tool_start: bool = False,
+    ) -> list[SemanticEvent]:
+        pending = self._pending_reasoning_tool_tokens
+        if pending is not None:
+            if terminal == "THINK_END":
+                self._pending_reasoning_tool_tokens = None
+                events = [
+                    SemanticEvent(
+                        EventType.REASONING_CHUNK,
+                        value=held_value,
+                        token_count=held_token_count,
+                    )
+                    for held_terminal, held_value, held_token_count in pending
+                    if held_terminal != DROP_TERMINAL
+                ]
+                transition = self.config.transitions.get((self.state, terminal))
+                if transition is not None:
+                    events.extend(self._apply_transition(transition, value, token_count))
+                else:
+                    events.extend(self._emit_for_state(value, token_count))
+                return events
+            pending.append((terminal, value, token_count))
+            return []
+
+        if self._pending_tool_start is not None:
+            next_transition = self.config.transitions.get(
+                (ParserState.TOOL_PREAMBLE, terminal)
+            )
+            if next_transition is not None and next_transition.next_state in (
+                ParserState.TOOL_NAME,
+                ParserState.CONTENT,
+            ):
+                events = self._confirm_tool_preamble()
+                events.extend(self._on_terminal(terminal, value, token_count))
+                return events
+            events = self._flush_tool_preamble()
+            events.extend(self._on_terminal(terminal, value, token_count))
+            return events
+
+        key = (self.state, terminal)
+        transition = self.config.transitions.get(key)
+
+        if transition is None:
+            if self._has_drops and terminal == DROP_TERMINAL:
+                # Control tokens are protocol delimiters, never user text.
+                return []
+            # The projected skip state may not define the wrapper closer.
+            if self.skip_tool_parsing and terminal in self._tool_exit_terminals:
+                self._in_skipped_tool_span = False
+            return self._emit_for_state(value, token_count)
+
+        if self.skip_reasoning_parsing and terminal in self._reasoning_markup_terminals:
+            return self._emit_for_state(value, token_count)
+
+        if (
+            self.config.guard_literal_tool_markers
+            and not confirmed_tool_start
+            and self.state in (ParserState.CONTENT, ParserState.REASONING)
+            and transition.next_state in self._TOOL_STATES
+            and self._marker_is_literal(terminal)
+        ):
+            if self.state is ParserState.REASONING:
+                self._saw_reasoning_tool_literal = True
+            return self._emit_for_state(value, token_count)
+
+        if (
+            self.defer_reasoning_tool_start
+            and self.state is ParserState.REASONING
+            and terminal == "TOOL_START"
+            and not confirmed_tool_start
+        ):
+            self._pending_reasoning_tool_tokens = [(terminal, value, token_count)]
+            return []
+
+        if (
+            self.config.validate_tool_preamble
+            and not confirmed_tool_start
+            and self.state in (ParserState.CONTENT, ParserState.REASONING)
+            and transition.next_state == ParserState.TOOL_PREAMBLE
+        ):
+            self._pending_tool_start = (terminal, value, token_count)
+            return []
+
+        if self.skip_tool_parsing and terminal in self._tool_terminals:
+            # Inkling reuses one terminal for tool, text, and reasoning exits.
+            # Outside a forwarded tool span, apply its normal transition.
+            is_opener = transition.next_state in self._TOOL_STATES
+            is_exit = terminal in self._tool_exit_terminals
+            used_as_plain_closer = (
+                is_exit and not is_opener and not self._in_skipped_tool_span
+            )
+            if not used_as_plain_closer:
+                if is_opener:
+                    self._in_skipped_tool_span = True
+                elif is_exit:
+                    self._in_skipped_tool_span = False
+                leaving_message_header = self.state == ParserState.MESSAGE_HEADER
+                if leaving_message_header:
+                    self._message_header_buffer = ""
+                    self._message_header_token_count = 0
+                # A tool terminal that implicitly ends reasoning must report
+                # that even from the header state, or the reasoning pass never
+                # hands the block to the tool pass.
+                if EventType.REASONING_END in transition.events:
+                    self.state = ParserState.CONTENT
+                    return [
+                        SemanticEvent(
+                            EventType.REASONING_END,
+                            value=value,
+                            tool_index=self.tool_index,
+                        ),
+                        SemanticEvent(
+                            EventType.TEXT_CHUNK,
+                            value=value,
+                            tool_index=self.tool_index,
+                        ),
+                    ]
+                elif leaving_message_header:
+                    self.state = ParserState.CONTENT
+                    return [
+                        SemanticEvent(
+                            EventType.TEXT_CHUNK,
+                            value=value,
+                            tool_index=self.tool_index,
+                        )
+                    ]
+                content_type = self.config.content_events.get(self.state)
+                if content_type is not None:
+                    return [
+                        SemanticEvent(
+                            content_type, value=value, tool_index=self.tool_index
+                        )
+                    ]
+                return []
+
+        if transition.skip_in_token_id_mode and self._ever_had_token_ids:
+            return self._emit_for_state(value, token_count)
+
+        return self._apply_transition(transition, value, token_count)
+
+    def _reset_marker_guard(self) -> None:
+        self._marker_guard_state: ParserState | None = self.state
+        self._fence_open_run = 0
+        self._fence_open_char = ""
+        self._close_pending = False
+        self._begin_line()
+
+    def _begin_line(self) -> None:
+        self._line_state = "indent"
+        self._line_indent = 0
+        self._fence_run = 0
+        self._fence_run_char = ""
+
+    def _resolve_fence_run(self) -> None:
+        """Act on the fence run that just ended on this line.
+
+        CommonMark: a run of three or more opens, and only a run of the same
+        character at least as long closes. A shorter inner fence therefore
+        does not close the block around it.
+        """
+        run, char = self._fence_run, self._fence_run_char
+        self._fence_run = 0
+        self._line_state = "body"
+        if run < 3:
+            return
+        if not self._fence_open_run:
+            self._fence_open_run = run
+            self._fence_open_char = char
+        elif char == self._fence_open_char and run >= self._fence_open_run:
+            # Only a closer if nothing but whitespace follows it.
+            self._close_pending = True
+
+    def _sync_marker_guard(self) -> None:
+        """Reasoning and content are separate documents.
+
+        A fence left open in one must not carry into the other, and the
+        channel can change with no text in between (``</think><tool_call>``),
+        so this is checked on use as well as on the next chunk of text.
+        """
+        if self.state is not self._marker_guard_state:
+            self._reset_marker_guard()
+
+    def _marker_is_literal(self, terminal: str) -> bool:
+        """Report a tool marker the model cannot be using to open a call.
+
+        Inside a fenced code block it is quoting the format: Qwen emits a
+        call as bare markup, never from inside a fence. A wrapper-less
+        function header is a call only when it starts a line; mid-line it
+        is prose naming the marker.
+        """
+        self._sync_marker_guard()
+        if self._line_state == "run":
+            self._resolve_fence_run()
+        if self._fence_open_run:
+            return True
+        at_line_start = self._line_state != "body"
+        return terminal in self._bare_tool_headers and not at_line_start
+
+    def _track_literal_text(self, text: str) -> None:
+        """Follow fence state and line-start position through plain text."""
+        self._sync_marker_guard()
+        for ch in text:
+            if ch == "\n":
+                if self._line_state == "run":
+                    self._resolve_fence_run()
+                if self._close_pending:
+                    self._fence_open_run = 0
+                    self._fence_open_char = ""
+                    self._close_pending = False
+                self._begin_line()
+                continue
+            if self._line_state == "indent":
+                # Four or more leading spaces is indented code, not a fence.
+                if ch in " \t" and self._line_indent < 3:
+                    self._line_indent += 1
+                    continue
+                if ch in "`~":
+                    self._line_state = "run"
+                    self._fence_run_char = ch
+                    self._fence_run = 1
+                    continue
+                self._line_state = "body"
+                continue
+            if self._line_state == "run":
+                if ch == self._fence_run_char:
+                    self._fence_run += 1
+                    continue
+                self._resolve_fence_run()
+            if self._close_pending and ch not in " \t":
+                self._close_pending = False
+
+    def _emit_for_state(self, text: str, token_count: int = 0) -> list[SemanticEvent]:
+        if self._pending_reasoning_tool_tokens is not None:
+            self._pending_reasoning_tool_tokens.append(
+                (CONTENT_TERMINAL, text, token_count)
+            )
+            return []
+        # A deferred wrapper replays its buffer through here once it is
+        # flushed; tracking it now would count every fence in it twice.
+        if (
+            self.config.guard_literal_tool_markers
+            and text
+            and self._pending_tool_start is None
+            and self.state in (ParserState.CONTENT, ParserState.REASONING)
+        ):
+            self._track_literal_text(text)
+        if self._pending_tool_start is not None:
+            self._tool_preamble_buffer += text
+            self._tool_preamble_token_count += token_count
+            if text.strip():
+                candidate = self._tool_preamble_buffer.lstrip()
+                for (state, terminal), tr in self.config.transitions.items():
+                    if (
+                        state == ParserState.TOOL_PREAMBLE
+                        and tr.next_state == ParserState.TOOL_NAME
+                        and (literal := self.config.terminals.get(terminal))
+                        and any(
+                            value.startswith(candidate)
+                            for value in (
+                                (literal,) if isinstance(literal, str) else literal
+                            )
+                        )
+                    ):
+                        return []
+                return self._flush_tool_preamble()
+            return []
+        if self.state == ParserState.MESSAGE_HEADER:
+            self._message_header_buffer += text
+            self._message_header_token_count += token_count
+            return []
+        if self.state == ParserState.TOOL_ARGS:
+            if self.config.tool_call_body_array:
+                return self._feed_array_text(text)
+            if self.config.tool_args_json:
+                return self._feed_args_text(text)
+            return [
+                SemanticEvent(
+                    EventType.ARG_VALUE_CHUNK,
+                    value=text,
+                    tool_index=self.tool_index,
+                    token_count=token_count,
+                )
+            ]
+        content_type = self.config.content_events.get(self.state)
+        if content_type is not None:
+            return [
+                SemanticEvent(
+                    content_type,
+                    value=text,
+                    tool_index=self.tool_index,
+                    token_count=token_count,
+                )
+            ]
+        return []
+
+    def _flush_tool_preamble(self) -> list[SemanticEvent]:
+        if self._pending_tool_start is None:
+            return []
+        _, opener, opener_count = self._pending_tool_start
+        text = opener + self._tool_preamble_buffer
+        count = opener_count + self._tool_preamble_token_count
+        self._pending_tool_start = None
+        self._tool_preamble_buffer = ""
+        self._tool_preamble_token_count = 0
+        return self._emit_for_state(text, count)
+
+    def _confirm_tool_preamble(self) -> list[SemanticEvent]:
+        if self._pending_tool_start is None:
+            return []
+        opener = self._pending_tool_start
+        text = self._tool_preamble_buffer
+        count = self._tool_preamble_token_count
+        self._pending_tool_start = None
+        self._tool_preamble_buffer = ""
+        self._tool_preamble_token_count = 0
+        events = self._on_terminal(*opener, confirmed_tool_start=True)
+        events.extend(self._emit_for_state(text, count))
+        return events
+
+    def _on_content(self, text: str, token_count: int = 0) -> list[SemanticEvent]:
+        if self._pending_reasoning_tool_tokens is not None:
+            self._pending_reasoning_tool_tokens.append(
+                (CONTENT_TERMINAL, text, token_count)
+            )
+            return []
+        if not text:
+            return []
+        return self._emit_for_state(text, token_count)
+
+    def _apply_transition(
+        self,
+        transition: Transition,
+        value: str,
+        token_count: int = 0,
+    ) -> list[SemanticEvent]:
+        events: list[SemanticEvent] = []
+        previous_state = self.state
+        message_header = ""
+        message_header_token_count = 0
+
+        if (
+            self.state == ParserState.TOOL_ARGS
+            and transition.next_state != ParserState.TOOL_ARGS
+            and self._args_buffer
+        ):
+            events.append(
+                SemanticEvent(
+                    EventType.ARG_VALUE_CHUNK,
+                    value=self._args_buffer,
+                    tool_index=self.tool_index,
+                )
+            )
+            self._args_buffer = ""
+
+        if previous_state == ParserState.MESSAGE_HEADER:
+            message_header = self._message_header_buffer
+            message_header_token_count = self._message_header_token_count
+            self._message_header_buffer = ""
+            self._message_header_token_count = 0
+
+        self.state = transition.next_state
+
+        for event_type in transition.events:
+            if event_type == EventType.TOOL_CALL_START:
+                self.tool_index += 1
+            event_value = (
+                message_header
+                if previous_state == ParserState.MESSAGE_HEADER
+                and event_type == EventType.TEXT_CHUNK
+                else value
+            )
+            if event_type == EventType.TEXT_CHUNK and not event_value:
+                continue
+            events.append(
+                SemanticEvent(
+                    event_type,
+                    value=event_value,
+                    tool_index=self.tool_index,
+                    token_count=(
+                        message_header_token_count
+                        if previous_state == ParserState.MESSAGE_HEADER
+                        and event_type == EventType.TEXT_CHUNK
+                        else token_count
+                    ),
+                )
+            )
+
+        if self.state == ParserState.TOOL_ARGS:
+            self._args_brace_depth = 0
+            self._args_in_string = False
+            self._args_escape_next = False
+            self._args_safe_end = 0
+            if self.config.tool_call_body_array:
+                self._reset_array_state()
+
+        return events
+
+    def _feed_args_text(self, text: str) -> list[SemanticEvent]:
+        """Feed text into the JSON argument streaming buffer.
+
+        Streams argument characters incrementally while holding back
+        closing braces/brackets that might change as more input arrives.
+        """
+        events: list[SemanticEvent] = []
+        for ch in text:
+            result = self._feed_args_char(ch)
+            events.extend(result)
+        return events
+
+    def _feed_args_char(self, ch: str) -> list[SemanticEvent]:
+        self._args_buffer += ch
+
+        if self._args_escape_next:
+            self._args_escape_next = False
+            self._args_safe_end = len(self._args_buffer)
+            return self._flush_safe_args()
+
+        if self._args_in_string:
+            if ch == "\\":
+                self._args_escape_next = True
+            elif ch == '"':
+                self._args_in_string = False
+            self._args_safe_end = len(self._args_buffer)
+            return self._flush_safe_args()
+
+        if ch == '"':
+            self._args_in_string = True
+            self._args_safe_end = len(self._args_buffer)
+            return self._flush_safe_args()
+
+        if ch in ("{", "["):
+            self._args_brace_depth += 1
+            self._args_safe_end = len(self._args_buffer)
+            return self._flush_safe_args()
+
+        if ch in ("}", "]"):
+            if self._args_brace_depth > 0:
+                self._args_brace_depth -= 1
+            if self._args_brace_depth == 0:
+                return []
+            self._args_safe_end = len(self._args_buffer)
+            return self._flush_safe_args()
+
+        self._args_safe_end = len(self._args_buffer)
+        return self._flush_safe_args()
+
+    def _flush_safe_args(self) -> list[SemanticEvent]:
+        """Emit buffered argument characters up to the safe-end watermark.
+
+        Top-level closing braces are held back (safe_end not advanced)
+        until confirmed safe by a subsequent character or finish().
+        """
+        if self._args_safe_end == 0:
+            return []
+        to_emit = self._args_buffer[: self._args_safe_end]
+        self._args_buffer = self._args_buffer[self._args_safe_end :]
+        self._args_safe_end = 0
+        return [
+            SemanticEvent(
+                EventType.ARG_VALUE_CHUNK,
+                value=to_emit,
+                tool_index=self.tool_index,
+            )
+        ]
+
+    # ── JSON-array tool body (tool_call_body_array) ─────────────────────
+
+    def _feed_array_text(self, text: str) -> list[SemanticEvent]:
+        """Split a JSON-array tool body into one tool call per element.
+
+        Granite emits ``[{"name":..,"arguments":{..}}, ...]`` after the tool
+        marker. Element interiors are streamed through the string/brace-aware
+        :meth:`_feed_args_char`, so each element behaves exactly like a
+        single-object tool body; the array's ``]`` ends the region and any
+        trailing text becomes content.
+        """
+        events: list[SemanticEvent] = []
+        for i, ch in enumerate(text):
+            if self.state != ParserState.TOOL_ARGS:
+                # The array closed mid-chunk; the rest of the text is content.
+                events.extend(self._emit_for_state(text[i:]))
+                break
+            events.extend(self._feed_array_char(ch))
+        return events
+
+    def _feed_array_char(self, ch: str) -> list[SemanticEvent]:
+        if self._array_in_element:
+            events = self._feed_args_char(ch)
+            # Element object closed: top-level '}' with all braces balanced.
+            if (
+                ch == "}"
+                and not self._args_in_string
+                and not self._args_escape_next
+                and self._args_brace_depth == 0
+            ):
+                events.extend(self._end_array_element())
+            return events
+
+        # Between elements only structural array characters are expected.
+        if ch in " \t\r\n":
+            return []
+        if not self._array_started:
+            if ch == "[":
+                self._array_started = True
+                return []
+            return self._bail_array_to_content(ch)
+        if ch == ",":
+            return []
+        if ch == "{":
+            return self._start_array_element(ch)
+        if ch == "]":
+            self.state = ParserState.CONTENT
+            self._reset_array_state()
+            return []
+        return self._bail_array_to_content(ch)
+
+    def _start_array_element(self, ch: str) -> list[SemanticEvent]:
+        self.tool_index += 1
+        self._reset_args_state()
+        self._array_in_element = True
+        events = [SemanticEvent(EventType.TOOL_CALL_START, tool_index=self.tool_index)]
+        events.extend(self._feed_args_char(ch))
+        return events
+
+    def _end_array_element(self) -> list[SemanticEvent]:
+        self._array_in_element = False
+        events: list[SemanticEvent] = []
+        # Flush the held closing '}' so the slot body is the full element.
+        if self._args_buffer:
+            events.append(
+                SemanticEvent(
+                    EventType.ARG_VALUE_CHUNK,
+                    value=self._args_buffer,
+                    tool_index=self.tool_index,
+                )
+            )
+            self._args_buffer = ""
+            self._args_safe_end = 0
+        events.append(
+            SemanticEvent(EventType.TOOL_CALL_END, tool_index=self.tool_index)
+        )
+        return events
+
+    def _bail_array_to_content(self, ch: str) -> list[SemanticEvent]:
+        # Marker not followed by a JSON array (malformed) — revert to content
+        # so the remaining tokens are emitted as plain text, no tool call.
+        self.state = ParserState.CONTENT
+        self._reset_array_state()
+        return self._emit_for_state(ch)

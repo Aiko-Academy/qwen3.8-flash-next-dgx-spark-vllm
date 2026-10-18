@@ -1,0 +1,12 @@
+{
+ "_note": "Frozen prompts of bench/probe.py. prose_fr and code are the prompts of the reference measurements; prose_en was written for this repository. Do not edit: a changed prompt is a different benchmark.",
+ "prose_fr": "Explique en francais, en six paragraphes, comment une banque centrale regle un paiement interbancaire en monnaie de banque centrale tokenisee, et ce que change le reglement atomique.",
+ "prose_en": "Explain in English, in six paragraphs, how a central bank settles an interbank payment in tokenised central bank money, and what atomic settlement changes.",
+ "code": "Ecris en TypeScript un module complet de file d'attente avec priorites, retrait par identifiant, et tests unitaires vitest. Code seulement.",
+ "tool": {
+  "user": "Quel est le solde du compte FR7630006000011234567890189 ?",
+  "function": {"name": "solde_compte", "description": "Lit le solde d'un compte en EUR.",
+               "parameters": {"type": "object", "properties": {"iban": {"type": "string"}}, "required": ["iban"]}},
+  "expected_argument": {"iban": "FR7630006000011234567890189"}
+ }
+}
