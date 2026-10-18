@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # A community protocol: llama-benchy (eugr/llama-benchy, MIT), run ON the Spark so that the network is not counted.
-# Installed at a pinned version in a throwaway container of the vLLM image: bridge network, no capability, no new
-# privilege, 4 GB, pinned on the Cortex-A725 cores (0-4) so that the client does not compete with the engine's
+# Installed at a pinned version in a throwaway container of the vLLM image: host network (to reach the address
+# the server is bound to), no capability, no new privilege, 4 GB, pinned on the Cortex-A725 cores (0-4) so that the client does not compete with the engine's
 # cores. The tokenizer is read from the checkpoint, mounted read-only. The key comes from the docker --env-file of
 # serve.sh and is passed inside the container only.
 #   bench/community/llama-benchy.sh <label>       writes results/llama-benchy-<label>.md and .json
@@ -20,12 +20,11 @@ VERSION=0.4.0
 WHEEL_SHA=9d380f97bd5ef39b03ed2f319f1ee3bdf5c983463f6ce1479f432e90db079410
 ARGS="--pp 2048 --tg 32 128 512 --depth 0 8192 --runs 3 --latency-mode generation"
 host="$BIND"; [ "$host" = 0.0.0.0 ] && host=127.0.0.1
-net=(--network bridge); [ "$host" = 127.0.0.1 ] && net=(--network host)
 KEYENV=(); [ -n "${API_KEY_FILE:-}" ] && KEYENV=(--env-file "$API_KEY_FILE")
 mkdir -p "$REPO/results"
 OUT="$REPO/results/llama-benchy-$LABEL"
 start="$(date +%Y-%m-%dT%H:%M:%S%z)"
-docker run --rm "${net[@]}" --cap-drop ALL --security-opt no-new-privileges --memory 4g --cpuset-cpus 0-4 \
+docker run --rm --network host --cap-drop ALL --security-opt no-new-privileges --memory 4g --cpuset-cpus 0-4 \
   -e CUDA_VISIBLE_DEVICES= ${KEYENV[@]+"${KEYENV[@]}"} -v "$SOURCE_DIR":/tok:ro --entrypoint bash "$IMAGE" -c "
     set -e
     pip download -q --no-deps -d /tmp/w llama-benchy==$VERSION >/dev/null
