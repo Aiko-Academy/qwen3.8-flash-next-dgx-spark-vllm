@@ -3,6 +3,7 @@
 #
 #   serve/serve.sh            check every input, then (re)create the container
 #   serve/serve.sh --print    print the docker run, one argument per line; start nothing, check nothing
+#   serve/serve.sh --check    run every check below and stop there; the running container is not touched
 #
 # Image vllm/vllm-openai:v0.31.0 (pinned by digest), the NVIDIA NVFP4 checkpoint with its dense layers in block FP8
 # (serve/prepare.sh), 524 288 tokens of context (YaRN factor 2), MTP 2 with a 65 536-row NVFP4 draft head, 16
@@ -101,7 +102,7 @@ if [ "${1:-}" = --print ]; then
   printf '%s\n' "${RUN[@]}"
   exit 0
 fi
-[ $# -eq 0 ] || { echo "usage: $(basename "$0") [--print]" >&2; exit 2; }
+[ $# -eq 0 ] || [ "$1" = --check ] || { echo "usage: $(basename "$0") [--print|--check]" >&2; exit 2; }
 
 # Checks before anything is stopped: every mounted file, the converted checkpoint, the image digest, the key.
 fail() { echo "serve.sh: $*" >&2; exit 3; }
@@ -129,6 +130,9 @@ elif [ "$BIND" != 127.0.0.1 ]; then
   fail "no API_KEY_FILE: refusing to bind $BIND without a key"
 fi
 
+if [ "${1:-}" = --check ]; then
+  echo "serve.sh: every check passed; nothing started"; exit 0
+fi
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 "${RUN[@]}"
 echo "serve.sh: $CONTAINER started on $BIND:$PORT; the first completion takes 12 to 18 minutes (docker logs -f $CONTAINER)"
