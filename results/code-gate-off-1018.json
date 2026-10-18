@@ -1,0 +1,89 @@
+{
+ "kind": "code-gate",
+ "label": "off-1018",
+ "measured_at": "2026-10-18T08:55:52+0200",
+ "repo_commit": "9ef8b9247f0989fae6130a6f46ff5af0adeb5abe-dirty",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "reasoning": "off",
+  "temperature": 0.1,
+  "max_tokens": 3072,
+  "long_document": {
+   "chars": 70000,
+   "sha256": "a1accad8a1eb29271812e7d2cc3124b38e6a0bfb9bcc27995cd3ee466e25e75c"
+  }
+ },
+ "results": [
+  {
+   "name": "solidity_guard",
+   "content": "```solidity\n// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\ninterface IWhitelist {\n    function isWhitelisted(address account) external view returns (bool);\n}\n\nerror NotWhitelisted(address account);\n\ncontract MinimalERC20 {\n    string public name = \"MinimalERC20\";\n    string public symbol = \"MERC\";\n    uint8 public decimals = 18;\n    uint256 public totalSupply;\n\n    mapping(address => uint256) public balanceOf;\n    mapping(address => mapping(address => uint256)) public allowance;\n\n    address public immutable whitelistAddress;\n\n    event Transfer(address indexed from, address indexed to, uint256 value);\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n\n    constructor(address _whitelistAddress) {\n        whitelistAddress = _whitelistAddress;\n    }\n\n    function getWhitelistAddress() public view returns (address) {\n        return whitelistAddress;\n    }\n\n    function _checkWhitelist(address account) internal view {\n        if (!IWhitelist(whitelistAddress).isWhitelisted(account)) {\n            revert NotWhitelisted(account);\n        }\n    }\n\n    function transfer(address to, uint256 value) external returns (bool) {\n        _checkWhitelist(msg.sender);\n        _checkWhitelist(to);\n        require(balanceOf[msg.sender] >= value, \"Insufficient balance\");\n        balanceOf[msg.sender] -= value;\n        balanceOf[to] += value;\n        emit Transfer(msg.sender, to, value);\n        return true;\n    }\n\n    function transferFrom(address from, address to, uint256 value) external returns (bool) {\n        _checkWhitelist(from);\n        _checkWhitelist(to);\n        require(balanceOf[from] >= value, \"Insufficient balance\");\n        if (allowance[from][msg.sender] != type(uint256).max) {\n            require(allowance[from][msg.sender] >= value, \"Insufficient allowance\");\n            allowance[from][msg.sender] -= value;\n        }\n        balanceOf[from] -= value;\n        balanceOf[to] += value;\n        emit Transfer(from, to, value);\n        return true;\n    }\n\n    function approve(address spender, uint256 value) external returns (bool) {\n        allowance[msg.sender][spender] = value;\n        emit Approval(msg.sender, spender, value);\n        return true;\n    }\n\n    function mint(address to, uint256 value) external {\n        totalSupply += value;\n        balanceOf[to] += value;\n        emit Transfer(address(0), to, value);\n    }\n}\n```",
+   "prompt_tokens": 122,
+   "reasoning_tokens": 0,
+   "answer_tokens": 606,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 12.5
+  },
+  {
+   "name": "abi_runner_ethers",
+   "content": "```javascript\nconst { ethers } = require('ethers');\n\nconst RPC_URL = process.env.RPC_URL;\nconst TOKEN = process.env.TOKEN;\nconst HOLDER = process.env.HOLDER;\n\nif (!RPC_URL || !TOKEN || !HOLDER) {\n    console.error(\"Missing environment variables: RPC_URL, TOKEN, HOLDER\");\n    process.exit(1);\n}\n\nconst abi = [\n    {\n        \"type\": \"function\",\n        \"name\": \"balanceOf\",\n        \"stateMutability\": \"view\",\n        \"inputs\": [\n            {\n                \"name\": \"a\",\n                \"type\": \"address\"\n            }\n        ],\n        \"outputs\": [\n            {\n                \"type\": \"uint256\"\n            }\n        ]\n    },\n    {\n        \"type\": \"function\",\n        \"name\": \"decimals\",\n        \"stateMutability\": \"view\",\n        \"inputs\": [],\n        \"outputs\": [\n            {\n                \"type\": \"uint8\"\n            }\n        ]\n    }\n];\n\nasync function main() {\n    try {\n        const provider = new ethers.JsonRpcProvider(RPC_URL);\n        const contract = new ethers.Contract(TOKEN, abi, provider);\n\n        const decimals = await contract.decimals();\n        const balance = await contract.balanceOf(HOLDER);\n\n        const formattedBalance = ethers.formatUnits(balance, decimals);\n        console.log(formattedBalance);\n    } catch (error) {\n        console.error(\"Error:\", error.message);\n        process.exit(1);\n    }\n}\n\nmain();\n```",
+   "prompt_tokens": 180,
+   "reasoning_tokens": 0,
+   "answer_tokens": 358,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 7.7
+  },
+  {
+   "name": "react_hook_ts",
+   "content": "```typescript\nimport { useState, useEffect, useCallback, useRef } from 'react';\n\ninterface UseChainHeadResult {\n  blockNumber: number | null;\n  loading: boolean;\n  error: string | null;\n}\n\nexport function useChainHead(rpcUrl: string): UseChainHeadResult {\n  const [blockNumber, setBlockNumber] = useState<number | null>(null);\n  const [loading, setLoading] = useState<boolean>(true);\n  const [error, setError] = useState<string | null>(null);\n\n  const isMountedRef = useRef<boolean>(true);\n  const abortControllerRef = useRef<AbortController | null>(null);\n\n  const fetchBlockNumber = useCallback(async () => {\n    if (!isMountedRef.current) return;\n\n    // Cancel previous request if any\n    if (abortControllerRef.current) {\n      abortControllerRef.current.abort();\n    }\n\n    const controller = new AbortController();\n    abortControllerRef.current = controller;\n\n    try {\n      const response = await fetch(rpcUrl, {\n        method: 'POST',\n        headers: {\n          'Content-Type': 'application/json',\n        },\n        body: JSON.stringify({\n          jsonrpc: '2.0',\n          id: 1,\n          method: 'eth_blockNumber',\n          params: [],\n        }),\n        signal: controller.signal,\n      });\n\n      if (!response.ok) {\n        throw new Error(`HTTP error! status: ${response.status}`);\n      }\n\n      const data = await response.json();\n\n      if (!isMountedRef.current) return;\n\n      if (data.error) {\n        setError(data.error.message || 'RPC error');\n        setBlockNumber(null);\n      } else if (typeof data.result === 'string') {\n        const parsed = parseInt(data.result, 16);\n        if (isNaN(parsed)) {\n          throw new Error('Invalid block number format');\n        }\n        setBlockNumber(parsed);\n        setError(null);\n      } else {\n        throw new Error('Unexpected response format');\n      }\n    } catch (err: unknown) {\n      if (!isMountedRef.current) return;\n\n      if (err instanceof DOMException && err.name === 'AbortError') {\n        // Request was aborted, ignore\n        return;\n      }\n\n      const message = err instanceof Error ? err.message : 'Unknown error';\n      setError(message);\n      setBlockNumber(null);\n    } finally {\n      if (isMountedRef.current) {\n        setLoading(false);\n      }\n    }\n  }, [rpcUrl]);\n\n  useEffect(() => {\n    isMountedRef.current = true;\n    setLoading(true);\n    setError(null);\n\n    // Initial fetch\n    fetchBlockNumber();\n\n    // Set up interval\n    const intervalId = setInterval(() => {\n      if (isMountedRef.current) {\n        fetchBlockNumber();\n      }\n    }, 5000);\n\n    return () => {\n      isMountedRef.current = false;\n      clearInterval(intervalId);\n      if (abortControllerRef.current) {\n        abortControllerRef.current.abort();\n        abortControllerRef.current = null;\n      }\n    };\n  }, [fetchBlockNumber]);\n\n  return { blockNumber, loading, error };\n}\n```",
+   "prompt_tokens": 115,
+   "reasoning_tokens": 0,
+   "answer_tokens": 729,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 15.9
+  },
+  {
+   "name": "code_long",
+   "content": "```bash\n#!/usr/bin/env bash\n# status.sh: report the state of the vLLM container and its served model.\n#\n#   serve/status.sh\n#\n# Configuration by environment variables, or by a file named in SERVE_CONFIG (serve/config.example.env lists them\n# all). The API key is never an argument: API_KEY_FILE names a docker --env-file that holds VLLM_API_KEY=<key>.\nset -euo pipefail\n\nREPO=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")/..\" && pwd)\"\nif [ -n \"${SERVE_CONFIG:-}\" ]; then\n  # shellcheck disable=SC1090\n  . \"$SERVE_CONFIG\"\nfi\n\nCONTAINER=\"${CONTAINER:-vllm-flashnext}\"\nBIND=\"${BIND:-127.0.0.1}\"\nPORT=\"${PORT:-8000}\"\nAPI_KEY_FILE=\"${API_KEY_FILE:-}\"\n\n# 1. Container state via docker inspect\necho \"== Container: $CONTAINER ==\"\nif ! docker inspect \"$CONTAINER\" >/dev/null 2>&1; then\n  echo \"   ERROR: container '$CONTAINER' not found.\"\n  exit 1\nfi\n\nSTATE=$(docker inspect -f '{{.State.Status}}' \"$CONTAINER\")\nSTARTED=$(docker inspect -f '{{.State.StartedAt}}' \"$CONTAINER\")\nRESTARTS=$(docker inspect -f '{{.RestartCount}}' \"$CONTAINER\")\necho \"   Status:    $STATE\"\necho \"   Started:   $STARTED\"\necho \"   Restarts:  $RESTARTS\"\n\n# 2. Last 10 lines of the container log\necho \"\"\necho \"== Last 10 log lines ==\"\ndocker logs --tail 10 \"$CONTAINER\" 2>&1 || true\n\n# 3. Query /v1/models with the API key from API_KEY_FILE\necho \"\"\necho \"== Served models ==\"\nURL=\"http://${BIND}:${PORT}/v1/models\"\n\n# Read the key from the file if specified\nKEY=\"\"\nif [ -n \"$API_KEY_FILE\" ] && [ -f \"$API_KEY_FILE\" ]; then\n  # Extract VLLM_API_KEY from the env-file format\n  KEY=$(grep -E '^\\s*(export\\s+)?VLLM_API_KEY=' \"$API_KEY_FILE\" | tail -n 1 | sed -E 's/^\\s*(export\\s+)?VLLM_API_KEY=//' | tr -d \"'\\\"\" | xargs)\nfi\n\n# Build curl command\nCURL_ARGS=(-s -f -H \"Content-Type: application/json\")\nif [ -n \"$KEY\" ]; then\n  CURL_ARGS+=(-H \"Authorization: Bearer $KEY\")\nfi\n\nif curl \"${CURL_ARGS[@]}\" \"$URL\" | python3 -m json.tool 2>/dev/null; then\n  :\nelse\n  echo \"   ERROR: failed to query $URL\"\n  exit 1\nfi\n```",
+   "prompt_tokens": 21195,
+   "reasoning_tokens": 0,
+   "answer_tokens": 652,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "seconds": 23.2
+  }
+ ],
+ "requests": {
+  "sent": 4,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T08:56:51+0200",
+ "judged": {
+  "ok": 4,
+  "total": 4,
+  "tasks": [
+   {
+    "name": "solidity_guard",
+    "ok": true,
+    "detail": "compiles"
+   },
+   {
+    "name": "abi_runner_ethers",
+    "ok": true,
+    "detail": "valid syntax"
+   },
+   {
+    "name": "react_hook_ts",
+    "ok": true,
+    "detail": "valid syntax"
+   },
+   {
+    "name": "code_long",
+    "ok": true,
+    "detail": "bash -n valid"
+   }
+  ]
+ }
+}

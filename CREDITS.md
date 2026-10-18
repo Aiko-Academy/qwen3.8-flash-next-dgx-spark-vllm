@@ -112,7 +112,7 @@ One row per file. `modified` says whether the file differs from its source, and 
 Everything else is written by Aiko Academy and licensed Apache-2.0 (`LICENSE`): the files matched by these patterns.
 
 - `README.md`, `CHANGELOG.md`, `CREDITS.md`, `NOTICE`, `LICENSE`, `MANIFEST.sha256`, `.gitignore`
-- `serve/*`, `bench/*.py`, `bench/quality/*`, `bench/prompts/*.json`, `tests/*`, `tools/*`, `docs/*`, `results/*`
+- `serve/*`, `bench/*.py`, `bench/quality/*`, `bench/community/*`, `bench/prompts/*.json`, `tests/*`, `tools/*`, `docs/*`, `results/*`
 - `patches/*/PROVENANCE.md`, `patches/fp8-hybrid/convertir_denses_fp8.py`, `patches/draft-vocab/build_draft_vocab_public.py`,
   `patches/draft-vocab/fetch_public_corpus.py`, `patches/draft-vocab/public-corpus.tsv`, `patches/draft-vocab/temoin_crochet.py`,
   `patches/tool-parser/EMPREINTES.sha256`, `patches/tool-parser/marker-guard-witness/*`

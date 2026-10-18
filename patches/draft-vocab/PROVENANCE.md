@@ -2,7 +2,8 @@
 
 The MTP drafter scores the 248 320 rows of the output head at every draft step, and almost none of them is ever
 its argmax. With this hook, it only scores 65 536 rows chosen in advance (a 320 MiB private copy); the others are
-`-inf`. The target verifies every drafted token, so the set changes the acceptance rate, never an output.
+`-inf`. The target verifies every drafted token, so the set changes the acceptance rate, and it can also change a
+greedy text (measured on 2026-10-18, `docs/method.md`).
 
 ## Sources
 
@@ -43,5 +44,6 @@ is, and the `.npy` holds token ids only.
 - Replaced function in v0.31.0: `return self.logits_processor(self.lm_head, hidden_states)`, with
   `LogitsProcessor(config.vocab_size)` (scale 1, no soft cap), TP 1: same logits, restricted to the set.
 - The drafter samples greedily (`draft_sample_method = "greedy"`, default, read back on the serving container):
-  the set only changes the drafter's argmax.
+  the set only changes the drafter's argmax. Greedy texts were identical when the set first went into service
+  (2026-10-12); with the public set, French and English prose diverged, code did not (2026-10-18).
 - The 320 MiB copy is created at the first call, after the KV pool is sized: outside the memory budget.

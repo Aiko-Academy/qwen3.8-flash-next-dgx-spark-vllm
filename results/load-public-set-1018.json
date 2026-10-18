@@ -1,0 +1,84 @@
+{
+ "kind": "load",
+ "label": "public-set-1018",
+ "measured_at": "2026-10-18T11:15:20+0200",
+ "repo_commit": "4ec6862a6dba05f04d71f2457cd933ccb52a0148",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "prefill_chars": [
+   27307,
+   80519
+  ],
+  "prefill_passes": 3,
+  "clients": [
+   1,
+   4,
+   8,
+   16
+  ],
+  "max_tokens": 400,
+  "temperature": 0,
+  "reasoning": "off"
+ },
+ "prefill": [
+  {
+   "prompt_tokens": 8023,
+   "first_token_s": 3.04,
+   "prefill_tok_s": 2642.9,
+   "passes_tok_s": [
+    1746.5,
+    2759.3,
+    2642.9
+   ]
+  },
+  {
+   "prompt_tokens": 23406,
+   "first_token_s": 8.54,
+   "prefill_tok_s": 2740.1,
+   "passes_tok_s": [
+    2446.5,
+    2740.1,
+    2793.2
+   ]
+  }
+ ],
+ "load": [
+  {
+   "clients": 1,
+   "tokens": 400,
+   "duration_s": 10.05,
+   "aggregate_tok_s": 39.8,
+   "per_stream_tok_s": 40.5,
+   "mean_first_token_s": 0.17
+  },
+  {
+   "clients": 4,
+   "tokens": 1492,
+   "duration_s": 16.76,
+   "aggregate_tok_s": 89.0,
+   "per_stream_tok_s": 27.8,
+   "mean_first_token_s": 1.09
+  },
+  {
+   "clients": 8,
+   "tokens": 3085,
+   "duration_s": 23.54,
+   "aggregate_tok_s": 131.0,
+   "per_stream_tok_s": 18.8,
+   "mean_first_token_s": 0.46
+  },
+  {
+   "clients": 16,
+   "tokens": 6160,
+   "duration_s": 31.19,
+   "aggregate_tok_s": 197.5,
+   "per_stream_tok_s": 14.1,
+   "mean_first_token_s": 0.61
+  }
+ ],
+ "requests": {
+  "sent": 35,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T11:17:23+0200"
+}

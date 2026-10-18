@@ -1,0 +1,148 @@
+{
+ "kind": "probe",
+ "label": "private-set-1018-return",
+ "measured_at": "2026-10-18T15:21:09+0200",
+ "repo_commit": "4ec6862a6dba05f04d71f2457cd933ccb52a0148",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "max_tokens": 600,
+  "temperature": 0,
+  "reasoning": "off",
+  "passes": 2,
+  "rest_s": 20,
+  "prompts": {
+   "prose_fr": "Explique en francais, en six paragraphes, comment une banque centrale regle un paiement interbancaire en monnaie de banque centrale tokenisee, et ce que change le reglement atomique.",
+   "prose_en": "Explain in English, in six paragraphs, how a central bank settles an interbank payment in tokenised central bank money, and what atomic settlement changes.",
+   "code": "Ecris en TypeScript un module complet de file d'attente avec priorites, retrait par identifiant, et tests unitaires vitest. Code seulement."
+  }
+ },
+ "generations": [
+  {
+   "prompt": "prose_fr",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 42.07,
+   "tokens_per_step": 2.1,
+   "acceptance_by_position": [
+    0.684,
+    0.418
+   ],
+   "mean_itl_ms": 50.1,
+   "finished_requests": 1.0,
+   "text": "Dans le système financier traditionnel, une banque centrale agit comme le règlement final des paiements entre les banques commerciales. Ces dernières détiennent des comptes de réserve auprès de la banque centrale, qui servent de support à la monnaie de banque centrale. Lorsqu'un paiement interbancaire est initié, la banque centrale vérifie la solvabilité de la banque émettrice et procède à un transfert de fonds entre les comptes de réserve des deux institutions concernées. Ce processus repose sur des infrastructures centralisées et souvent des cycles de règlement différés, où la finalité du paiement peut prendre plusieurs heures ou jours.\n\nLa tokenisation de la monnaie de banque centrale introduit une nouvelle couche technologique à ce mécanisme existant. Au lieu de simples écritures comptables dans un grand livre centralisé, la monnaie est représentée sous forme de jetons numériques (tokens) émis et garantis par la banque centrale. Ces tokens circulent sur une infrastructure distribuée, souvent basée sur la technologie des registres distribués (DLT) ou la blockchain. Chaque token représente une unité exacte de la monnaie légale, assurant ainsi une confiance identique à celle de la monnaie fiduciaire classique, mais avec des propriétés numériques natives.\n\nLe processus de règlement d'un paiement interbancaire avec cette monnaie tokenisée commence par l'initiation d'une transaction par la banque payeuse. Cette transaction est diffusée sur le réseau sécurisé de la banque centrale ou de l'infrastructure partagée. Les nœuds du réseau valident la transaction en vérifiant que la banque dispose de suffisamment de tokens dans son portefeuille numérique. Une fois la validation effectuée, les tokens sont transférés du portefeuille de la banque payeuse vers celui de la banque receveuse, créant une trace immuable et auditable de l'échange.\n\nC'est ici que le concept de règlement atomique prend tout son sens et transforme la dynamique des paiements. Le règlement atomique signifie que l'échange de valeur est indivisible et se produit simultanément pour les deux parties. Dans un contexte interbancaire, cela implique que le transfert de tokens de la banque A vers la banque B et la contrepartie (par exemple, des actifs financiers ou des obligations) de la banque B vers la banque A s'effectuent dans la même transaction. Si l'une des deux parties ne peut pas honorer sa part, la transaction entière est annulée, évitant ainsi tout risque de règlement partiel.\n\nCe changement radical élimine le risque de règlement, qui est la possibilité qu'une partie livre la valeur attendue sans recevoir la contrepartie due. Dans les systèmes traditionnels, ce risque est géré par des garanties, des lignes de crédit ou des processus de compensation complexes. Avec le règlement atomique sur une infrastructure de monnaie tokenisée, la confiance est remplacée par la certitude algorithmique. Les banques n'ont plus",
+   "major_faults": 1285,
+   "nvme_read_mb": 58.0,
+   "engine_cpu_s": 15.8,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "prose_fr",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 43.36,
+   "tokens_per_step": 2.1,
+   "acceptance_by_position": [
+    0.684,
+    0.418
+   ],
+   "mean_itl_ms": 48.5,
+   "finished_requests": 1.0,
+   "text": "Dans le système financier traditionnel, une banque centrale agit comme le règlement final des paiements entre les banques commerciales. Ces dernières détiennent des comptes de réserve auprès de la banque centrale, qui servent de support à la monnaie de banque centrale. Lorsqu'un paiement interbancaire est initié, la banque centrale vérifie la solvabilité de la banque émettrice et procède à un transfert de fonds entre les comptes de réserve des deux institutions concernées. Ce processus repose sur des infrastructures centralisées et souvent des cycles de règlement différés, où la finalité du paiement peut prendre plusieurs heures ou jours.\n\nLa tokenisation de la monnaie de banque centrale introduit une nouvelle couche technologique à ce mécanisme existant. Au lieu de simples écritures comptables dans un grand livre centralisé, la monnaie est représentée sous forme de jetons numériques (tokens) émis et garantis par la banque centrale. Ces tokens circulent sur une infrastructure distribuée, souvent basée sur la technologie des registres distribués (DLT) ou la blockchain. Chaque token représente une unité exacte de la monnaie légale, assurant ainsi une confiance identique à celle de la monnaie fiduciaire classique, mais avec des propriétés numériques natives.\n\nLe processus de règlement d'un paiement interbancaire avec cette monnaie tokenisée commence par l'initiation d'une transaction par la banque payeuse. Cette transaction est diffusée sur le réseau sécurisé de la banque centrale ou de l'infrastructure partagée. Les nœuds du réseau valident la transaction en vérifiant que la banque dispose de suffisamment de tokens dans son portefeuille numérique. Une fois la validation effectuée, les tokens sont transférés du portefeuille de la banque payeuse vers celui de la banque receveuse, créant une trace immuable et auditable de l'échange.\n\nC'est ici que le concept de règlement atomique prend tout son sens et transforme la dynamique des paiements. Le règlement atomique signifie que l'échange de valeur est indivisible et se produit simultanément pour les deux parties. Dans un contexte interbancaire, cela implique que le transfert de tokens de la banque A vers la banque B et la contrepartie (par exemple, des actifs financiers ou des obligations) de la banque B vers la banque A s'effectuent dans la même transaction. Si l'une des deux parties ne peut pas honorer sa part, la transaction entière est annulée, évitant ainsi tout risque de règlement partiel.\n\nCe changement radical élimine le risque de règlement, qui est la possibilité qu'une partie livre la valeur attendue sans recevoir la contrepartie due. Dans les systèmes traditionnels, ce risque est géré par des garanties, des lignes de crédit ou des processus de compensation complexes. Avec le règlement atomique sur une infrastructure de monnaie tokenisée, la confiance est remplacée par la certitude algorithmique. Les banques n'ont plus",
+   "major_faults": 288,
+   "nvme_read_mb": 1.2,
+   "engine_cpu_s": 15.5,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "prose_en",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 42.68,
+   "tokens_per_step": 2.15,
+   "acceptance_by_position": [
+    0.72,
+    0.434
+   ],
+   "mean_itl_ms": 50.3,
+   "finished_requests": 1.0,
+   "text": "In a traditional interbank payment system, settlement often occurs through a deferred net settlement mechanism, where transactions are batched and settled at the end of the day. This process introduces settlement risk, as one party may fail to deliver the asset or payment before the other party has already transferred their side of the deal. To mitigate this, central banks typically act as the ultimate settlement agent, holding accounts for commercial banks and ensuring that the final transfer of funds is irrevocable. However, the timing mismatch between the exchange of assets and the transfer of cash creates a window of vulnerability known as settlement risk.\n\nTokenised central bank money represents a digital form of the central bank’s liability, recorded on a distributed ledger technology (DLT) or a similar secure digital infrastructure. Unlike traditional reserve balances held in centralized ledgers, tokenised money exists as digital tokens that can be transferred peer-to-peer between authorized participants. These tokens are fully backed by the central bank, ensuring they carry the same credit risk as physical cash or traditional reserves. This digital format allows for programmability and real-time transfer capabilities, fundamentally altering how value moves within the financial system.\n\nWhen a central bank settles an interbank payment using tokenised central bank money, the process shifts from a batched, end-of-day reconciliation to a real-time, gross settlement model. The paying bank sends a digital token representing the payment amount directly to the receiving bank’s digital wallet or account on the shared ledger. The central bank’s infrastructure validates the transaction, ensuring that the paying bank has sufficient tokenised reserves and that the tokens are authentic. Once validated, the tokens are transferred instantly, and the ledger is updated to reflect the new ownership of the digital assets.\n\nThis real-time gross settlement eliminates the need for intraday credit and reduces the reliance on collateral arrangements that are common in traditional systems. Because the transfer of tokenised money is immediate and final, the receiving bank gains irrevocable access to the funds as soon as the transaction is confirmed. This significantly lowers the operational and liquidity costs associated with managing settlement risk, as banks no longer need to maintain large buffers of liquidity to cover potential delays or failures in the settlement process.\n\nAtomic settlement, also known as delivery versus payment (DvP) on a single platform, takes this efficiency a step further by linking the transfer of the asset and the payment in a single, indivisible transaction. In a tokenised environment, both the financial asset (such as a bond or equity) and the tokenised central bank money can be represented as digital tokens on the same ledger. Atomic settlement ensures that either both the asset and the payment are exchanged simultaneously, or neither is transferred. This is achieved through smart contracts that enforce the conditions of the trade automatically.\n\nThe introduction of atomic settlement fundamentally changes the risk profile of interbank transactions by eliminating principal risk, which is the risk that one party delivers the asset but does not receive the payment. In traditional systems, even with real-time gross settlement",
+   "major_faults": 1091,
+   "nvme_read_mb": 55.5,
+   "engine_cpu_s": 15.5,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "prose_en",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 43.69,
+   "tokens_per_step": 2.15,
+   "acceptance_by_position": [
+    0.72,
+    0.434
+   ],
+   "mean_itl_ms": 49.1,
+   "finished_requests": 1.0,
+   "text": "In a traditional interbank payment system, settlement often occurs through a deferred net settlement mechanism, where transactions are batched and settled at the end of the day. This process introduces settlement risk, as one party may fail to deliver the asset or payment before the other party has already transferred their side of the deal. To mitigate this, central banks typically act as the ultimate settlement agent, holding accounts for commercial banks and ensuring that the final transfer of funds is irrevocable. However, the timing mismatch between the exchange of assets and the transfer of cash creates a window of vulnerability known as settlement risk.\n\nTokenised central bank money represents a digital form of the central bank’s liability, recorded on a distributed ledger technology (DLT) or a similar secure digital infrastructure. Unlike traditional reserve balances held in centralized ledgers, tokenised money exists as digital tokens that can be transferred peer-to-peer between authorized participants. These tokens are fully backed by the central bank, ensuring they carry the same credit risk as physical cash or traditional reserves. This digital format allows for programmability and real-time transfer capabilities, fundamentally altering how value moves within the financial system.\n\nWhen a central bank settles an interbank payment using tokenised central bank money, the process shifts from a batched, end-of-day reconciliation to a real-time, gross settlement model. The paying bank sends a digital token representing the payment amount directly to the receiving bank’s digital wallet or account on the shared ledger. The central bank’s infrastructure validates the transaction, ensuring that the paying bank has sufficient tokenised reserves and that the tokens are authentic. Once validated, the tokens are transferred instantly, and the ledger is updated to reflect the new ownership of the digital assets.\n\nThis real-time gross settlement eliminates the need for intraday credit and reduces the reliance on collateral arrangements that are common in traditional systems. Because the transfer of tokenised money is immediate and final, the receiving bank gains irrevocable access to the funds as soon as the transaction is confirmed. This significantly lowers the operational and liquidity costs associated with managing settlement risk, as banks no longer need to maintain large buffers of liquidity to cover potential delays or failures in the settlement process.\n\nAtomic settlement, also known as delivery versus payment (DvP) on a single platform, takes this efficiency a step further by linking the transfer of the asset and the payment in a single, indivisible transaction. In a tokenised environment, both the financial asset (such as a bond or equity) and the tokenised central bank money can be represented as digital tokens on the same ledger. Atomic settlement ensures that either both the asset and the payment are exchanged simultaneously, or neither is transferred. This is achieved through smart contracts that enforce the conditions of the trade automatically.\n\nThe introduction of atomic settlement fundamentally changes the risk profile of interbank transactions by eliminating principal risk, which is the risk that one party delivers the asset but does not receive the payment. In traditional systems, even with real-time gross settlement",
+   "major_faults": 2,
+   "nvme_read_mb": 0.0,
+   "engine_cpu_s": 15.1,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "code",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 51.24,
+   "tokens_per_step": 2.64,
+   "acceptance_by_position": [
+    0.86,
+    0.776
+   ],
+   "mean_itl_ms": 51.3,
+   "finished_requests": 1.0,
+   "text": "Voici un module complet : une file d'attente à priorités (tas binaire) avec retrait par identifiant, `peek`, `drain`, `clear`, `size`, `isEmpty`, `has`, `get`, `keys`, `values`, `entries`, `toJSON`, `from`, `Symbol.iterator`, `Symbol.toStringTag`, `Symbol.for('nodejs.util.inspect.custom')`, `util.inspect` (via `node:util`), `util.deprecate`, `util.promisify`, `util.callbackify`, `util.parseArgs`, `util.styleText`, `util.MIMEType`, `util.MIMEParamsParser`, `util.TextDecoder`, `util.TextEncoder`, `util.types`, `util.isDeepStrictEqual`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemError",
+   "major_faults": 387,
+   "nvme_read_mb": 15.9,
+   "engine_cpu_s": 12.9,
+   "swap_used_mb": 0.0
+  },
+  {
+   "prompt": "code",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 51.88,
+   "tokens_per_step": 2.64,
+   "acceptance_by_position": [
+    0.86,
+    0.776
+   ],
+   "mean_itl_ms": 50.7,
+   "finished_requests": 1.0,
+   "text": "Voici un module complet : une file d'attente à priorités (tas binaire) avec retrait par identifiant, `peek`, `drain`, `clear`, `size`, `isEmpty`, `has`, `get`, `keys`, `values`, `entries`, `toJSON`, `from`, `Symbol.iterator`, `Symbol.toStringTag`, `Symbol.for('nodejs.util.inspect.custom')`, `util.inspect` (via `node:util`), `util.deprecate`, `util.promisify`, `util.callbackify`, `util.parseArgs`, `util.styleText`, `util.MIMEType`, `util.MIMEParamsParser`, `util.TextDecoder`, `util.TextEncoder`, `util.types`, `util.isDeepStrictEqual`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemErrorMap`, `util.getSystemErrorName`, `util.getSystemError",
+   "major_faults": 198,
+   "nvme_read_mb": 0.8,
+   "engine_cpu_s": 12.8,
+   "swap_used_mb": 0.0
+  }
+ ],
+ "tool": {
+  "well_formed": true,
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-84882a29427f4359",
+    "type": "function",
+    "function": {
+     "name": "solde_compte",
+     "arguments": "{\"iban\": \"FR7630006000011234567890189\"}"
+    }
+   }
+  ],
+  "content": null
+ },
+ "requests": {
+  "sent": 7,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T15:24:47+0200"
+}

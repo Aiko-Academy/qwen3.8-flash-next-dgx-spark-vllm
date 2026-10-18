@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I probe.py public-set-1018",
+ "result": "probe-public-set-1018.json",
+ "waited_for_rest_s": 25,
+ "start": "2026-10-18T11:11:06+0200",
+ "end": "2026-10-18T11:14:43+0200",
+ "rc": 0,
+ "sent": 7,
+ "errors": 0,
+ "finished_by_engine": 7,
+ "peak_running": 1.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

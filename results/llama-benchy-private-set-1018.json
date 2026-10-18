@@ -1,0 +1,90 @@
+{
+ "kind": "llama-benchy",
+ "label": "private-set-1018",
+ "measured_at": "2026-10-18T09:00:18+0200",
+ "finished_at": "2026-10-18T09:03:49+0200",
+ "repo_commit": "2def016f56723d0deafa4deb826ec7ae43ed7289",
+ "protocol": {
+  "tool": "llama-benchy 0.4.0",
+  "arguments": "--pp 2048 --tg 32 128 512 --depth 0 8192 --runs 3 --latency-mode generation",
+  "client": "on the Spark, cores 0-4"
+ },
+ "rows": [
+  {
+   "test": "pp2048",
+   "t_s": "2247.27 \u00b1 268.27",
+   "peak_t_s": "",
+   "ttfr_ms": "1097.56 \u00b1 118.97"
+  },
+  {
+   "test": "tg32",
+   "t_s": "31.69 \u00b1 4.79",
+   "peak_t_s": "32.44 \u00b1 5.33",
+   "ttfr_ms": ""
+  },
+  {
+   "test": "pp2048",
+   "t_s": "2629.87 \u00b1 255.74",
+   "peak_t_s": "",
+   "ttfr_ms": "958.65 \u00b1 81.48"
+  },
+  {
+   "test": "tg128",
+   "t_s": "30.01 \u00b1 3.17",
+   "peak_t_s": "38.67 \u00b1 4.19",
+   "ttfr_ms": ""
+  },
+  {
+   "test": "pp2048",
+   "t_s": "2456.34 \u00b1 193.31",
+   "peak_t_s": "",
+   "ttfr_ms": "1010.69 \u00b1 64.39"
+  },
+  {
+   "test": "tg512",
+   "t_s": "35.24 \u00b1 1.70",
+   "peak_t_s": "42.49 \u00b1 5.54",
+   "ttfr_ms": ""
+  },
+  {
+   "test": "pp2048 @ d8192",
+   "t_s": "2018.12 \u00b1 241.50",
+   "peak_t_s": "",
+   "ttfr_ms": "5315.52 \u00b1 582.46"
+  },
+  {
+   "test": "tg32 @ d8192",
+   "t_s": "28.60 \u00b1 1.67",
+   "peak_t_s": "30.00 \u00b1 0.82",
+   "ttfr_ms": ""
+  },
+  {
+   "test": "pp2048 @ d8192",
+   "t_s": "2397.92 \u00b1 114.38",
+   "peak_t_s": "",
+   "ttfr_ms": "4452.53 \u00b1 209.88"
+  },
+  {
+   "test": "tg128 @ d8192",
+   "t_s": "27.88 \u00b1 3.95",
+   "peak_t_s": "36.00 \u00b1 6.68",
+   "ttfr_ms": ""
+  },
+  {
+   "test": "pp2048 @ d8192",
+   "t_s": "2410.24 \u00b1 40.37",
+   "peak_t_s": "",
+   "ttfr_ms": "4421.74 \u00b1 70.38"
+  },
+  {
+   "test": "tg512 @ d8192",
+   "t_s": "28.90 \u00b1 3.39",
+   "peak_t_s": "41.67 \u00b1 12.26",
+   "ttfr_ms": ""
+  }
+ ],
+ "requests": {
+  "sent": null,
+  "errors": null
+ }
+}

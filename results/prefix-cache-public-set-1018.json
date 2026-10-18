@@ -1,0 +1,55 @@
+{
+ "kind": "prefix-cache",
+ "label": "public-set-1018",
+ "measured_at": "2026-10-18T11:20:46+0200",
+ "repo_commit": "4ec6862a6dba05f04d71f2457cd933ccb52a0148",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "prompt_chars": 63575,
+  "repeats": 3,
+  "max_tokens": 120,
+  "temperature": 0
+ },
+ "passes": [
+  {
+   "seconds": 9.67,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, membre du Reform-Club, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement de Londres avec son nouveau domestique, Passepartout. L'agent de police Fix, convaincu que Fogg est le voleur de cinquante-cinq mille livres de la Banque d'Angleterre, le traque à travers le monde en espérant obtenir un mandat d'arrestation. Le récit s'arrête à Suez, où Passepartout, ignorant la suspicion qui pèse sur"
+  },
+  {
+   "seconds": 3.32,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, membre du Reform-Club, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement de Londres avec son nouveau domestique, Passepartout. L'agent de police Fix, convaincu que Fogg est le voleur de cinquante-cinq mille livres de la Banque d'Angleterre, le traque à travers le monde en espérant obtenir un mandat d'arrestation. Le récit s'arrête à Suez, où Passepartout, ignorant la suspicion qui pèse sur"
+  },
+  {
+   "seconds": 3.35,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, membre du Reform-Club, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement de Londres avec son nouveau domestique, Passepartout. L'agent de police Fix, convaincu que Fogg est le voleur de cinquante-cinq mille livres de la Banque d'Angleterre, le traque à travers le monde en espérant obtenir un mandat d'arrestation. Le récit s'arrête à Suez, où Passepartout, ignorant la suspicion qui pèse sur"
+  }
+ ],
+ "hit_tokens": 32960.0,
+ "cases": [
+  {
+   "name": "prefix cache served (32960 tokens hit)",
+   "ok": true
+  },
+  {
+   "name": "repeats faster than the cold pass (under 0.7 times)",
+   "ok": true
+  },
+  {
+   "name": "the two cached outputs identical (passes 1 and 2)",
+   "ok": true
+  },
+  {
+   "name": "cold output identical to the cached outputs (pass 0)",
+   "ok": true
+  }
+ ],
+ "verdict": "green",
+ "requests": {
+  "sent": 3,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T11:21:02+0200"
+}

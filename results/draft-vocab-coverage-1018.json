@@ -1,0 +1,83 @@
+{
+ "kind": "draft-vocab-coverage",
+ "label": "1018",
+ "measured_at": "2026-10-18T08:57:05+0200",
+ "repo_commit": "9ef8b9247f0989fae6130a6f46ff5af0adeb5abe-dirty",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "sets": {
+   "public": {
+    "ids": 65536,
+    "sha256": "19a4415d6146a0fc91355674a11d9929d0e726da56656096a9a52c3d168368a8"
+   },
+   "blazux": {
+    "ids": 65536,
+    "sha256": "6459e0fdc8df30e0c1d1f45be7c1b6bef0d68b0e73c073a82c52ea2a7f4b26d4"
+   },
+   "private": {
+    "ids": 65536,
+    "sha256": "4ddcf3602ca4a1436bc21024a0108d8723f36924afa454f5009f7c208197aacb"
+   }
+  },
+  "sources": [
+   "probe-private-set-1018.json",
+   "code-gate-off-1018.json"
+  ]
+ },
+ "coverage_percent": [
+  {
+   "text": "probe prose_fr",
+   "tokens": 600,
+   "public": 98.8,
+   "blazux": 79.0,
+   "private": 99.2
+  },
+  {
+   "text": "probe prose_en",
+   "tokens": 600,
+   "public": 98.0,
+   "blazux": 99.7,
+   "private": 99.8
+  },
+  {
+   "text": "probe code",
+   "tokens": 600,
+   "public": 99.2,
+   "blazux": 99.2,
+   "private": 99.7
+  },
+  {
+   "text": "code gate solidity_guard",
+   "tokens": 605,
+   "public": 95.7,
+   "blazux": 97.2,
+   "private": 100.0
+  },
+  {
+   "text": "code gate abi_runner_ethers",
+   "tokens": 357,
+   "public": 95.5,
+   "blazux": 98.0,
+   "private": 100.0
+  },
+  {
+   "text": "code gate react_hook_ts",
+   "tokens": 728,
+   "public": 94.4,
+   "blazux": 98.2,
+   "private": 100.0
+  },
+  {
+   "text": "code gate code_long",
+   "tokens": 651,
+   "public": 94.0,
+   "blazux": 98.5,
+   "private": 100.0
+  }
+ ],
+ "requests": {
+  "sent": 0,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T08:57:05+0200"
+}

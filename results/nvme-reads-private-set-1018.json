@@ -1,0 +1,100 @@
+{
+ "kind": "nvme-reads",
+ "label": "private-set-1018",
+ "measured_at": "2026-10-18T08:46:30+0200",
+ "repo_commit": "9ef8b9247f0989fae6130a6f46ff5af0adeb5abe",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "streams": "16,1",
+  "max_tokens": 300,
+  "temperature": 1.0,
+  "device": "nvme0n1"
+ },
+ "silences": [
+  {
+   "silence_ms": 0,
+   "median_ms": 0.248,
+   "min_ms": 0.234,
+   "max_ms": 0.249
+  },
+  {
+   "silence_ms": 20,
+   "median_ms": 0.829,
+   "min_ms": 0.66,
+   "max_ms": 1.515
+  },
+  {
+   "silence_ms": 50,
+   "median_ms": 0.993,
+   "min_ms": 0.8,
+   "max_ms": 1.281
+  },
+  {
+   "silence_ms": 80,
+   "median_ms": 1.147,
+   "min_ms": 0.907,
+   "max_ms": 1.822
+  },
+  {
+   "silence_ms": 120,
+   "median_ms": 10.056,
+   "min_ms": 0.44,
+   "max_ms": 10.362
+  },
+  {
+   "silence_ms": 200,
+   "median_ms": 10.008,
+   "min_ms": 9.793,
+   "max_ms": 10.203
+  },
+  {
+   "silence_ms": 500,
+   "median_ms": 9.959,
+   "min_ms": 9.639,
+   "max_ms": 10.103
+  },
+  {
+   "silence_ms": 1000,
+   "median_ms": 9.951,
+   "min_ms": 9.822,
+   "max_ms": 10.076
+  },
+  {
+   "silence_ms": 2500,
+   "median_ms": 10.008,
+   "min_ms": 0.698,
+   "max_ms": 10.102
+  },
+  {
+   "silence_ms": 4000,
+   "median_ms": 10.07,
+   "min_ms": 9.863,
+   "max_ms": 10.114
+  }
+ ],
+ "load": [
+  {
+   "streams": 16,
+   "tokens": 4800,
+   "duration_s": 34.3,
+   "aggregate_tok_s": 140.0,
+   "reads": 95156,
+   "read_time_ms": 514055,
+   "ms_per_read": 5.4
+  },
+  {
+   "streams": 1,
+   "tokens": 300,
+   "duration_s": 10.1,
+   "aggregate_tok_s": 29.6,
+   "reads": 8013,
+   "read_time_ms": 2517,
+   "ms_per_read": 0.31
+  }
+ ],
+ "requests": {
+  "sent": 17,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T08:48:13+0200"
+}

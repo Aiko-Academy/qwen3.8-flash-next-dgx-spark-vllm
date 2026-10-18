@@ -1,0 +1,55 @@
+{
+ "kind": "prefix-cache",
+ "label": "private-set-1018",
+ "measured_at": "2026-10-18T08:39:21+0200",
+ "repo_commit": "9ef8b9247f0989fae6130a6f46ff5af0adeb5abe",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "prompt_chars": 63575,
+  "repeats": 3,
+  "max_tokens": 120,
+  "temperature": 0
+ },
+ "passes": [
+  {
+   "seconds": 10.1,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours, engageant immédiatement son nouveau domestique français, Passepartout, pour ce voyage improvisé. Leur départ déclenche une controverse médiatique intense et attire l'attention de l'inspecteur Fix, qui, ayant reçu le signalement d'un voleur de banque, soupçonne Fogg d'utiliser ce périple comme une couverture pour fuir la justice. À leur arrivée à Suez"
+  },
+  {
+   "seconds": 3.76,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours, engageant immédiatement son nouveau domestique français, Passepartout, pour ce voyage improvisé. Leur départ déclenche une controverse médiatique intense et attire l'attention de l'inspecteur Fix, qui, ayant reçu le signalement d'un voleur de banque, soupçonne Fogg d'utiliser ce périple comme une couverture pour fuir la justice. À leur arrivée à Suez"
+  },
+  {
+   "seconds": 3.8,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours, engageant immédiatement son nouveau domestique français, Passepartout, pour ce voyage improvisé. Leur départ déclenche une controverse médiatique intense et attire l'attention de l'inspecteur Fix, qui, ayant reçu le signalement d'un voleur de banque, soupçonne Fogg d'utiliser ce périple comme une couverture pour fuir la justice. À leur arrivée à Suez"
+  }
+ ],
+ "hit_tokens": 32960.0,
+ "cases": [
+  {
+   "name": "prefix cache served (32960 tokens hit)",
+   "ok": true
+  },
+  {
+   "name": "repeats faster than the cold pass (under 0.7 times)",
+   "ok": true
+  },
+  {
+   "name": "the two cached outputs identical (passes 1 and 2)",
+   "ok": true
+  },
+  {
+   "name": "cold output identical to the cached outputs (pass 0)",
+   "ok": true
+  }
+ ],
+ "verdict": "green",
+ "requests": {
+  "sent": 3,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T08:39:39+0200"
+}

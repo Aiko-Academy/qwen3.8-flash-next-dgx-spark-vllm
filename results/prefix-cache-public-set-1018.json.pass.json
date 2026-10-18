@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I prefix_cache.py public-set-1018",
+ "result": "prefix-cache-public-set-1018.json",
+ "waited_for_rest_s": 25,
+ "start": "2026-10-18T11:20:46+0200",
+ "end": "2026-10-18T11:21:02+0200",
+ "rc": 0,
+ "sent": 3,
+ "errors": 0,
+ "finished_by_engine": 3,
+ "peak_running": 1.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

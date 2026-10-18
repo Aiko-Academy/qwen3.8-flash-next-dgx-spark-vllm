@@ -9,7 +9,8 @@ Same rule as build_draft_vocab.py (blazux, kept unchanged beside this file), wit
      by DECREASING id: its low ids are already a fill by order, its high ids are the ones its corpus chose
      (by increasing id, the result equalled a plain fill by order);
   5. then the lowest ids not yet chosen.
-The target verifies every drafted token: the set only changes the acceptance rate, never an output.
+The target verifies every drafted token: the set changes the acceptance rate, and it can also change a
+greedy text (docs/method.md).
 
 Usage (container --network none, a vLLM image that carries transformers and numpy):
   build_draft_vocab_public.py <tokenizer_dir> <out.npy> --corpus <dir> [--complement ids.npy] [--n 65536]

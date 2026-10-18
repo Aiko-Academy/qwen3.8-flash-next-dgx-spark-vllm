@@ -1,0 +1,14 @@
+{
+ "kind": "verify",
+ "label": "public-set-1018",
+ "measured_at": "2026-10-18T11:10:09+0200",
+ "repo_commit": "4ec6862a6dba05f04d71f2457cd933ccb52a0148",
+ "source": "console output of serve/verify.sh on the Spark, transcribed; the bind address is not kept",
+ "container": {"started_at": "2026-10-18T09:42:08+0200", "first_completion": "2026-10-18T09:54:19+0200", "restarts": 0,
+               "kv_pool_tokens_logged": 1374695, "draft_vocabulary": "draft_vocab_public_65536.npy, sha256 19a4415d6146a0fc"},
+ "equivalence": {"image": true, "entrypoint": true, "arguments_same_41_same_order": true, "environment_same_13": true,
+                 "mounts_same_25": true, "cpu_set": true, "ipc_shm": true, "ulimits": true, "restart_policy": true,
+                 "gpus": true, "port_published_on_bind": true, "key_file": true, "overlay_files_equal_published": 21},
+ "settings_ok": 25,
+ "summary": "38 OK, 0 FAIL"
+}

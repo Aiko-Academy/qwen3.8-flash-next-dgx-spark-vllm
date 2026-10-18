@@ -1,0 +1,72 @@
+{
+ "kind": "reasoning",
+ "label": "deep-510k-off-1018",
+ "measured_at": "2026-10-18T08:51:21+0200",
+ "repo_commit": "9ef8b9247f0989fae6130a6f46ff5af0adeb5abe",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "reasoning": "off",
+  "max_tokens": 2048,
+  "temperature": 0,
+  "depths": "510000",
+  "deep_items": 3
+ },
+ "short": {},
+ "deep": {
+  "510000": {
+   "ok": 3,
+   "total": 3,
+   "accuracy": 1.0,
+   "needle_ok": true,
+   "needle": {
+    "prompt_tokens": 449330,
+    "reasoning_tokens": 0,
+    "answer_tokens": 130,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 5.7
+   },
+   "detail": [
+    {
+     "id": "r01",
+     "ok": true,
+     "prompt_tokens": 449333,
+     "reasoning_tokens": 0,
+     "answer_tokens": 475,
+     "reasoning_chars": 0,
+     "finish": "stop",
+     "seconds": 187.1
+    },
+    {
+     "id": "r06",
+     "ok": true,
+     "prompt_tokens": 449365,
+     "reasoning_tokens": 0,
+     "answer_tokens": 389,
+     "reasoning_chars": 0,
+     "finish": "stop",
+     "seconds": 10.2
+    },
+    {
+     "id": "r08",
+     "ok": true,
+     "prompt_tokens": 449345,
+     "reasoning_tokens": 0,
+     "answer_tokens": 710,
+     "reasoning_chars": 0,
+     "finish": "stop",
+     "seconds": 17.4
+    }
+   ],
+   "real_prompt_tokens": 449365,
+   "length_finishes": 0
+  }
+ },
+ "verdict": "PASS",
+ "reasons": [],
+ "requests": {
+  "sent": 4,
+  "errors": 0
+ },
+ "finished_at": "2026-10-18T08:55:01+0200"
+}

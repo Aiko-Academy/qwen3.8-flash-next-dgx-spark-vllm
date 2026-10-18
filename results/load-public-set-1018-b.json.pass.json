@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I load_bench.py public-set-1018-b --clients 1,4,8,16",
+ "result": "load-public-set-1018-b.json",
+ "waited_for_rest_s": 26,
+ "start": "2026-10-18T11:17:50+0200",
+ "end": "2026-10-18T11:19:49+0200",
+ "rc": 0,
+ "sent": 35,
+ "errors": 0,
+ "finished_by_engine": 35,
+ "peak_running": 16.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

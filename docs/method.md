@@ -44,7 +44,9 @@ The reference figures are pass 2, greedy, 600 tokens, reasoning off. Pass 1 is r
 
 - A setting is judged A-B-A: reference, change, reference again, the same day, by the same commands. A gap between
   A and B smaller than the gap between the two A arms is not a result.
-- The load bench is judged on two passes: the first bench of a series has come out low more than once.
+- The load bench is judged on two passes, and only against a pass taken on a container in a comparable state: on
+  2026-10-18 the same recipe gave 118.0 tok/s at 8 clients on a container that had served for 16 hours, and 134.8
+  on the same set after a restart (`results/load-private-set-1018*.json`). The cause is not established.
 - A prefill is only comparable with a prefill taken in the same state of the page cache. Long sampled loads fill the
   cache with unrelated table rows and lower the next prefills.
 - A prompt is frozen in `bench/prompts/`. A prompt cut out of a document that keeps being edited moves with each edit.
@@ -68,6 +70,11 @@ No file carries an address, a key or a host name.
 ## Draft vocabulary
 
 The reduced draft vocabulary only changes which tokens the drafter may propose; the target verifies every token.
-It changes acceptance and speed, never a greedy output. This repository builds its set from a frozen public corpus
+In principle it changes acceptance and speed, not the output. Measured in A-B-A on 2026-10-18 (private set, public
+set, private set again after a restart): code stayed identical, but the greedy prose diverged with the public set,
+from character 1 098 in French and 502 in English, and the private set gave its own texts back after the restart.
+The divergence comes from the set, not from the restart. A likely cause, not proven: with other tokens accepted, the
+target verifies other groups of positions per step, and a sum in another order can flip a near-tie. The two texts
+are equally greedy continuations; neither is the "true" one. This repository builds its set from a frozen public corpus
 (`patches/draft-vocab/`); our own server uses a set built on private texts. Both are measured on the same server,
 with the same commands, and reported side by side.
