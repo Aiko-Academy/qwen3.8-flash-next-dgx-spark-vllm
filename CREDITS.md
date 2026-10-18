@@ -49,7 +49,7 @@ Ideas and figures that we read, compared against or tested; no code from these s
 | salient-data/qwen38-next-dgx-recipe (@jeremy-newhouse), commit `faf5cb30` | the FP8 output head and NVFP4 draft head ideas, the warm-up note on Triton kernels of the rejection sampler (`bench/warmup.py`) |
 | vllm-project/vllm#59753 and #59740 (@stecasta), measured on local-inference-lab/Qwen3.8-Flash-Next-NVFP4 | SM121 skinny-GEMM plans and the sparse draft head: studied, not used (`docs/negative-results.md`); the public reference figure of #59740 does not serve the NVIDIA checkpoint |
 | MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark | published throughput figures we compare with, at a different protocol |
-| tonyd2wild/Qwen3.8-Flash-Next-NVFP4-DGX-Spark (issue #3) | throughput figures measured with llama-benchy, at a different protocol |
+| tonyd2wild/Qwen3.8-Flash-Next-NVFP4-DGX-Spark (Tony DeAngelo) | an earlier reduced draft vocabulary (`single-spark-vllm-tp1/patch/mtp_draft_vocab.py`, first committed on 2026-09-05, commit `63fa63b`); the hook used here is blazux's. Throughput figures measured with llama-benchy (issue #3), at a different protocol |
 | eugr/spark-vllm-docker and the image `eugr/spark-vllm-b12x` | the recipe of the NVIDIA FP4-Local checkpoint, tested and not kept (`docs/negative-results.md`) |
 | christopherowen/spark-ds41f and NVIDIA forum thread 384438 (post 29) | the NVMe APST experiment, replayed in A-B-A and not kept (`docs/negative-results.md`) |
 | NVIDIA developer forum, DGX Spark category: threads 385463, 385994, 386117, 386124 | measurements, settings and warnings shared by the community |
