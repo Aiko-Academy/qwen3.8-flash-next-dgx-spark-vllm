@@ -13,6 +13,15 @@ dense layers, same settings.
   top-k hook, the draft head, the tool parser (two Responses API hunks ported by hand), the PLE files of
   vllm-project/vllm#58439 (now its head of 2026-10-13).
 - `tests/overlay-import.sh`: every overlay imports in the pinned image.
+- Measured on 2026-10-18 (README table, `results/*-v0320-*`), with the public set, v0.31.0-1 in brackets: French
+  prose 41.1 tok/s (40.9), English 45.3 (44.7), 8 / 16 clients 133.0 to 133.6 / 194.6 to 195.1 (131.0 to 134.4 /
+  194.1 to 197.5); prefix cache green; short reasoning 15 / 15, code gate 4 / 4. With our private set: long context
+  at 449 365 tokens, 3 / 3 with the needle.
+- Found on v0.32.0: to a code prompt with no tool declared, the model often writes calls to tools that do not exist
+  (6 of 12 draws with the public set, 11 of 12 with our private set; 0 of 12 on French prose); the parser drops them
+  and the client receives a sentence of intent. The probe's code line has no value on this version.
+- With our private draft set, French prose is level with the public set on v0.32.0 (41.2 against 41.1), where it was
+  ahead on v0.31.0.
 
 ## v0.31.0-1 (2026-10-18)
 
