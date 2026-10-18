@@ -3,8 +3,14 @@
 
 Three cases (prompts/toolcall.json): French with a declared tool, French without tool, Hungarian with a tool. The
 prompt asks to explain the literal string <tool_call> without calling a tool. Unprompted cases (--cases
-code_without_tool,prose_fr_without_tool): the probe's prompts, no tool declared; any call there is invented. N series of 4 requests per case,
-temperature 0.7, one request at a time. --reasoning {default,off,low,medium,xhigh} (reasoning_modes.py).
+code_without_tool,prose_fr_without_tool): the probe's prompts, no tool declared; any call there is invented. Case
+code_with_tool: the same code prompt with the Bash tool declared; a call to Bash is an agent's move, a call to any
+other name is invented. N series of 4 requests per case, temperature 0.7, one request at a time.
+--reasoning {default,off,low,medium,xhigh} (reasoning_modes.py). --system TEXT puts a system message before the
+prompt (none by default).
+
+Called names: every <function=NAME> outside code in the answer, against the declared tools. The summary counts, per
+case, the draws with at least one undeclared name ("invented") and those whose calls are all declared.
 
 Chat path (default): /v1/chat/completions with return_token_ids; the generated tokens are decoded again by
 /detokenize, special tokens included, and compared with the message the parser returns. That separates a choice of
@@ -22,7 +28,8 @@ Classes (chat path):
   length_finish       reasoning mode, `length` finish without a call: budget too short, never a wrong answer
 A "structured" call is <tool_call> followed by <function=, or a bare <function=, outside a code block and outside
 backticks.
-  python3 -I bench/toolcall.py <label> [--series 3] [--cases hu_with_tool] [--raw]   results/toolcall-<label>.json
+  python3 -I bench/toolcall.py <label> [--series 3] [--cases hu_with_tool] [--raw] [--system TEXT]
+      results/toolcall-<label>.json
   python3 -I bench/toolcall.py --self-check        classification fixtures only, no network
 """
 import argparse, os, re, sys, time
@@ -32,6 +39,7 @@ import reasoning_modes as rm  # noqa: E402
 
 SPECIAL = re.compile(r"<\|im_end\|>|<\|endoftext\|>|<\|im_start\|>")
 MARKER = re.compile(r"<tool_call>\s*<function=|<function=")
+NAME = re.compile(r"<function=([^>\s]+)>")
 SHORT = 20
 WHOLE = 0.9
 
@@ -50,6 +58,20 @@ def structured_call(raw):
         if not in_code(raw, m.start()):
             return m.start()
     return None
+
+
+def called_names(text):
+    """Names of the structured calls outside code, in order."""
+    return [m.group(1) for m in NAME.finditer(text) if not in_code(text, m.start())]
+
+
+def undeclared(names, tools):
+    declared = {t["function"]["name"] for t in tools or []}
+    return [n for n in names if n not in declared]
+
+
+def build_messages(prompt, system=None):
+    return ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
 
 
 def markers(raw):
@@ -135,7 +157,22 @@ def self_check():
         got = classify(*args, **(opt[0] if opt else {}))
         red += got != want
         print(f"  {'ok ' if got == want else 'RED'}  {name}: {got} (expected {want})")
-    print(f"self-check: {len(cases) - red}/{len(cases)}")
+    bash = [{"type": "function", "function": {"name": "Bash"}}]
+    two = "<tool_call>\n<function=Bash>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n</function>\n</tool_call>"
+    names = [
+        ("called names, outside code only", called_names("```\n<function=list_files>\n```\n" + call), ["Bash"]),
+        ("called names, between backticks ignored", called_names("Write `<function=read_file>` to call."), []),
+        ("declared call, no undeclared name", undeclared(called_names(call), bash), []),
+        ("no tool declared, every name is undeclared", undeclared(called_names(call), None), ["Bash"]),
+        ("declared then undeclared", undeclared(called_names(two), bash), ["read_file"]),
+        ("messages without system", build_messages("p"), [{"role": "user", "content": "p"}]),
+        ("messages with system", build_messages("p", "s"), [{"role": "system", "content": "s"}, {"role": "user", "content": "p"}]),
+    ]
+    for name, got, want in names:
+        red += got != want
+        print(f"  {'ok ' if got == want else 'RED'}  {name}: {got} (expected {want})")
+    total = len(cases) + len(names)
+    print(f"self-check: {total - red}/{total}")
     return 1 if red else 0
 
 
@@ -145,8 +182,8 @@ def excerpt(raw):
     return raw[start:start + 200]
 
 
-def one_request(c, model, prompt, tools, raw_only, temperature, max_tokens, mode):
-    messages = [{"role": "user", "content": prompt}]
+def one_request(c, model, prompt, tools, raw_only, temperature, max_tokens, mode, system=None):
+    messages = build_messages(prompt, system)
     t0 = time.time()
     if raw_only:
         body = {"model": model, "messages": messages, "add_generation_prompt": True}
@@ -159,9 +196,10 @@ def one_request(c, model, prompt, tools, raw_only, temperature, max_tokens, mode
         ch = d["choices"][0]; raw = ch["text"]; tokens = d["usage"]["completion_tokens"]
         reasoning = mode in rm.REASONING
         rea, answer = split(raw, reasoning)
+        names = called_names(answer)
         r = {"class": classify(raw, tokens, reasoning=reasoning), "finish": ch["finish_reason"], "tokens": tokens,
-             "visible": len(visible(answer)), "markers": markers(raw), "raw_excerpt": excerpt(raw),
-             "seconds": round(time.time() - t0, 1)}
+             "visible": len(visible(answer)), "markers": markers(raw), "called_names": names,
+             "undeclared_names": undeclared(names, tools), "raw_excerpt": excerpt(raw), "seconds": round(time.time() - t0, 1)}
         if reasoning:
             r["reasoning_markers"] = markers(rea)
         return r
@@ -183,8 +221,10 @@ def one_request(c, model, prompt, tools, raw_only, temperature, max_tokens, mode
     reasoning = bool(mes["reasoning_chars"] or mes["reasoning_tokens"])
     rea, answer = split(raw, reasoning)
     answer_tokens = mes["answer_tokens"] if mes["answer_tokens"] is not None else tokens
+    names = called_names(answer)
     r = {"class": classify(raw, answer_tokens, content, calls, reasoning, ch["finish_reason"]), "finish": ch["finish_reason"],
          "tokens": tokens, "content": len(content), "visible": len(visible(answer)), "calls": calls, "markers": markers(raw),
+         "called_names": names, "undeclared_names": undeclared(names, tools), "code_block_returned": "```" in content,
          "content_start": content[:70], "raw_excerpt": excerpt(raw), "reasoning_tokens": mes["reasoning_tokens"],
          "seconds": mes["seconds"]}
     if reasoning:
@@ -204,6 +244,7 @@ def main():
     ap.add_argument("--temperature", type=float, default=0.7)
     ap.add_argument("--max-tokens", type=int, default=3000)
     ap.add_argument("--reasoning", choices=rm.MODES, default=None)
+    ap.add_argument("--system", default=None, help="system message put before the prompt (none by default)")
     ap.add_argument("--self-check", action="store_true")
     a = ap.parse_args()
     if a.self_check:
@@ -219,21 +260,34 @@ def main():
     model = c.served_model()
     path = "raw (/v1/completions)" if a.raw else "chat (return_token_ids)"
     res = c.header("toolcall", a.label, path=path, temperature=a.temperature, reasoning=mode, series=a.series,
-                   per_series=a.per_series, cases=names)
-    print(f"<tool_call> witness, {path}, temperature {a.temperature}, reasoning {mode}")
+                   per_series=a.per_series, cases=names, system=a.system)
+    print(f"<tool_call> witness, {path}, temperature {a.temperature}, reasoning {mode}, system {a.system!r}")
     rows = []
     for s in range(1, a.series + 1):
         for name in names:
             prompt, with_tool = known[name]
             for i in range(a.per_series):
-                r = one_request(c, model, prompt, p["tools"] if with_tool else None, a.raw, a.temperature, a.max_tokens, mode)
+                r = one_request(c, model, prompt, p["tools"] if with_tool else None, a.raw, a.temperature, a.max_tokens, mode,
+                                a.system)
                 r.update(series=s, case=name, rank=i + 1, time=time.strftime("%H:%M:%S"))
                 rows.append(r)
                 print(f"  {name:16} {r['class']:20} finish {r['finish']:7} tokens {r['tokens']:5}")
     classes = sorted({r["class"] for r in rows})
     res["summary"] = {n: {k: sum(1 for r in rows if r["case"] == n and r["class"] == k) for k in classes} for n in names}
     res["summary"]["total"] = {k: sum(1 for r in rows if r["class"] == k) for k in classes}
+    res["called"] = {}
+    for n in names:
+        mine = [r for r in rows if r["case"] == n]
+        res["called"][n] = {
+            "draws": len(mine), "with_undeclared_call": sum(1 for r in mine if r["undeclared_names"]),
+            "with_declared_calls_only": sum(1 for r in mine if r["called_names"] and not r["undeclared_names"]),
+            "without_call": sum(1 for r in mine if not r["called_names"]),
+            "code_block_returned": sum(1 for r in mine if r.get("code_block_returned")),
+            "length_finishes": sum(1 for r in mine if r["finish"] == "length"),
+            "names": sorted({x for r in mine for x in r["called_names"]})}
     print("total: " + ", ".join(f"{k} {v}" for k, v in res["summary"]["total"].items()))
+    for n, v in res["called"].items():
+        print(f"  {n}: {v}")
     res["responses"] = rows
     res["requests"] = {"sent": len(rows), "errors": 0}
     c.write_result(res, f"toolcall-{a.label}.json")
