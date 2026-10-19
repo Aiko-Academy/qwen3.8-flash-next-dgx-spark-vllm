@@ -10,19 +10,23 @@ call (qwen3_xml) that must come back well formed.
 Pass 1 of a prompt decodes new text (rows of the PLE table may come from disk); pass 2 decodes the same text again
 (rows in the page cache). The reference figures are pass 2.
 
-  python3 -I bench/probe.py <label> [--passes 2]        writes results/probe-<label>.json
+--system TEXT puts a system message before each generation prompt (none by default; the tool call is unchanged). On
+vLLM v0.32.0 the bare code prompt comes back as invented tool calls (README), so a code speed needs it.
+
+  python3 -I bench/probe.py <label> [--passes 2] [--system TEXT]        writes results/probe-<label>.json
 """
 import argparse, json, os, sys, time, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common as c  # noqa: E402
+from toolcall import build_messages  # noqa: E402
 
 COUNTERS = ("vllm:spec_decode_num_drafts", "vllm:spec_decode_num_accepted_tokens", "vllm:request_success",
             "vllm:inter_token_latency_seconds_sum", "vllm:inter_token_latency_seconds_count")
 
 
-def generate(model, prompt):
-    body = {"model": model, "messages": [{"role": "user", "content": prompt}], "max_tokens": 600, "temperature": 0,
+def generate(model, prompt, system=None):
+    body = {"model": model, "messages": build_messages(prompt, system), "max_tokens": 600, "temperature": 0,
             "stream": True, "stream_options": {"include_usage": True}, "chat_template_kwargs": {"enable_thinking": False}}
     req = urllib.request.Request(c.URL + "/v1/chat/completions", json.dumps(body).encode(), c.HEADERS)
     first = last = None; n = None; text = []
@@ -58,11 +62,12 @@ def main():
     ap.add_argument("label")
     ap.add_argument("--passes", type=int, default=2)
     ap.add_argument("--only", default="prose_fr,prose_en,code", help="prompts to play, comma-separated")
+    ap.add_argument("--system", default=None, help="system message put before each generation prompt (none by default)")
     a = ap.parse_args()
     p = c.prompts("probe.json")
     model = c.served_model()
     res = c.header("probe", a.label, max_tokens=600, temperature=0, reasoning="off", passes=a.passes, rest_s=20,
-                   prompts={k: p[k] for k in a.only.split(",")})
+                   prompts={k: p[k] for k in a.only.split(",")}, system=a.system)
     res["generations"] = []
     sent = errors = 0
     for name in a.only.split(","):
@@ -71,7 +76,7 @@ def main():
                 print(f"{name} {i + 1}: no rest within 10 min, skipped"); continue
             m0, s0 = c.metric_sums(COUNTERS), c.machine()
             try:
-                tokens, rate, text = generate(model, p[name]); sent += 1
+                tokens, rate, text = generate(model, p[name], a.system); sent += 1
             except Exception as e:
                 errors += 1; print(f"{name} {i + 1}: error {e}"); continue
             m1, s1 = c.metric_sums(COUNTERS), c.machine()
