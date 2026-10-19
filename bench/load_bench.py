@@ -21,6 +21,8 @@ Refuses to start while a request is running.
 import argparse, concurrent.futures, json, os, random, sys, time, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import common as c  # noqa: E402
+
 SAMPLING = ("temperature", "top_p", "top_k", "presence_penalty")
 SPEC = ("vllm:spec_decode_num_drafts", "vllm:spec_decode_num_accepted_tokens")
 
@@ -57,6 +59,8 @@ def self_check():
     m1 = {"vllm:spec_decode_num_drafts_total": 110, "vllm:spec_decode_num_accepted_tokens_per_pos_total[0]": 75,
           "vllm:spec_decode_num_accepted_tokens_per_pos_total[1]": 42}
     assert acceptance(m0, m1) == [0.7, 0.4] and acceptance(m0, m0) is None
+    p = c.prompts("load.json")
+    assert p["prefill_chars"] and p["load_subjects"] and c.prompts("long-fr-verne.txt")
     print("load_bench self-check: request bodies and acceptance as expected")
 
 
