@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Witness that every overlay of serve.sh compiles and imports in the pinned image, mounted where serve.sh mounts it,
 # in a throwaway CPU container without network (a serving container is not touched). Then, under VLLM_FP8_HYBRID=1:
-# the shim hooks modelopt.py, the QSA indexer projection is kept apart, and the draft-vocabulary hook is active.
+# the shim hooks modelopt.py, the QSA indexer projection is kept apart, and the draft-vocabulary hook is active; the
+# drafter's M-RoPE cache is floored on max_model_len while the YaRN target is unchanged; the key guards /invocations.
 #   tests/overlay-import.sh
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -27,6 +28,7 @@ mods = ["vllm.model_executor.layers.quantization.modelopt", "vllm.models.qwen4_e
         "vllm.parser.nemotron_v3", "vllm.parser.qwen3", "vllm.config.engram",
         "vllm.models.qwen4_exp.common.ngram_embedding", "vllm.models.qwen4_exp.nvidia.model_state",
         "vllm.models.qwen4_exp.nvidia.ngram_embedding", "vllm.models.qwen4_exp.nvidia.ple_pageable",
+        "vllm.model_executor.layers.rotary_embedding.mrope", "vllm.entrypoints.serve.middleware.authenticate",
         "vllm_fp8_hybrid_modelopt"]
 for m in mods:
     try:
@@ -43,6 +45,37 @@ import vllm.model_executor.layers.quantization.modelopt as mo
 check("vllm_fp8_hybrid_modelopt" in inspect.getsource(mo), "modelopt.py imports the FP8 shim")
 import vllm.parser.qwen3 as q3
 check("guard" in inspect.getsource(q3).lower() or "preamble" in inspect.getsource(q3).lower(), "repaired qwen3 parser mounted")
+import types, warnings
+import torch
+from vllm.config import DeviceConfig, VllmConfig, set_current_vllm_config
+from vllm.model_executor.layers.rotary_embedding import get_rope
+base = {"mrope_interleaved": True, "mrope_section": [11, 11, 10], "partial_rotary_factor": 0.25, "rope_theta": 10000000}
+rows = {}
+for name, rp in (("drafter", dict(base, rope_type="default")),
+                 ("target", dict(base, rope_type="yarn", factor=2.0, original_max_position_embeddings=262144))):
+    vc = VllmConfig(device_config=DeviceConfig(device="cpu"))
+    object.__setattr__(vc, "model_config", types.SimpleNamespace(max_model_len=524288, multimodal_config=None))
+    with set_current_vllm_config(vc), warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        rows[name] = get_rope(head_size=256, max_position=262144, rope_parameters=rp, dtype=torch.float32,
+                              mrope_positions_factor=1).cos_sin_cache.shape[0]
+check(rows["drafter"] == 524288, f"drafter M-RoPE cache floored on max_model_len: {rows['drafter']} rows")
+check(rows["target"] == 524288, f"YaRN target M-RoPE cache unchanged: {rows['target']} rows")
+import asyncio
+import vllm.entrypoints.serve.middleware.authenticate as au
+async def _app(scope, receive, send):
+    await send({"type": "http.response.start", "status": 200, "headers": []}); await send({"type": "http.response.body", "body": b""})
+def status(method, path, key):
+    got = {}
+    async def send(m):
+        if m["type"] == "http.response.start": got["s"] = m["status"]
+    async def receive(): return {"type": "http.request", "body": b"", "more_body": False}
+    hdr = [(b"authorization", b"Bearer " + key)] if key else []
+    asyncio.run(au.AuthenticationMiddleware(_app, ["k"])({"type": "http", "method": method, "path": path, "root_path": "",
+                                                         "headers": hdr, "query_string": b""}, receive, send))
+    return got["s"]
+check((status("POST", "/invocations", None), status("POST", "/invocations", b"k"), status("GET", "/health", None))
+      == (401, 200, 200), "key required on /invocations, GET /health open")
 print(f"\n{ok} OK, {ko} FAIL"); sys.exit(1 if ko else 0)
 PY
 exit "${PIPESTATUS[0]}"

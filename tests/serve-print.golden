@@ -91,6 +91,10 @@ VLLM_MTP_DRAFT_VOCAB=/opt/draft-vocab/draft_vocab_public_65536.npy
 <repo>/patches/ple-checkpoint-mapped/vllm-overlay/vllm/models/qwen4_exp/nvidia/ngram_embedding.py:/usr/local/lib/python3.12/dist-packages/vllm/models/qwen4_exp/nvidia/ngram_embedding.py:ro
 -v
 <repo>/patches/ple-checkpoint-mapped/vllm-overlay/vllm/models/qwen4_exp/nvidia/ple_pageable.py:/usr/local/lib/python3.12/dist-packages/vllm/models/qwen4_exp/nvidia/ple_pageable.py:ro
+-v
+<repo>/patches/mrope-draft-floor/vllm-overlay/model_executor/layers/rotary_embedding/mrope.py:/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/rotary_embedding/mrope.py:ro
+-v
+<repo>/patches/auth-all-routes/vllm-overlay/entrypoints/serve/middleware/authenticate.py:/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/serve/middleware/authenticate.py:ro
 -p
 127.0.0.1:8000:8000
 --entrypoint

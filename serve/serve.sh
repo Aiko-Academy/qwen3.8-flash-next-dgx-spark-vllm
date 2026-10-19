@@ -7,7 +7,8 @@
 #
 # Image vllm/vllm-openai:v0.32.0 (pinned by digest), the NVIDIA NVFP4 checkpoint with its dense layers in block FP8
 # (serve/prepare.sh), 524 288 tokens of context (YaRN factor 2), MTP 2 with a 65 536-row NVFP4 draft head, 16
-# sequences on the ten Cortex-X925 cores, and the overlays of patches/ mounted read-only on the image.
+# sequences on the ten Cortex-X925 cores, and the overlays of patches/ mounted read-only on the image: among them, the
+# drafter's M-RoPE cache floored on the served window, and the API key required on every route but GET /health.
 #
 # Configuration by environment variables, or by a file named in SERVE_CONFIG (serve/config.example.env lists them
 # all). The API key is never an argument: API_KEY_FILE names a docker --env-file that holds VLLM_API_KEY=<key>.
@@ -39,6 +40,8 @@ DRAFT_HEAD="${DRAFT_HEAD:-$PATCHES/draft-nvfp4-head}"
 DRAFT_VOCAB="${DRAFT_VOCAB:-$BUILD/draft_vocab_public_65536.npy}"
 DRAFT_VOCAB_DIR="${DRAFT_VOCAB_DIR:-/opt/draft-vocab}"
 TOOL_PARSER="${TOOL_PARSER:-$PATCHES/tool-parser}"
+MROPE_FLOOR="${MROPE_FLOOR:-$PATCHES/mrope-draft-floor}"
+AUTH_ALL="${AUTH_ALL:-$PATCHES/auth-all-routes}"
 VERIFIED_MARKER="${VERIFIED_MARKER:-.verified}"
 
 VP=/usr/local/lib/python3.12/dist-packages/vllm   # the vllm package inside the image
@@ -69,6 +72,10 @@ MOUNTS+=(-v "$MODEL_DIR:/models/flashnext:ro" -v "$CACHE_DIR:/root/.cache")
 for f in config/engram.py models/qwen4_exp/common/ngram_embedding.py models/qwen4_exp/nvidia/model_state.py \
          models/qwen4_exp/nvidia/ngram_embedding.py models/qwen4_exp/nvidia/ple_pageable.py; do
   MOUNTS+=(-v "$PLE_OVERLAY/vllm/$f:$VP/$f:ro")
+done
+# The drafter's M-RoPE cache floored on max_model_len (after vllm#62409, YaRN untouched); the key on every route.
+for f in "$MROPE_FLOOR:model_executor/layers/rotary_embedding/mrope.py" "$AUTH_ALL:entrypoints/serve/middleware/authenticate.py"; do
+  MOUNTS+=(-v "${f%%:*}/vllm-overlay/${f#*:}:$VP/${f#*:}:ro")
 done
 
 KEYFILE=()

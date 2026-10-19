@@ -32,6 +32,7 @@ that says what was taken and what was changed.
 | deterministic persistent top-k kernel (it carries its own attribution comments to sglang and flashinfer) | Jürgen Schmied (@jschmied) | jschmied/qwen38-flash-next-gb10, commit `e0ef69d`; proposed as vllm-project/vllm#55122 (open) | Apache-2.0 |
 | `--kv-cache-dtype-skip-layers` honoured in the QSA attention (an overlay on v0.31.0; part of vLLM since v0.32.0) | @stecasta | vllm-project/vllm#60023, merged 2026-10-05, commit `4ff028d7` | Apache-2.0 |
 | NVFP4 quantization of the draft head rows (`_quantize_nvfp4`) | @stecasta | vllm-project/vllm#59973, as carried by salient-data/qwen38-next-dgx-recipe@faf5cb30 (patch 0003) | Apache-2.0 |
+| the M-RoPE cache floored on the served window, applied here to the MTP drafter only | @wtogami | vllm-project/vllm#62409 (open), head `2c2c57288bbb`; the bug is vllm-project/vllm#62383 | Apache-2.0 |
 
 ## Settings taken from others
 
@@ -112,6 +113,8 @@ One row per file. `modified` says whether the file differs from its source, and 
 | `patches/tool-parser/vllm-overlay/parser/engine/streaming_parser_engine.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
 | `patches/tool-parser/vllm-overlay/parser/nemotron_v3.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
 | `patches/tool-parser/vllm-overlay/parser/qwen3.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
+| `patches/mrope-draft-floor/vllm-overlay/model_executor/layers/rotary_embedding/mrope.py` | the vLLM project; floor by @wtogami | vllm-project/vllm | v0.32.0, #62409 at `2c2c57288bbb` | Apache-2.0 | yes, by Aiko Academy: the floor applied without YaRN only |
+| `patches/auth-all-routes/vllm-overlay/entrypoints/serve/middleware/authenticate.py` | the vLLM project | vllm-project/vllm | v0.32.0 | Apache-2.0 | yes, by Aiko Academy: the key on every route but GET /health |
 
 ## Our own files
 

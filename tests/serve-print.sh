@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Offline witness of serve/serve.sh --print (no Docker, no Spark; bash 3.2 or later):
 # the printed docker run equals tests/serve-print.golden (repository path replaced by <repo>), with 41 vLLM
-# arguments, 24 mounts and 13 variables, bound to 127.0.0.1 without a key file by default; a configured bind and
+# arguments, 26 mounts and 13 variables, bound to 127.0.0.1 without a key file by default; a configured bind and
 # key file appear; and a serve.sh with one argument removed is caught.
 #   tests/serve-print.sh
 set -u
@@ -12,14 +12,14 @@ ok()  { PASS=$((PASS + 1)); printf 'OK    %s\n' "$1"; }
 non() { FAIL=$((FAIL + 1)); printf 'FAIL  %s\n' "$1"; }
 clean() { env -u SERVE_CONFIG -u BIND -u API_KEY_FILE -u PATCHES -u BUILD -u MODEL_DIR -u CACHE_DIR -u CPUSET -u CONTAINER \
   -u IMAGE -u PLE_OVERLAY -u FP8_HYBRID -u CACHE_DET -u DET_LIB -u DRAFT_HEAD -u DRAFT_VOCAB -u DRAFT_VOCAB_DIR \
-  -u TOOL_PARSER -u PORT "$@"; }
+  -u TOOL_PARSER -u MROPE_FLOOR -u AUTH_ALL -u PORT "$@"; }
 
 clean bash "$REPO/serve/serve.sh" --print | sed "s#$REPO#<repo>#g" > "$TMP/out"
 if cmp -s "$TMP/out" "$REPO/tests/serve-print.golden"; then ok "output equals tests/serve-print.golden"
 else non "output differs from the golden file"; diff "$REPO/tests/serve-print.golden" "$TMP/out" | head -10; fi
 after=$(sed -n '/^--entrypoint$/,$p' "$TMP/out" | tail -n +4 | wc -l | tr -d ' ')
 [ "$after" = 41 ] && ok "41 vLLM arguments after the image" || non "vLLM arguments: $after"
-[ "$(grep -cx -- '-v' "$TMP/out")" = 24 ] && ok "24 mounts" || non "mounts: $(grep -cx -- '-v' "$TMP/out")"
+[ "$(grep -cx -- '-v' "$TMP/out")" = 26 ] && ok "26 mounts" || non "mounts: $(grep -cx -- '-v' "$TMP/out")"
 [ "$(grep -cx -- '-e' "$TMP/out")" = 13 ] && ok "13 environment variables" || non "variables: $(grep -cx -- '-e' "$TMP/out")"
 grep -qx '127.0.0.1:8000:8000' "$TMP/out" && ! grep -qx -- '--env-file' "$TMP/out" \
   && ok "default: bound to 127.0.0.1, no key file" || non "default bind or key file"

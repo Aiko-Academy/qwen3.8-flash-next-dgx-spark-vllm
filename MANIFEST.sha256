@@ -1,3 +1,4 @@
+88bdb56207642cc297f4cd2f8c45a45c10ffe030911b35bcb6a4adfb00eacbcb  patches/auth-all-routes/vllm-overlay/entrypoints/serve/middleware/authenticate.py
 4245ba4f6cce24ce10840b4db586ef4fbd361248250a15e1e5c22feb2ac4fc18  patches/cache-det/LICENSE-blazux
 02e07067a581a25c426b339a5c9598319749393c1222f435f131667bdbb0f36a  patches/cache-det/LICENSE-jschmied
 b103fbeaf7589b9468471142ad0b30012a076f93d20ba11fc5ff6dcb1ecd32a6  patches/cache-det/kernel-det/bindings_det.cpp
@@ -22,6 +23,7 @@ f4a6a1ea75f2fa1e744dd89f1fcb1e4c7d03719d1a639958b77dece8b080dd19  patches/fp8-hy
 9c63c9088b5f4f9648cd870546c41dd98827c86931739742bb64fac9df23462e  patches/fp8-hybrid/vllm-overlay/model_executor/layers/quantization/modelopt.py
 6a3a0291beaf705c850a4c97e7b76cb44283d3ff6662dc8edb4b45671130b736  patches/fp8-hybrid/vllm-overlay/models/qwen4_exp/nvidia/qsa.py
 3c1596064504a0ab3498d1d6a0464c0f90aee87bccef2334826d31c6c55e9e09  patches/fp8-hybrid/vllm_fp8_hybrid_modelopt.py
+96c2cd7301e38b89428ccdb92f22df16742a341a9231becda1b630ae9e7037e6  patches/mrope-draft-floor/vllm-overlay/model_executor/layers/rotary_embedding/mrope.py
 f0b65f4d8b9b079b033b2a495ed4c64a73cc0ce29db72d0d0a3b39c6ee5ca958  patches/ple-checkpoint-mapped/pr-58439.diff
 bb4f4a9343586cad134931fbd1d6885c8eadc08bf2985147b386091ec0f78b92  patches/ple-checkpoint-mapped/vllm-overlay/vllm/config/engram.py
 751d771d5477f9b3de513aab42e97f9a92d443998e7c8c55127ea799331e223f  patches/ple-checkpoint-mapped/vllm-overlay/vllm/models/qwen4_exp/common/ngram_embedding.py
