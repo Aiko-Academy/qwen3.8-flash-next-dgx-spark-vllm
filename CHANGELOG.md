@@ -2,6 +2,19 @@
 
 ## Since v0.32.0-1 (2026-10-19)
 
+- `patches/mrope-draft-floor/`: on v0.32.0 the MTP drafter's rotary cache stops at 262 144 positions while 524 288
+  are served (vllm-project/vllm#62383). The overlay floors it on `max_model_len`, after vllm-project/vllm#62409 by
+  @wtogami, for rotary embeddings without YaRN only: the pull request as it stands also moves 8 of the 32 YaRN
+  frequencies of the target. Measured in A-B-A on 2026-10-19: greedy probe texts identical; MTP acceptance at
+  position 1 for a 449 977-token prompt from 0.746 to 0.898 (a reasoning item) and 0.521 to 0.864 (the needle).
+- `patches/auth-all-routes/`: the API key on every route but `GET /health` (vllm-project/vllm#58144: on v0.32.0,
+  `/invocations` serves inference without the key). `serve.sh` mounts 26 files; `verify.sh` checks 27 settings.
+- `bench/deep_acceptance.py`: MTP acceptance by position for prompts sized in real tokens past 262 144.
+- `bench/load_bench.py`: `--temperature`, `--top-p`, `--top-k`, `--presence-penalty`, `--seed`, and the MTP
+  acceptance of each batch. Measured with it: Qwen's non-thinking sampling is not faster than the checkpoint's
+  `generation_config` for one client, and sampled throughput is 7 to 9 % under the greedy figures
+  (`docs/negative-results.md`).
+
 - `bench/toolcall.py`: `--system TEXT` puts a system message before the prompt; a `code_with_tool` case sends the
   code prompt with the Bash tool declared; every draw records the names called outside code against the declared
   tools, and the summary counts the draws with an undeclared call. Seven new self-check fixtures (27 in all).

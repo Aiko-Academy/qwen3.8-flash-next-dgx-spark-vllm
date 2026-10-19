@@ -8,6 +8,8 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| Qwen's non-thinking sampling instead of the checkpoint's generation_config | 2026-10-19 | 16 clients 2.6 % faster | one client (French prose) level: 38.0 against 38.1 tok/s, under the 3 % set before the measure |
+| vllm#62409 as it stands, for the drafter's M-RoPE cache | 2026-10-19 | drafter cache 524 288 rows | it also moves 8 of the 32 YaRN frequencies of the target; an adapted floor is served instead (`patches/mrope-draft-floor`) |
 | NVMe APST delays raised to 2 s and 60 s | 2026-10-18 | disk wake-up 10.3 ms to 1.5 ms, 6.3 ms to 0.15 ms per read at 16 streams | throughput unchanged in A-B-A |
 | NVIDIA FP4-Local checkpoint on a community vLLM image | 2026-10-17 | code +21 % | French prose -18 %, KV pool -21 %, tool-call witness 1 complete answer out of 36 |
 | reasoning at effort xhigh on code | 2026-10-17 | right and fast on short questions | cut by the 16 384-token budget on 12 of 14 code tasks |
@@ -15,6 +17,33 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## Sampling: Qwen's non-thinking recommendation (2026-10-19, 11:28 to 11:44)
+
+Our clients send no sampling parameters and get the checkpoint's `generation_config` (temperature 1.0, top_p 0.95,
+top_k 20, the values of the reasoning mode). The model card recommends, for the non-thinking mode we serve, temperature
+0.7, top_p 0.80, top_k 20, presence_penalty 1.5. `bench/load_bench.py` with `--no-prefill --clients 1,8,16`, no seed
+(a per-request seed takes vLLM off its fused FlashInfer sampler), three repetitions of each setting alternated between
+two greedy passes, our private draft set. Aggregate tok/s:
+
+| pass | 1 client | 8 clients | 16 clients | files |
+|---|---|---|---|---|
+| greedy, before | 41.4 | 132.5 | 196.8 | `load-v0320-private-set-greedy-1019-a` |
+| generation_config (T 1.0, top_p 0.95, top_k 20), three repetitions | 38.7 / 38.2 / 37.4 | 121.7 / 126.8 / 119.5 | 179.2 / 178.5 / 178.3 | `load-v0320-private-set-s7-r1-1019`, `-r2`, `-r3` |
+| non-thinking (T 0.7, top_p 0.80, top_k 20, presence 1.5), three repetitions | 37.2 / 37.5 / 39.4 | 128.9 / 125.8 / 124.6 | 181.8 / 184.1 / 183.9 | `load-v0320-private-set-s6-r1-1019`, `-r2`, `-r3` |
+| greedy, after | 41.9 | 134.3 | 196.1 | `load-v0320-private-set-greedy-1019-b` |
+
+The criterion, written before: at least 3 % on one client, with no overlap between the repetitions. One client: 38.0
+against 38.1 on average; not kept, so the quality gates were not run. What the table does show: sampled as our
+clients are, throughput is 7 to 9 % under the greedy figures, and MTP acceptance at position 1 drops by about five
+points (0.63 against 0.68 at one client). Greedy gains overstate what sampled clients get.
+
+## vllm#62409 as it stands (2026-10-19, studied in the image, not served)
+
+The pull request floors the M-RoPE cache on the engine's `max_model_len`, for every M-RoPE. In `MRotaryEmbedding`
+that number is also the base of the YaRN correction range: in the v0.32.0 image, on CPU, the target built with our
+YaRN parameters gets 1 048 576 cache rows instead of 524 288 and 8 of its 32 rotary frequencies change, so its outputs
+would change. The served overlay applies the floor without YaRN only (`patches/mrope-draft-floor/PROVENANCE.md`).
 
 ## NVMe APST, A-B-A (2026-10-18, 02:18 to 03:14)
 

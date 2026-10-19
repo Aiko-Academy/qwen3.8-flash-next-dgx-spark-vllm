@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I load_bench.py v0320-private-set-greedy-1019-a --no-prefill --clients 1,8,16",
+ "result": "load-v0320-private-set-greedy-1019-a.json",
+ "waited_for_rest_s": 26,
+ "start": "2026-10-19T11:28:34+0200",
+ "end": "2026-10-19T11:29:40+0200",
+ "rc": 0,
+ "sent": 25,
+ "errors": 0,
+ "finished_by_engine": 25,
+ "peak_running": 16.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

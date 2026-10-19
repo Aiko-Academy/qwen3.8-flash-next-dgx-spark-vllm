@@ -96,6 +96,8 @@ v0.31.0 outputs, `tools/draft_vocab_coverage.py`, `results/draft-vocab-coverage-
 | cache and determinism | prefix cache repaired (the scheduler half; the worker half is in vLLM since v0.32.0, vllm#55601); deterministic sparse-attention top-k | `patches/cache-det/` |
 | tools | Qwen tool parser repaired: a literal `<tool_call>` in prose no longer cuts the answer | `patches/tool-parser/` |
 | CPU | vLLM pinned on the ten Cortex-X925 cores; 16 sequences; recurrent state in BF16 | `serve/serve.sh` |
+| long context | the MTP drafter's rotary cache floored on the served window; on v0.32.0 it stops at 262 144 positions (vllm#62383) | `patches/mrope-draft-floor/` |
+| security | the API key required on every route but `GET /health`; v0.32.0 checks it on `/v1` paths only, and `/invocations` serves inference without it (vllm#58144) | `patches/auth-all-routes/` |
 
 Reasoning is off by default; a request turns it on with `chat_template_kwargs` (`bench/reasoning_modes.py`).
 
@@ -122,6 +124,10 @@ serve/serve.sh && serve/verify.sh
 a file (`VLLM_API_KEY=<key>`, `chmod 600`) and set `BIND` and `API_KEY_FILE` (`serve/config.example.env`). The first
 completion comes 12 to 18 minutes after the start. `serve/serve.sh --check` runs every check without touching a
 running container; `--print` shows the docker run. The version on vLLM v0.31.0 stays at tag `v0.31.0-1`.
+
+With a key, every route but `GET /health` requires it, `/metrics`, `/tokenize` and `/detokenize` included
+(`patches/auth-all-routes/`): give it to the benches and to any metrics reader (`VLLM_API_KEY_FILE`, the key file of
+`serve.sh` fits).
 
 ## Limits
 
