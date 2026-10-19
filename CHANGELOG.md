@@ -9,7 +9,9 @@
   position 1 for a 449 977-token prompt from 0.746 to 0.898 (a reasoning item) and 0.521 to 0.864 (the needle).
 - `patches/auth-all-routes/`: the API key on every route but `GET /health` (vllm-project/vllm#58144: on v0.32.0,
   `/invocations` serves inference without the key). `serve.sh` mounts 26 files; `verify.sh` checks 27 settings.
-- `bench/deep_acceptance.py`: MTP acceptance by position for prompts sized in real tokens past 262 144.
+- `bench/deep_acceptance.py`: MTP acceptance by position for prompts sized in real tokens past 262 144; measured on
+  the served recipe on 2026-10-19 (README table, `results/deep-acceptance-v0320-private-set-1019`).
+- `serve/image-base.sha`: the v0.32.0 files under the two new overlays (20 base files checked by `prepare.sh image`).
 - `bench/load_bench.py`: `--temperature`, `--top-p`, `--top-k`, `--presence-penalty`, `--seed`, and the MTP
   acceptance of each batch. Measured with it: Qwen's non-thinking sampling is not faster than the checkpoint's
   `generation_config` for one client, and sampled throughput is 7 to 9 % under the greedy figures

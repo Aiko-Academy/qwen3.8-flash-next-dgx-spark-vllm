@@ -1,0 +1,148 @@
+{
+ "kind": "deep-acceptance",
+ "label": "v0320-private-set-1019",
+ "measured_at": "2026-10-19T19:54:09+0200",
+ "repo_commit": "c2f964ed95420d0681bc6f25a602a41ba8296261",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "targets_real_tokens": "200000,280000,450000",
+  "item": "r01",
+  "needle": true,
+  "temperature": 0,
+  "reasoning": "off",
+  "max_tokens": 2048
+ },
+ "targets": [
+  {
+   "target": 200000,
+   "item_prompt_tokens": 200013,
+   "item": {
+    "correct": true,
+    "prompt_tokens": 200013,
+    "reasoning_tokens": 0,
+    "answer_tokens": 483,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 82.7,
+    "acceptance": {
+     "drafts": 177,
+     "by_position": [
+      0.921,
+      0.808
+     ],
+     "finished_requests": 1
+    }
+   },
+   "needle": {
+    "correct": true,
+    "prompt_tokens": 200010,
+    "reasoning_tokens": 0,
+    "answer_tokens": 75,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 2.8,
+    "acceptance": {
+     "drafts": 27,
+     "by_position": [
+      0.963,
+      0.815
+     ],
+     "finished_requests": 1
+    }
+   },
+   "kernel_journal": {
+    "lines_read": 33,
+    "xid": []
+   }
+  },
+  {
+   "target": 280000,
+   "item_prompt_tokens": 280007,
+   "item": {
+    "correct": true,
+    "prompt_tokens": 280007,
+    "reasoning_tokens": 0,
+    "answer_tokens": 437,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 41.8,
+    "acceptance": {
+     "drafts": 165,
+     "by_position": [
+      0.897,
+      0.758
+     ],
+     "finished_requests": 1
+    }
+   },
+   "needle": {
+    "correct": true,
+    "prompt_tokens": 280004,
+    "reasoning_tokens": 0,
+    "answer_tokens": 67,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 3.4,
+    "acceptance": {
+     "drafts": 26,
+     "by_position": [
+      0.923,
+      0.654
+     ],
+     "finished_requests": 1
+    }
+   },
+   "kernel_journal": {
+    "lines_read": 18,
+    "xid": []
+   }
+  },
+  {
+   "target": 450000,
+   "item_prompt_tokens": 449977,
+   "item": {
+    "correct": true,
+    "prompt_tokens": 449977,
+    "reasoning_tokens": 0,
+    "answer_tokens": 500,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 84.7,
+    "acceptance": {
+     "drafts": 187,
+     "by_position": [
+      0.898,
+      0.781
+     ],
+     "finished_requests": 1
+    }
+   },
+   "needle": {
+    "correct": true,
+    "prompt_tokens": 449974,
+    "reasoning_tokens": 0,
+    "answer_tokens": 115,
+    "reasoning_chars": 0,
+    "finish": "stop",
+    "seconds": 4.1,
+    "acceptance": {
+     "drafts": 44,
+     "by_position": [
+      0.864,
+      0.75
+     ],
+     "finished_requests": 1
+    }
+   },
+   "kernel_journal": {
+    "lines_read": 37,
+    "xid": []
+   }
+  }
+ ],
+ "requests": {
+  "sent": 6,
+  "errors": 0
+ },
+ "finished_at": "2026-10-19T19:57:55+0200"
+}

@@ -64,6 +64,7 @@ Measured once per version, the draft set named in each cell:
 | measure | v0.32.0 | v0.31.0 | protocol | files |
 |---|---|---|---|---|
 | long context with a needle | 449 365 tokens read, 3 reasoning items out of 3, needle found (our set) | the same (our set) | `bench/reasoning_bench.py --depths 510000` | `reasoning-deep-510k-v0320-private-set-1018`, `reasoning-deep-510k-off-1018` |
+| MTP acceptance at positions 1 and 2 past the checkpoint's native window, reasoning item / needle question, with `patches/mrope-draft-floor` | 200 013 tokens: 0.921, 0.808 / 0.963, 0.815; 280 007: 0.897, 0.758 / 0.923, 0.654; 449 977: 0.898, 0.781 / 0.864, 0.75; every answer correct, no Xid in the kernel journal (our set) | not measured | `bench/deep_acceptance.py` | `deep-acceptance-v0320-private-set-1019` |
 | short reasoning items | 15 / 15 (public set) | 15 / 15 (our set) | `bench/reasoning_bench.py --short-only`, reasoning off | `reasoning-v0320-short-off-1018`, `reasoning-short-off-1018` |
 | code gate, mechanical judge | 4 / 4 (public set) | 4 / 4 (our set) | `bench/quality/code_gate.py` then `judge_code.py`: Solidity compiles, TypeScript and bash parse | `code-gate-v0320-off-1018`, `code-gate-off-1018` |
 | literal `<tool_call>` written in prose | 32 complete answers out of 36, 4 short stops, no content lost, no fabricated call (public set) | 35 out of 36, 1 short stop, no content lost, no fabricated call (our set) | `bench/toolcall.py`, temperature 0.7 | `toolcall-v0320-public-set-1018`, `toolcall-private-set-1018` |
