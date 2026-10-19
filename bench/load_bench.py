@@ -10,7 +10,9 @@
 
 Sampling (greedy by default): --temperature, --top-p, --top-k, --presence-penalty set it for every request; --seed N
 gives request i the seed N + i, so a sampled pass can be replayed. Our clients send none of these and get the
-checkpoint's generation_config (temperature 1.0, top_p 0.95, top_k 20). --self-check tests the request bodies offline.
+checkpoint's generation_config (temperature 1.0, top_p 0.95, top_k 20). On vLLM v0.32.0 a seeded request leaves the
+fused FlashInfer sampler for the Triton top-k/top-p and Gumbel path (v1/worker/gpu/sample/sampler.py), so a seeded
+pass does not measure what unseeded clients get. --self-check tests the request bodies offline.
 
 A prefill is only comparable with a prefill taken in the same state of the page cache (docs/method.md).
 Refuses to start while a request is running.
