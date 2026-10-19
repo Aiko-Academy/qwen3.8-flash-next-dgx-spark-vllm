@@ -9,6 +9,8 @@
   that gave invented calls: with a system message, 0 of 12 draws call a tool and 12 return code (cut at the
   3 000-token budget); with the Bash tool declared, 12 call Bash and none an undeclared tool; with reasoning low,
   0 of 12 call a tool and 12 return code. The same tests on v0.31.0 are not measured.
+- `bench/probe.py`: `--system TEXT` puts a system message before each generation prompt, so that the code line has a
+  value on v0.32.0; not yet measured.
 
 ## v0.32.0-1 (2026-10-18)
 
