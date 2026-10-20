@@ -1,13 +1,14 @@
 # Negative results
 
 What we tried on this machine and did not keep, with the measurement that decided. These were measured on our
-Spark between 2026-10-12 and 2026-10-20 with the scripts that `bench/` derives from (same prompts and protocols
+Spark between 2026-10-12 and 2026-10-21 with the scripts that `bench/` derives from (same prompts and protocols
 unless stated); the raw files are not published. The probe is greedy, 600 tokens, reasoning off, second pass.
 
 ## Summary
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| screened target head (`--screened-lm-head`, vllm#60566, open) | 2026-10-20 and 21 | greedy probe 6.0 to 6.2 % faster at one client, same texts and acceptance | 8 clients 1.9 % faster (median of three passes per arm), under the 2 % gain set before |
 | internal prefill checkpoints (vllm#60050 and #61601, merged after v0.32.0) | 2026-10-20 | warm replayed turns 14 to 42 % sooner, KV pool +5.6 % (1 664-token blocks) | the summed first token of the replayed turns fell 3.6 %, not 10 %, and cached outputs differed from cold outputs |
 | one draft token instead of two above 8 requests (`num_speculative_tokens_per_batch_size` `[[1, 8, 2], [9, 16, 1]]`) | 2026-10-20 | the same probe texts and speed (two draft tokens kept at one client) | 16 clients 8.7 % slower greedy and 5.1 % slower sampled, where a 5 % gain was set before |
 | CUDA graphs for decoding only (`cudagraph_mode` `FULL_DECODE_ONLY`) | 2026-10-20 | graph capture 0.34 GiB instead of about 1 GiB, KV pool +3.6 % | under the 5 % pool gain set before; one client 5.1 % slower on the load bench, the French prose probe with a system message 3.2 % slower |
@@ -28,6 +29,32 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## Screened target head (2026-10-20, 22:09 to 22:52, and 2026-10-21, 00:00 to 00:38)
+
+vllm-project/vllm#60566 (open, head 229abbf75d) adds `--screened-lm-head`: an FP8 copy of the target head ranks the
+248 320 rows, and only the best candidates are recomputed in BF16 from the original head. We applied it to v0.32.0 (six
+files, no conflict). Criterion written before each measure: the greedy probe with a system message (French prose and
+code) and the greedy load bench at 8 clients each at least 2 % faster than the mean of the two default arms, outside the
+gap between those arms, and greedy texts identical.
+
+The first lot, one load pass per arm, gave +2.05 % at 8 clients under a 2.13 % gap between A and A': not a result. The
+load bench opens each load prompt with a random identifier, so the arms did not send the same prompts. The confirmation
+lot played the 8-client load three times in a row per arm, with Python's generator seeded per pass (the same seed in the
+three arms, another one for each pass), and compared the medians.
+
+| measure | default (A) | screened head (B) | default (A') |
+|---|---|---|---|
+| load bench, 8 clients, median of three passes, tok/s | 134.7 | 137.8 | 135.7 |
+| the three passes, tok/s | 134.5, 134.7, 134.7 | 137.8, 137.2, 138.4 | 132.2, 136.6, 135.7 |
+| probe with a system message, French prose, tok/s | 43.21 | 45.87 | 43.16 |
+| probe with a system message, code, tok/s | 55.37 | 58.68 | 55.31 |
+| KV pool, tokens | 1 265 468 | 1 259 227 | 1 259 227 |
+
+At one client the probe gained 6.0 to 6.2 % on all five prompts, under a 0.1 to 0.5 % gap, with the same texts and the
+same acceptance by position. At 8 clients the gain was out of the noise for the first time (1.9 % against a 0.7 % gap
+between medians), but under the 2 % set before. Nothing regressed. Not kept; worth measuring again once the pull request
+is merged, when it no longer needs an overlay.
 
 ## Internal prefill checkpoints (2026-10-20, 21:11 to 22:08)
 

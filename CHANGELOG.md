@@ -3,6 +3,7 @@
 ## Since v0.32.0-4 (2026-10-20)
 
 - `docs/negative-results.md`: internal prefill checkpoints (vllm#60050 and #61601) on v0.32.0.
+- `docs/negative-results.md`: the screened target head (vllm#60566) on v0.32.0.
 
 ## v0.32.0-4 (2026-10-20)
 
