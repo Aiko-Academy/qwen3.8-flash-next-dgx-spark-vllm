@@ -1,0 +1,779 @@
+{
+ "kind": "toolcall",
+ "label": "unprompted-v0320-3-private-set-1020",
+ "measured_at": "2026-10-20T03:11:16+0200",
+ "repo_commit": "d95de7abe9d3d1aa5f492c5292d53d1463cd16cd",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "path": "chat (return_token_ids)",
+  "temperature": 0.7,
+  "reasoning": "default",
+  "series": 3,
+  "per_series": 4,
+  "cases": [
+   "code_without_tool",
+   "prose_fr_without_tool"
+  ],
+  "system": null
+ },
+ "summary": {
+  "code_without_tool": {
+   "complete": 1,
+   "missed_call": 11
+  },
+  "prose_fr_without_tool": {
+   "complete": 12,
+   "missed_call": 0
+  },
+  "total": {
+   "complete": 13,
+   "missed_call": 11
+  }
+ },
+ "called": {
+  "code_without_tool": {
+   "draws": 12,
+   "with_undeclared_call": 11,
+   "with_declared_calls_only": 0,
+   "without_call": 1,
+   "code_block_returned": 1,
+   "length_finishes": 1,
+   "names": [
+    "list_files",
+    "read_file"
+   ]
+  },
+  "prose_fr_without_tool": {
+   "draws": 12,
+   "with_undeclared_call": 0,
+   "with_declared_calls_only": 0,
+   "without_call": 12,
+   "code_block_returned": 0,
+   "length_finishes": 0,
+   "names": []
+  }
+ },
+ "responses": [
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 197,
+   "content": 96,
+   "visible": 687,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "called_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll explore the project structure first to understand the setup befor",
+   "raw_excerpt": "e first to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 3.9,
+   "raw_full": "I'll explore the project structure first to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n60\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\nsrc/App.tsx\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n60\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\nindex.html\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n40\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll explore the project structure first to understand the setup before writing the module.\n\n\n\n\n",
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "03:11:20"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 145,
+   "content": 83,
+   "visible": 512,
+   "calls": [],
+   "markers": {
+    "tool_call": 3,
+    "tool_call_outside_code": 3,
+    "function": 3,
+    "function_outside_code": 3
+   },
+   "called_names": [
+    "list_files",
+    "read_file",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the existing project structure to understand t",
+   "raw_excerpt": "ng the existing project structure to understand the setup.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit",
+   "reasoning_tokens": 0,
+   "seconds": 2.8,
+   "raw_full": "I'll start by exploring the existing project structure to understand the setup.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\ntsconfig.json\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the existing project structure to understand the setup.\n\n\n\n",
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "03:11:23"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 212,
+   "content": 153,
+   "visible": 746,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "called_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll build a complete priority queue module in TypeScript with id-base",
+   "raw_excerpt": "ough vitest tests. Let me first explore the project setup.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit",
+   "reasoning_tokens": 0,
+   "seconds": 3.9,
+   "raw_full": "I'll build a complete priority queue module in TypeScript with id-based removal, plus thorough vitest tests. Let me first explore the project setup.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\nsrc/App.tsx\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n50\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\nindex.html\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll build a complete priority queue module in TypeScript with id-based removal, plus thorough vitest tests. Let me first explore the project setup.\n\n\n\n\n",
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "03:11:27"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 94,
+   "content": 85,
+   "visible": 344,
+   "calls": [],
+   "markers": {
+    "tool_call": 2,
+    "tool_call_outside_code": 2,
+    "function": 2,
+    "function_outside_code": 2
+   },
+   "called_names": [
+    "list_files",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand what's alr",
+   "raw_excerpt": "the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 1.8,
+   "raw_full": "I'll start by exploring the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand what's already set up.\n\n\n",
+   "series": 1,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "03:11:29"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 812,
+   "content": 3961,
+   "visible": 3961,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "Dans l'architecture traditionnelle, les paiements interbancaires repos",
+   "raw_excerpt": "Dans l'architecture traditionnelle, les paiements interbancaires reposent sur un système de comptes de règlement tenus par la banque centrale. Chaque banque commerciale détient un compte auprès de la ",
+   "reasoning_tokens": 0,
+   "seconds": 20.6,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 1,
+   "time": "03:11:49"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 955,
+   "content": 4420,
+   "visible": 4420,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "La transition vers une monnaie de banque centrale tokenisée (CBDC) mod",
+   "raw_excerpt": "La transition vers une monnaie de banque centrale tokenisée (CBDC) modifie fondamentalement l'infrastructure des paiements interbancaires en substituant les registres traditionnels par une architectur",
+   "reasoning_tokens": 0,
+   "seconds": 23.7,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 2,
+   "time": "03:12:13"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 812,
+   "content": 3892,
+   "visible": 3892,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "La mise en place d'un système de règlement en monnaie de banque centra",
+   "raw_excerpt": "La mise en place d'un système de règlement en monnaie de banque centrale tokenisée (MNBC) commence par l'inscription des institutions financières sur une infrastructure de registre distribué ou une pl",
+   "reasoning_tokens": 0,
+   "seconds": 20.6,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 3,
+   "time": "03:12:34"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 731,
+   "content": 3628,
+   "visible": 3628,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "Dans l'écosystème financier moderne, le règlement des paiements interb",
+   "raw_excerpt": "Dans l'écosystème financier moderne, le règlement des paiements interbancaires repose traditionnellement sur des comptes de réserve détenus auprès de la banque centrale. Avec l'introduction de la monn",
+   "reasoning_tokens": 0,
+   "seconds": 18.5,
+   "series": 1,
+   "case": "prose_fr_without_tool",
+   "rank": 4,
+   "time": "03:12:52"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 199,
+   "content": 87,
+   "visible": 680,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "called_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand what's alr",
+   "raw_excerpt": "the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit",
+   "reasoning_tokens": 0,
+   "seconds": 3.6,
+   "raw_full": "I'll start by exploring the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\nsrc/App.tsx\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n50\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\nindex.html\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand what's already set up.\n\n\n\n\n",
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "03:12:56"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 199,
+   "content": 87,
+   "visible": 683,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "called_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand what's alr",
+   "raw_excerpt": "the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit",
+   "reasoning_tokens": 0,
+   "seconds": 3.6,
+   "raw_full": "I'll start by exploring the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\ntsconfig.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\nindex.html\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand what's already set up.\n\n\n\n\n",
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "03:12:59"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 94,
+   "content": 85,
+   "visible": 344,
+   "calls": [],
+   "markers": {
+    "tool_call": 2,
+    "tool_call_outside_code": 2,
+    "function": 2,
+    "function_outside_code": 2
+   },
+   "called_names": [
+    "list_files",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand what's alr",
+   "raw_excerpt": "the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit",
+   "reasoning_tokens": 0,
+   "seconds": 1.8,
+   "raw_full": "I'll start by exploring the project structure to understand what's already set up.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand what's already set up.\n\n\n",
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "03:13:01"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 152,
+   "content": 123,
+   "visible": 551,
+   "calls": [],
+   "markers": {
+    "tool_call": 3,
+    "tool_call_outside_code": 3,
+    "function": 3,
+    "function_outside_code": 3
+   },
+   "called_names": [
+    "read_file",
+    "list_files",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "read_file",
+    "list_files",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand the setup,",
+   "raw_excerpt": "he setup, then build the priority queue module with tests.\n\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parame",
+   "reasoning_tokens": 0,
+   "seconds": 3.0,
+   "raw_full": "I'll start by exploring the project structure to understand the setup, then build the priority queue module with tests.\n\n<tool_call>\n<function=read_file>\n<parameter=limit>\n100\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=limit>\n60\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=path>\ntsconfig.json\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup, then build the priority queue module with tests.\n\n\n\n",
+   "series": 2,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "03:13:04"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 707,
+   "content": 3387,
+   "visible": 3387,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "Dans l'architecture financière traditionnelle, les paiements interbanc",
+   "raw_excerpt": "Dans l'architecture financière traditionnelle, les paiements interbancaires s'effectuent via des comptes de réserve détenus par les banques commerciales auprès de la banque centrale. Ces comptes sont ",
+   "reasoning_tokens": 0,
+   "seconds": 17.4,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 1,
+   "time": "03:13:21"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 723,
+   "content": 3457,
+   "visible": 3457,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "La modernisation des systèmes de paiement repose sur la transition ver",
+   "raw_excerpt": "La modernisation des systèmes de paiement repose sur la transition vers une monnaie de banque centrale numérique (MBCN), souvent appelée « monnaie de banque centrale tokenisée ». Dans ce nouveau parad",
+   "reasoning_tokens": 0,
+   "seconds": 18.6,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 2,
+   "time": "03:13:40"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 688,
+   "content": 3325,
+   "visible": 3325,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "Dans un système de monnaie de banque centrale tokenisée, le processus ",
+   "raw_excerpt": "Dans un système de monnaie de banque centrale tokenisée, le processus de règlement interbancaire commence par l'initiation d'une transaction par une banque commerciale émettrice. Cette banque détient ",
+   "reasoning_tokens": 0,
+   "seconds": 16.9,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 3,
+   "time": "03:13:57"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 869,
+   "content": 4198,
+   "visible": 4198,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "L'introduction de la monnaie de banque centrale tokenisée (MBCt) trans",
+   "raw_excerpt": "L'introduction de la monnaie de banque centrale tokenisée (MBCt) transforme radicalement l'infrastructure de paiement interbancaire en passant d'un modèle de crédit fiduciaire à un modèle de transfert",
+   "reasoning_tokens": 0,
+   "seconds": 21.7,
+   "series": 2,
+   "case": "prose_fr_without_tool",
+   "rank": 4,
+   "time": "03:14:19"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 200,
+   "content": 99,
+   "visible": 692,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "called_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand the setup ",
+   "raw_excerpt": "structure to understand the setup before writing the code.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 3.7,
+   "raw_full": "I'll start by exploring the project structure to understand the setup before writing the code.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\nsrc/App.tsx\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\nindex.html\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n50\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup before writing the code.\n\n\n\n\n",
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 1,
+   "time": "03:14:23"
+  },
+  {
+   "class": "complete",
+   "finish": "length",
+   "tokens": 3000,
+   "content": 10427,
+   "visible": 10420,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": true,
+   "content_start": "```typescript\n// priority-queue.ts\n\nexport type Priority = number;\n\nex",
+   "raw_excerpt": "```typescript\n// priority-queue.ts\n\nexport type Priority = number;\n\nexport interface QueueItem<T = unknown> {\n  id: string;\n  value: T;\n  priority: Priority;\n  timestamp: number;\n}\n\nexport class Prior",
+   "reasoning_tokens": 0,
+   "seconds": 55.8,
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 2,
+   "time": "03:15:18"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 199,
+   "content": 101,
+   "visible": 693,
+   "calls": [],
+   "markers": {
+    "tool_call": 4,
+    "tool_call_outside_code": 4,
+    "function": 4,
+    "function_outside_code": 4
+   },
+   "called_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "read_file",
+    "read_file",
+    "read_file"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand the setup ",
+   "raw_excerpt": "ructure to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>",
+   "reasoning_tokens": 0,
+   "seconds": 3.7,
+   "raw_full": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n100\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\nsrc/App.tsx\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n60\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=read_file>\n<parameter=path>\nindex.html\n</parameter>\n<parameter=offset>\n1\n</parameter>\n<parameter=limit>\n40\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup before writing the module.\n\n\n\n\n",
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 3,
+   "time": "03:15:22"
+  },
+  {
+   "class": "missed_call",
+   "finish": "stop",
+   "tokens": 74,
+   "content": 129,
+   "visible": 311,
+   "calls": [],
+   "markers": {
+    "tool_call": 2,
+    "tool_call_outside_code": 2,
+    "function": 2,
+    "function_outside_code": 2
+   },
+   "called_names": [
+    "list_files",
+    "list_files"
+   ],
+   "undeclared_names": [
+    "list_files",
+    "list_files"
+   ],
+   "code_block_returned": false,
+   "content_start": "I'll start by exploring the project structure to understand the setup,",
+   "raw_excerpt": "p, then build a complete priority queue module with tests.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=list_files>\n<parameter=path",
+   "reasoning_tokens": 0,
+   "seconds": 1.6,
+   "raw_full": "I'll start by exploring the project structure to understand the setup, then build a complete priority queue module with tests.\n\n<tool_call>\n<function=list_files>\n<parameter=path>\n.\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n<function=list_files>\n<parameter=path>\nsrc\n</parameter>\n</function>\n</tool_call><|im_end|>",
+   "content_full": "I'll start by exploring the project structure to understand the setup, then build a complete priority queue module with tests.\n\n\n",
+   "series": 3,
+   "case": "code_without_tool",
+   "rank": 4,
+   "time": "03:15:24"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 899,
+   "content": 4352,
+   "visible": 4352,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "Dans l'architecture financière traditionnelle, le règlement des paieme",
+   "raw_excerpt": "Dans l'architecture financière traditionnelle, le règlement des paiements interbancaires repose sur des comptes de correspondance ouverts auprès de la banque centrale, où les mouvements de fonds sont ",
+   "reasoning_tokens": 0,
+   "seconds": 22.3,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 1,
+   "time": "03:15:46"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 863,
+   "content": 4261,
+   "visible": 4261,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "Dans le cadre d'un système de monnaie de banque centrale tokenisée (mC",
+   "raw_excerpt": "Dans le cadre d'un système de monnaie de banque centrale tokenisée (mCBDC), le règlement d'un paiement interbancaire repose sur l'utilisation d'une infrastructure technologique partagée, souvent basée",
+   "reasoning_tokens": 0,
+   "seconds": 21.9,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 2,
+   "time": "03:16:08"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 756,
+   "content": 3697,
+   "visible": 3697,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "La mise en œuvre d’un règlement interbancaire via une monnaie de banqu",
+   "raw_excerpt": "La mise en œuvre d’un règlement interbancaire via une monnaie de banque centrale tokenisée (mCBDC) commence par la conversion des soldes traditionnels en actifs numériques natifs. Chaque banque commer",
+   "reasoning_tokens": 0,
+   "seconds": 20.1,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 3,
+   "time": "03:16:28"
+  },
+  {
+   "class": "complete",
+   "finish": "stop",
+   "tokens": 968,
+   "content": 4698,
+   "visible": 4698,
+   "calls": [],
+   "markers": {
+    "tool_call": 0,
+    "tool_call_outside_code": 0,
+    "function": 0,
+    "function_outside_code": 0
+   },
+   "called_names": [],
+   "undeclared_names": [],
+   "code_block_returned": false,
+   "content_start": "La mise en place d’un système de règlement interbancaire basé sur la m",
+   "raw_excerpt": "La mise en place d’un système de règlement interbancaire basé sur la monnaie de banque centrale tokenisée (MBCt) repose sur l’utilisation d’un registre distribué ou d’une blockchain privée, où chaque ",
+   "reasoning_tokens": 0,
+   "seconds": 24.8,
+   "series": 3,
+   "case": "prose_fr_without_tool",
+   "rank": 4,
+   "time": "03:16:53"
+  }
+ ],
+ "requests": {
+  "sent": 24,
+  "errors": 0
+ },
+ "finished_at": "2026-10-20T03:16:53+0200"
+}

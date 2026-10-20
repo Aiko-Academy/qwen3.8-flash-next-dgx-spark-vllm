@@ -1,0 +1,125 @@
+{
+ "kind": "probe",
+ "label": "v0320-3-private-set-1020-system",
+ "measured_at": "2026-10-20T03:03:41+0200",
+ "repo_commit": "d95de7abe9d3d1aa5f492c5292d53d1463cd16cd",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "max_tokens": 600,
+  "temperature": 0,
+  "reasoning": "off",
+  "passes": 2,
+  "rest_s": 20,
+  "prompts": {
+   "prose_fr": "Explique en francais, en six paragraphes, comment une banque centrale regle un paiement interbancaire en monnaie de banque centrale tokenisee, et ce que change le reglement atomique.",
+   "prose_en": "Explain in English, in six paragraphs, how a central bank settles an interbank payment in tokenised central bank money, and what atomic settlement changes.",
+   "code": "Ecris en TypeScript un module complet de file d'attente avec priorites, retrait par identifiant, et tests unitaires vitest. Code seulement."
+  },
+  "system": "You are a helpful assistant."
+ },
+ "generations": [
+  {
+   "prompt": "prose_fr",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 41.96,
+   "tokens_per_step": 2.09,
+   "acceptance_by_position": [
+    0.683,
+    0.404
+   ],
+   "mean_itl_ms": 49.8,
+   "finished_requests": 1.0,
+   "text": "Dans le cadre d'un système de paiement interbancaire utilisant une monnaie de banque centrale tokenisée (MNBC), le processus commence par l'initiation d'une transaction entre deux institutions financières. Contrairement aux systèmes traditionnels où les échanges se font via des comptes de correspondance ou des infrastructures centralisées comme TARGET2, ici, la valeur est représentée sous forme de tokens numériques natifs sur une infrastructure distribuée, souvent une blockchain ou un registre distribué (DLT). Chaque banque détient un portefeuille numérique sécurisé contenant ses tokens de MNBC, qui constituent la réserve ultime de liquidité garantie par la banque centrale.\n\nLorsqu'une banque A souhaite payer une banque B, elle crée une transaction numérique signée cryptographiquement, indiquant le montant et l'adresse du portefeuille de la banque B. Cette transaction est ensuite diffusée sur le réseau de la MNBC. À ce stade, les fonds ne sont pas encore transférés de manière irréversible ; ils sont simplement \"mis en attente\" ou verrouillés dans un état de pré-validation. Le réseau vérifie la solvabilité de la banque A, s'assurant qu'elle dispose de suffisamment de tokens pour couvrir le paiement, sans pour autant exécuter le transfert final immédiatement.\n\nLe rôle de la banque centrale est crucial dans cette architecture, car elle agit comme l'émetteur et le régulateur de la monnaie. Elle valide l'authenticité des tokens et maintient la confiance dans le système en garantissant que chaque token correspond à une unité de monnaie légale. Dans un modèle hybride, la banque centrale peut opérer un nœud de validation ou superviser le consensus du réseau, s'assurant que les règles monétaires et les limites de crédit sont respectées. Cette supervision permet de maintenir la stabilité financière tout en modernisant l'infrastructure de paiement.\n\nLe règlement atomique est la caractéristique technique qui distingue fondamentalement ce système des paiements classiques. Le terme \"atomique\" signifie que la transaction est indivisible et irréversible : soit elle réussit entièrement, soit elle échoue complètement, sans état intermédiaire. Dans le contexte d'un paiement interbancaire, cela implique que le transfert de tokens de la banque A vers la banque B et la confirmation de la dette ou de la créance associée se produisent simultanément et instantanément sur le registre distribué.\n\nCe mécanisme élimine le risque de règlement, qui est la possibilité qu'une partie effectue le paiement tandis que l'autre ne livre pas la contrepartie, ou vice versa. Dans les systèmes traditionnels, il existe souvent un décalage temporel entre l'ordre de paiement et le règlement final, créant une exposition au risque de crédit et de liquidité. Avec le règlement atomique, la finalité est atteinte au moment même de la validation du bloc ou de la transaction"
+  },
+  {
+   "prompt": "prose_fr",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 43.25,
+   "tokens_per_step": 2.09,
+   "acceptance_by_position": [
+    0.683,
+    0.404
+   ],
+   "mean_itl_ms": 48.3,
+   "finished_requests": 1.0,
+   "text": "Dans le cadre d'un système de paiement interbancaire utilisant une monnaie de banque centrale tokenisée (MNBC), le processus commence par l'initiation d'une transaction entre deux institutions financières. Contrairement aux systèmes traditionnels où les échanges se font via des comptes de correspondance ou des infrastructures centralisées comme TARGET2, ici, la valeur est représentée sous forme de tokens numériques natifs sur une infrastructure distribuée, souvent une blockchain ou un registre distribué (DLT). Chaque banque détient un portefeuille numérique sécurisé contenant ses tokens de MNBC, qui constituent la réserve ultime de liquidité garantie par la banque centrale.\n\nLorsqu'une banque A souhaite payer une banque B, elle crée une transaction numérique signée cryptographiquement, indiquant le montant et l'adresse du portefeuille de la banque B. Cette transaction est ensuite diffusée sur le réseau de la MNBC. À ce stade, les fonds ne sont pas encore transférés de manière irréversible ; ils sont simplement \"mis en attente\" ou verrouillés dans un état de pré-validation. Le réseau vérifie la solvabilité de la banque A, s'assurant qu'elle dispose de suffisamment de tokens pour couvrir le paiement, sans pour autant exécuter le transfert final immédiatement.\n\nLe rôle de la banque centrale est crucial dans cette architecture, car elle agit comme l'émetteur et le régulateur de la monnaie. Elle valide l'authenticité des tokens et maintient la confiance dans le système en garantissant que chaque token correspond à une unité de monnaie légale. Dans un modèle hybride, la banque centrale peut opérer un nœud de validation ou superviser le consensus du réseau, s'assurant que les règles monétaires et les limites de crédit sont respectées. Cette supervision permet de maintenir la stabilité financière tout en modernisant l'infrastructure de paiement.\n\nLe règlement atomique est la caractéristique technique qui distingue fondamentalement ce système des paiements classiques. Le terme \"atomique\" signifie que la transaction est indivisible et irréversible : soit elle réussit entièrement, soit elle échoue complètement, sans état intermédiaire. Dans le contexte d'un paiement interbancaire, cela implique que le transfert de tokens de la banque A vers la banque B et la confirmation de la dette ou de la créance associée se produisent simultanément et instantanément sur le registre distribué.\n\nCe mécanisme élimine le risque de règlement, qui est la possibilité qu'une partie effectue le paiement tandis que l'autre ne livre pas la contrepartie, ou vice versa. Dans les systèmes traditionnels, il existe souvent un décalage temporel entre l'ordre de paiement et le règlement final, créant une exposition au risque de crédit et de liquidité. Avec le règlement atomique, la finalité est atteinte au moment même de la validation du bloc ou de la transaction"
+  },
+  {
+   "prompt": "prose_en",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 43.22,
+   "tokens_per_step": 2.19,
+   "acceptance_by_position": [
+    0.734,
+    0.456
+   ],
+   "mean_itl_ms": 50.6,
+   "finished_requests": 1.0,
+   "text": "In a traditional central bank money system, interbank payments are typically settled through a ledger-based process where the central bank acts as the ultimate arbiter of value. When Bank A needs to pay Bank B, it instructs the central bank to transfer a specific amount from its reserve account to Bank B’s reserve account. This process often involves a delay between the initiation of the payment and the final settlement, known as settlement risk, because the transfer of funds and the delivery of the underlying asset (such as securities) may not happen simultaneously. The central bank’s ledger is the single source of truth, ensuring that the money supply remains stable and that banks cannot create money out of thin air without proper backing.\n\nTokenised central bank money represents a digital evolution of this concept, where the central bank issues digital tokens that function as legal tender but exist on a distributed ledger technology (DLT) or a similar cryptographic infrastructure. Instead of merely updating balances in a centralized database, the central bank mints, burns, or transfers unique digital tokens that represent specific units of currency. These tokens are programmable and can be embedded with metadata, allowing for more complex interactions between financial institutions. The key distinction is that the value is carried by the token itself, which can be verified independently by any participant in the network, rather than relying solely on the central bank’s internal ledger entries.\n\nWhen settling an interbank payment using tokenised central bank money, the process begins with Bank A holding a certain number of digital tokens in its digital wallet or node. To pay Bank B, Bank A initiates a transaction that transfers these tokens directly to Bank B’s address on the network. This transfer is recorded on the shared ledger, and once the transaction is validated by the network’s consensus mechanism, the ownership of the tokens changes hands. The central bank may still oversee the issuance and redemption of these tokens, but the actual settlement of the payment occurs peer-to-peer between the banks, reducing the need for intermediaries and potentially speeding up the transaction finality.\n\nAtomic settlement is a critical feature enabled by tokenised money and smart contracts, fundamentally changing how value and assets are exchanged. In a traditional system, the payment of money and the delivery of an asset (like a bond or foreign currency) are often separate processes, leading to settlement risk where one party might fail to deliver after the other has paid. Atomic settlement ensures that the transfer of tokenised central bank money and the transfer of the corresponding asset occur simultaneously and irreversibly in a single transaction. If either part of the transaction fails, the entire transaction is rolled back, ensuring that no party is left exposed to the risk of non-delivery.\n\nThis atomicity is achieved through the use of smart contracts, which are self-executing contracts with the terms of the agreement directly written into code. The smart contract holds both the tokenised money and the tokenised asset in escrow until all conditions are met. Once the conditions are satisfied, the contract automatically swaps the"
+  },
+  {
+   "prompt": "prose_en",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 44.65,
+   "tokens_per_step": 2.19,
+   "acceptance_by_position": [
+    0.734,
+    0.456
+   ],
+   "mean_itl_ms": 49.0,
+   "finished_requests": 1.0,
+   "text": "In a traditional central bank money system, interbank payments are typically settled through a ledger-based process where the central bank acts as the ultimate arbiter of value. When Bank A needs to pay Bank B, it instructs the central bank to transfer a specific amount from its reserve account to Bank B’s reserve account. This process often involves a delay between the initiation of the payment and the final settlement, known as settlement risk, because the transfer of funds and the delivery of the underlying asset (such as securities) may not happen simultaneously. The central bank’s ledger is the single source of truth, ensuring that the money supply remains stable and that banks cannot create money out of thin air without proper backing.\n\nTokenised central bank money represents a digital evolution of this concept, where the central bank issues digital tokens that function as legal tender but exist on a distributed ledger technology (DLT) or a similar cryptographic infrastructure. Instead of merely updating balances in a centralized database, the central bank mints, burns, or transfers unique digital tokens that represent specific units of currency. These tokens are programmable and can be embedded with metadata, allowing for more complex interactions between financial institutions. The key distinction is that the value is carried by the token itself, which can be verified independently by any participant in the network, rather than relying solely on the central bank’s internal ledger entries.\n\nWhen settling an interbank payment using tokenised central bank money, the process begins with Bank A holding a certain number of digital tokens in its digital wallet or node. To pay Bank B, Bank A initiates a transaction that transfers these tokens directly to Bank B’s address on the network. This transfer is recorded on the shared ledger, and once the transaction is validated by the network’s consensus mechanism, the ownership of the tokens changes hands. The central bank may still oversee the issuance and redemption of these tokens, but the actual settlement of the payment occurs peer-to-peer between the banks, reducing the need for intermediaries and potentially speeding up the transaction finality.\n\nAtomic settlement is a critical feature enabled by tokenised money and smart contracts, fundamentally changing how value and assets are exchanged. In a traditional system, the payment of money and the delivery of an asset (like a bond or foreign currency) are often separate processes, leading to settlement risk where one party might fail to deliver after the other has paid. Atomic settlement ensures that the transfer of tokenised central bank money and the transfer of the corresponding asset occur simultaneously and irreversibly in a single transaction. If either part of the transaction fails, the entire transaction is rolled back, ensuring that no party is left exposed to the risk of non-delivery.\n\nThis atomicity is achieved through the use of smart contracts, which are self-executing contracts with the terms of the agreement directly written into code. The smart contract holds both the tokenised money and the tokenised asset in escrow until all conditions are met. Once the conditions are satisfied, the contract automatically swaps the"
+  },
+  {
+   "prompt": "code",
+   "pass": 1,
+   "tokens": 600,
+   "tok_s": 53.89,
+   "tokens_per_step": 2.74,
+   "acceptance_by_position": [
+    0.9,
+    0.836
+   ],
+   "mean_itl_ms": 50.8,
+   "finished_requests": 1.0,
+   "text": "```typescript\n// PriorityQueue.ts\n\nexport interface QueueItem<T> {\n  id: string;\n  priority: number;\n  value: T;\n  timestamp: number;\n}\n\nexport class PriorityQueue<T> {\n  private heap: QueueItem<T>[];\n  private idMap: Map<string, QueueItem<T>>;\n\n  constructor() {\n    this.heap = [];\n    this.idMap = new Map();\n  }\n\n  /**\n   * Add an item to the priority queue.\n   * @param id Unique identifier for the item\n   * @param value The value to store\n   * @param priority Higher number = higher priority\n   */\n  enqueue(id: string, value: T, priority: number): void {\n    if (this.idMap.has(id)) {\n      throw new Error(`Item with id \"${id}\" already exists in the queue`);\n    }\n\n    const item: QueueItem<T> = {\n      id,\n      value,\n      priority,\n      timestamp: Date.now(),\n    };\n\n    this.heap.push(item);\n    this.idMap.set(id, item);\n    this.bubbleUp(this.heap.length - 1);\n  }\n\n  /**\n   * Remove and return the highest priority item.\n   * @returns The item with the highest priority, or undefined if queue is empty\n   */\n  dequeue(): QueueItem<T> | undefined {\n    if (this.heap.length === 0) {\n      return undefined;\n    }\n\n    const top = this.heap[0];\n    const last = this.heap.pop()!;\n\n    if (this.heap.length > 0) {\n      this.heap[0] = last;\n      this.bubbleDown(0);\n    }\n\n    this.idMap.delete(top.id);\n    return top;\n  }\n\n  /**\n   * Peek at the highest priority item without removing it.\n   * @returns The item with the highest priority, or undefined if queue is empty\n   */\n  peek(): QueueItem<T> | undefined {\n    return this.heap.length > 0 ? this.heap[0] : undefined;\n  }\n\n  /**\n   * Remove an item by its unique identifier.\n   * @param id The identifier of the item to remove\n   * @returns true if the item was found and removed, false otherwise\n   */\n  removeById(id: string): boolean {\n    const item = this.idMap.get(id);\n    if (!item) {\n      return false;\n    }\n\n    const index = this.heap.indexOf(item);\n    if (index === -1) {\n      // Should not happen if idMap is consistent, but handle gracefully\n      this.idMap.delete(id);\n      return false;\n    }\n\n"
+  },
+  {
+   "prompt": "code",
+   "pass": 2,
+   "tokens": 600,
+   "tok_s": 55.42,
+   "tokens_per_step": 2.74,
+   "acceptance_by_position": [
+    0.9,
+    0.836
+   ],
+   "mean_itl_ms": 49.4,
+   "finished_requests": 1.0,
+   "text": "```typescript\n// PriorityQueue.ts\n\nexport interface QueueItem<T> {\n  id: string;\n  priority: number;\n  value: T;\n  timestamp: number;\n}\n\nexport class PriorityQueue<T> {\n  private heap: QueueItem<T>[];\n  private idMap: Map<string, QueueItem<T>>;\n\n  constructor() {\n    this.heap = [];\n    this.idMap = new Map();\n  }\n\n  /**\n   * Add an item to the priority queue.\n   * @param id Unique identifier for the item\n   * @param value The value to store\n   * @param priority Higher number = higher priority\n   */\n  enqueue(id: string, value: T, priority: number): void {\n    if (this.idMap.has(id)) {\n      throw new Error(`Item with id \"${id}\" already exists in the queue`);\n    }\n\n    const item: QueueItem<T> = {\n      id,\n      value,\n      priority,\n      timestamp: Date.now(),\n    };\n\n    this.heap.push(item);\n    this.idMap.set(id, item);\n    this.bubbleUp(this.heap.length - 1);\n  }\n\n  /**\n   * Remove and return the highest priority item.\n   * @returns The item with the highest priority, or undefined if queue is empty\n   */\n  dequeue(): QueueItem<T> | undefined {\n    if (this.heap.length === 0) {\n      return undefined;\n    }\n\n    const top = this.heap[0];\n    const last = this.heap.pop()!;\n\n    if (this.heap.length > 0) {\n      this.heap[0] = last;\n      this.bubbleDown(0);\n    }\n\n    this.idMap.delete(top.id);\n    return top;\n  }\n\n  /**\n   * Peek at the highest priority item without removing it.\n   * @returns The item with the highest priority, or undefined if queue is empty\n   */\n  peek(): QueueItem<T> | undefined {\n    return this.heap.length > 0 ? this.heap[0] : undefined;\n  }\n\n  /**\n   * Remove an item by its unique identifier.\n   * @param id The identifier of the item to remove\n   * @returns true if the item was found and removed, false otherwise\n   */\n  removeById(id: string): boolean {\n    const item = this.idMap.get(id);\n    if (!item) {\n      return false;\n    }\n\n    const index = this.heap.indexOf(item);\n    if (index === -1) {\n      // Should not happen if idMap is consistent, but handle gracefully\n      this.idMap.delete(id);\n      return false;\n    }\n\n"
+  }
+ ],
+ "tool": {
+  "well_formed": true,
+  "tool_calls": [
+   {
+    "id": "chatcmpl-tool-abe1bb935096f656",
+    "type": "function",
+    "function": {
+     "name": "solde_compte",
+     "arguments": "{\"iban\": \"FR7630006000011234567890189\"}"
+    }
+   }
+  ],
+  "content": null
+ },
+ "requests": {
+  "sent": 7,
+  "errors": 0
+ },
+ "finished_at": "2026-10-20T03:07:11+0200"
+}

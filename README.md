@@ -81,6 +81,21 @@ arms of that A-B-A (`probe-c1-bloc-*-1020-bis-system`, `probe-c1-bloc-*-1020-bis
 is the scheduler block of this hybrid model, 1 648 tokens, which vLLM sets so that an attention page is at least as
 large as a Mamba state page.
 
+The served v0.32.0-3, measured after its restart on 2026-10-20 between 03:03 and 03:17 (our draft set; greedy probe
+texts identical to those of v0.32.0-2, tool call well formed):
+
+| measure | v0.32.0-3 | protocol | files |
+|---|---|---|---|
+| decoding, French / English prose, with a system message | 43.25 / 44.65 tok/s | `bench/probe.py --system "You are a helpful assistant."`, second pass | `probe-v0320-3-private-set-1020-system` |
+| decoding, code (TypeScript), with a system message | 55.42 tok/s | same | same |
+| MTP acceptance at positions 1 and 2, French / English / code | 0.683, 0.404 / 0.734, 0.456 / 0.900, 0.836 | same | same |
+| decoding, French / English prose, no system message | 41.11 / 42.53 tok/s | `bench/probe.py --only prose_fr,prose_en`, second pass | `probe-v0320-3-private-set-1020-prose` |
+| prefix cache, 18 517-token prompt | cold 11.06 s, cached 3.67 and 2.95 s, 36 256 tokens hit, outputs identical | `bench/prefix_cache.py` | `prefix-cache-v0320-3-private-set-1020` |
+| invented tool calls, code prompt, no tool declared | 11 draws with a call, 1 complete answer; French prose: 0 | `bench/toolcall.py --cases code_without_tool,prose_fr_without_tool --series 3 --per-series 4`, temperature 0.7 | `toolcall-unprompted-v0320-3-private-set-1020` |
+
+Out of 12 draws per prompt, as on 2026-10-18 before the tool-parser rebuild: with no tool declared, no call reaches the
+client, which receives the sentence of intent.
+
 How much of the model's output each draft set covers (share of generated tokens inside the set, measured on the
 v0.31.0 outputs, `tools/draft_vocab_coverage.py`, `results/draft-vocab-coverage-1018.json`):
 

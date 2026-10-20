@@ -1,0 +1,55 @@
+{
+ "kind": "prefix-cache",
+ "label": "v0320-3-private-set-1020",
+ "measured_at": "2026-10-20T03:10:32+0200",
+ "repo_commit": "d95de7abe9d3d1aa5f492c5292d53d1463cd16cd",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "prompt_chars": 63575,
+  "repeats": 3,
+  "max_tokens": 120,
+  "temperature": 0
+ },
+ "passes": [
+  {
+   "seconds": 11.06,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique, Passepartout. Alors que l'opinion publique se retourne contre lui, l'inspecteur Fix, convaincu que Fogg est le voleur de la Banque d'Angleterre, le traque à travers les continents en espérant obtenir un mandat d'arrestation. Le récit s'arrête à Suez, où Passepartout"
+  },
+  {
+   "seconds": 3.67,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique, Passepartout. Alors que l'opinion publique se retourne contre lui, l'inspecteur Fix, convaincu que Fogg est le voleur de la Banque d'Angleterre, le traque à travers les continents en espérant obtenir un mandat d'arrestation. Le récit s'arrête à Suez, où Passepartout"
+  },
+  {
+   "seconds": 2.95,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte un pari de vingt mille livres pour accomplir le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique, Passepartout. Alors que l'opinion publique se retourne contre lui, l'inspecteur Fix, convaincu que Fogg est le voleur de la Banque d'Angleterre, le traque à travers les continents en espérant obtenir un mandat d'arrestation. Le récit s'arrête à Suez, où Passepartout"
+  }
+ ],
+ "hit_tokens": 36256.0,
+ "cases": [
+  {
+   "name": "prefix cache served (36256 tokens hit)",
+   "ok": true
+  },
+  {
+   "name": "repeats faster than the cold pass (under 0.7 times)",
+   "ok": true
+  },
+  {
+   "name": "the two cached outputs identical (passes 1 and 2)",
+   "ok": true
+  },
+  {
+   "name": "cold output identical to the cached outputs (pass 0)",
+   "ok": true
+  }
+ ],
+ "verdict": "green",
+ "requests": {
+  "sent": 3,
+  "errors": 0
+ },
+ "finished_at": "2026-10-20T03:10:50+0200"
+}

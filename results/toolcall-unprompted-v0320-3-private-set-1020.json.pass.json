@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I toolcall.py unprompted-v0320-3-private-set-1020 --cases code_without_tool,prose_fr_without_tool --series 3 --per-series 4",
+ "result": "toolcall-unprompted-v0320-3-private-set-1020.json",
+ "waited_for_rest_s": 26,
+ "start": "2026-10-20T03:11:16+0200",
+ "end": "2026-10-20T03:16:53+0200",
+ "rc": 0,
+ "sent": 24,
+ "errors": 0,
+ "finished_by_engine": 24,
+ "peak_running": 1.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

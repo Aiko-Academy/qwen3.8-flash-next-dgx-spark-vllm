@@ -1,6 +1,11 @@
 # Changelog
 
-## Since v0.32.0-2 (2026-10-20)
+## Since v0.32.0-3 (2026-10-20)
+
+- `results/`: the served v0.32.0-3 measured after its restart (probe with and without a system message, prefix cache,
+  invented tool calls on a bare code prompt); README table.
+
+## v0.32.0-3 (2026-10-20)
 
 - `serve.sh`: `"disable_eagle_block_drop": true` in `--speculative-config`. On a prefix-cache hit vLLM drops the last
   cached block for the MTP drafter and recomputes it; on this model a block is 1 648 tokens. Measured in A-B-A on
