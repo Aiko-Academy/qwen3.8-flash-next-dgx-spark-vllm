@@ -8,6 +8,12 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| one draft token instead of two above 8 requests (`num_speculative_tokens_per_batch_size` `[[1, 8, 2], [9, 16, 1]]`) | 2026-10-20 | the same probe texts and speed (two draft tokens kept at one client) | 16 clients 8.7 % slower greedy and 5.1 % slower sampled, where a 5 % gain was set before |
+| CUDA graphs for decoding only (`cudagraph_mode` `FULL_DECODE_ONLY`) | 2026-10-20 | graph capture 0.34 GiB instead of about 1 GiB, KV pool +3.6 % | under the 5 % pool gain set before; one client 5.1 % slower on the load bench, the French prose probe with a system message 3.2 % slower |
+| MoE experts on Marlin (`--moe-backend marlin`) | 2026-10-20 | one client 10.6 % faster on the load bench, 4 to 16 clients 4.4 to 4.5 % faster, KV pool +4.4 % | the greedy probe with a system message fell 3.3 % in French prose (a 2 % gain was set before), the 23 406-token prefill fell 4.4 %, and greedy texts changed |
+| MTP index sharing (`index_share_for_mtp_iteration`) | 2026-10-20 | the greedy probe without a system message 2.4 to 6.1 % faster | with a system message, the acceptance at position 2 fell 7.9 % on one prompt (2 % at most, set before) and its speed 3.9 %; greedy texts changed |
+| FlashInfer autotuning at start-up (without `--no-enable-flashinfer-autotune`) | 2026-10-20 | 16 clients 3.9 % faster greedy, 4.4 % and 5.2 % faster sampled at one and eight clients | the prefill gained 2.3 % at 8 023 tokens but 0.1 % at 23 406, under the 2 % set before at both sizes; the greedy probe with a system message fell 1.6 to 4.1 % and its texts changed |
+| a finer prefix-cache unit (`--prefix-match-unit 16`) with the Mamba shared-prefix checkpoint | 2026-10-20 | the first token of the second and third turns of two replayed agent sessions came 19 to 59 % sooner | the tokens served by the cache rose 1.2 to 1.6 %, not the 20 % set before the measure, and the greedy probe texts changed |
 | a fixed KV cache size (`--kv-cache-memory-bytes`, 18.33 GiB) instead of memory profiling | 2026-10-20 | the same pool on two restarts, no out-of-memory error | the first completion came 12 s sooner (11.9 against 12.1 min), for a pool 3.0 % smaller than the profiled one |
 | a tuned config for the MTP layer's Triton FP8 MoE kernel | 2026-10-20 | the image's GB10 config of the nearest shape: 0 % of a decoding step at one client, 0.05 % at 16 clients | under the 1 % set before the measure; any config is bounded at 0.34 % of a one-client step |
 | MTP 3 instead of MTP 2, on vLLM v0.32.0 | 2026-10-19 and 2026-10-20 | French prose +6.8 %, code +21.4 % | greedy outputs change, and a private code gate fell from 5 of 6 to 3 of 6 tasks, with a systematic error on one task |
@@ -21,6 +27,149 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## Fewer draft tokens under load (2026-10-20, 17:31 to 18:29)
+
+vLLM v0.32.0 can pick the number of draft tokens from the batch size (`num_speculative_tokens_per_batch_size` in
+`--speculative-config`). We tried the descending form: two draft tokens up to 8 running requests, as served, and one
+from 9 to 16, where verifying fewer drafted tokens might pay. Criterion written before the measure: 16 clients at least
+5 % faster, or one stream at least 3 %, with no loss elsewhere beyond the A-A' gap.
+
+| measure | default (A) | one draft above 8 (B) | default (A') |
+|---|---|---|---|
+| load bench, 16 clients, tok/s | 201.0 | 181.8 | 197.1 |
+| sampled load (T 1.0, top-p 0.95, top-k 20), 16 clients, tok/s | 179.9 | 170.3 | 179.0 |
+| load bench, 8 clients, tok/s | 136.9 | 134.8 | 135.3 |
+| probe, French prose with a system message, tok/s | 43.29 | 43.34 | 43.26 |
+| probe, code with a system message, tok/s | 55.46 | 55.52 | 55.41 |
+
+At one client the schedule keeps two draft tokens, and the probe gave the same texts and the same speed. At 16 clients
+one draft token cost 8.7 % greedy (A-A' gap 2.0 %) and 5.1 % sampled (gap 0.5 %): on this GB10, two draft tokens still
+pay at 16 clients. Not kept.
+
+## CUDA graphs for decoding only (2026-10-20, 16:37 to 17:30)
+
+The served configuration captures full CUDA graphs for decoding steps and piecewise graphs for mixed steps
+(`FULL_AND_PIECEWISE`). `--compilation-config '{"cudagraph_mode": "FULL_DECODE_ONLY"}'` keeps only the full ones, and a
+step that mixes a prefill with decodes then runs without a graph. Criterion written before the measure: the KV pool at
+least 5 % larger, no decoding loss beyond the A-A' gap.
+
+| measure | default (A) | decode-only graphs (B) | default (A') |
+|---|---|---|---|
+| KV pool, tokens | 1 274 831 | 1 316 961 | 1 267 029 |
+| probe, French prose with a system message, tok/s | 43.24 | 41.89 | 43.30 |
+| probe, code with a system message, tok/s | 55.42 | 55.21 | 55.47 |
+| load bench, 1 client, tok/s | 40.8 | 38.9 | 41.2 |
+| load bench, 16 clients, tok/s | 192.4 | 195.9 | 198.0 |
+| prefill, 23 406 tokens, tok/s | 2 771.6 | 2 781.1 | 2 790.3 |
+
+The graphs took 0.34 GiB in B, against 0.92 and 1.12 GiB on two default starts of the same day, and the pool grew
+3.6 % (A-A' gap 0.6 %), under the 5 % set before the measure. Decoding lost 3.2 % on the French prose probe with a
+system message (its greedy text changed; the other 8 generations were identical) and 5.1 % at one client on the load
+bench (gap 1.0 %). The prefill was level, and the first completion came 12.1 minutes after the restart order, as for the
+default. Not kept.
+
+## MoE experts on Marlin (2026-10-20, 15:38 to 16:36)
+
+`--moe-backend marlin` sends every routed-expert layer to Marlin: the NVFP4 experts of the 48 target layers, which the
+default runs on FlashInfer's CUTLASS backend, and the FP8 experts of the MTP layer, which the default runs on Triton.
+Marlin runs both weight-only (FP4 and FP8 weights, BF16 activations, as its log says). Criterion written before the
+measure: one stream at least 2 % faster (probe with a system message, French prose and code), 16 clients and the
+prefill not down beyond the A-A' gap.
+
+| measure | default (A) | Marlin (B) | default (A') |
+|---|---|---|---|
+| probe, code with a system message, tok/s | 55.60 | 57.24 | 55.42 |
+| probe, French prose with a system message, tok/s | 43.38 | 41.88 | 43.26 |
+| probe, French prose without a system message, tok/s | 41.25 | 43.12 | 41.11 |
+| load bench, 1 client, tok/s | 39.0 | 43.9 | 40.4 |
+| load bench, 16 clients, tok/s | 194.1 | 203.7 | 196.1 |
+| sampled load (T 1.0, top-p 0.95, top-k 20), 16 clients, tok/s | 181.3 | 187.3 | 182.4 |
+| prefill, 8 023 tokens, tok/s | 2 762.5 | 2 605.1 | 2 644.4 |
+| prefill, 23 406 tokens, tok/s | 2 789.5 | 2 656.9 | 2 766.8 |
+| KV pool, tokens | 1 277 952 | 1 332 565 | 1 274 831 |
+
+Marlin was faster under load (+4.4 % at 16 greedy clients, A-A' gap 1.0 %) and on the code probe (+3.1 %), and left a
+4.4 % larger KV pool. But the probe in French prose with a system message fell 3.3 % (gap 0.3 %), the 23 406-token
+prefill fell 4.4 % (gap 0.8 %), and the greedy probe texts of B differed from A in all 10 generations (A and A'
+identical), which would have sent it through the quality gates. Not kept.
+
+## MTP index sharing (2026-10-20, 14:03 to 14:56)
+
+`"index_share_for_mtp_iteration": true` in `--speculative-config` makes the second draft step reuse the sparse (QSA)
+top-k indices of the first one instead of running the indexer again; the target still verifies every drafted token.
+Criterion written before the measure: the acceptance at position 2 down by less than 2 % relative on every probe prompt,
+and the decoding after a 100 000-token prompt at least 3 % faster.
+
+| measure | default (A) | index sharing (B) | default (A') |
+|---|---|---|---|
+| probe, English prose with a system message: acceptance at position 2 | 0.456 | 0.420 | 0.456 |
+| probe, English prose with a system message, tok/s | 44.82 | 43.02 | 44.75 |
+| probe, French prose with a system message, tok/s | 43.38 | 43.45 | 43.37 |
+| probe, code with a system message, tok/s | 55.61 | 56.59 | 55.47 |
+| probe, French prose without a system message, tok/s | 41.25 | 43.76 | 41.24 |
+
+The probe is deterministic here (A and A' gave the same texts and the same acceptance), so the 7.9 % loss at position 2
+on English prose with a system message would come back; the greedy texts of B differed from A on 4 of the 5 prompts.
+The decoding after a 100 000-token prompt measured +2.7 %, but it is no evidence: our measure put a random marker at the
+head of the prompt in each arm, so the three arms decoded three different prompts, and the two default arms differed by
+6.7 %. The marker is now fixed for the three arms of an experiment. Not kept.
+
+## FlashInfer autotuning (2026-10-20, 12:56 to 13:55)
+
+The served command turns FlashInfer's autotuner off (`--no-enable-flashinfer-autotune`). Without that flag vLLM tunes
+the tactics of the two GEMMs of FlashInfer's fused MoE (`trtllm::fused_moe`) during the kernel warm-up, on 20 token
+buckets each; the first completion came 12.5 minutes after the restart order, as for the default's restart that
+followed. Criterion written before the measure: prefill at least 2 % faster at both sizes of the load bench, no
+decoding loss beyond the A-A' gap, no out-of-memory error and no invalid GEMM profile in the log, start-up under 20
+minutes.
+
+| measure | default (A) | autotuning (B) | default (A') |
+|---|---|---|---|
+| prefill, 8 023 tokens, tok/s | 2 685.9 | 2 764.6 | 2 716.6 |
+| prefill, 23 406 tokens, tok/s | 2 748.4 | 2 765.2 | 2 774.2 |
+| probe, French prose with a system message, tok/s | 43.32 | 41.58 | 43.36 |
+| probe, code with a system message, tok/s | 55.50 | 54.64 | 55.55 |
+| load bench, 16 clients, tok/s | 196.2 | 203.5 | 195.4 |
+| sampled load (T 1.0, top-p 0.95, top-k 20), 8 clients, tok/s | 117.6 | 124.4 | 118.9 |
+| sampled load, 16 clients, tok/s | 173.1 | 186.5 | 183.5 |
+
+The log of B had no out-of-memory error and no invalid GEMM profile. The prefill gain held at 8 023 tokens only
+(+2.3 %, A-A' gap 1.1 %); at 23 406 tokens it was +0.1 %, inside the gap. The greedy probe texts of B differed from A in
+all 10 generations (A and A' identical), and the probe with a system message fell 1.6 to 4.1 %, outside a gap of 0.1 %.
+Under load B was faster: +3.9 % at 16 greedy clients (gap 0.4 %) and +5.2 % at 8 sampled clients (gap 1.1 %); at 16
+sampled clients the +4.6 % stayed inside a 5.8 % gap. Not kept.
+
+## A finer prefix-cache unit (2026-10-20, 11:49 to 12:53)
+
+On this hybrid model a prefix-cache hit lands on a multiple of the scheduler block, 1 648 tokens. `--prefix-match-unit`
+hashes the prompt on a finer grid; it must divide the block of every cacheable KV cache group, and 1 648 = 16 x 103, so
+16 is the largest unit under 103 (64, read in the code, would be refused at start-up).
+`--enable-mamba-shared-prefix-checkpoint` was set with it. Criterion written before the measure: on the warm turns of
+two agent sessions captured from our clients and replayed (two turns of about 22 000 tokens, three turns of about
+48 000), the tokens served by the cache at least 20 % higher, outputs identical, the KV pool down by less than 3 %.
+A-B-A' on the served configuration (`disable_eagle_block_drop`):
+
+| measure | default (A) | unit 16 (B) | default (A') |
+|---|---|---|---|
+| first session, turn 2: first token, s | 0.499 | 0.403 | 0.498 |
+| second session, turn 2: first token, s | 0.600 | 0.425 | 0.598 |
+| second session, turn 3: first token, s | 0.776 | 0.315 | 0.767 |
+| first session, turn 2: tokens served by the cache | 21 424 | 21 760 | 21 424 |
+| second session, turns 2 and 3: tokens served by the cache | 95 584 | 96 848 | 95 584 |
+| KV pool, tokens | 1 270 150 | 1 240 502 | 1 252 985 |
+| probe, French prose with a system message, tok/s | 43.32 | 41.08 | 43.28 |
+| probe, code with a system message, tok/s | 55.69 | 56.19 | 55.43 |
+
+The first turn of each session starts cold in B and A'; in A it was served by the cache of an earlier, abandoned run of
+the same replay on the same server, and it is left out of the table. The finer unit serves 1.2 to 1.6 % more tokens on
+the warm turns (21 760 tokens is 1 360 units of 16, 21 424 is 13 blocks), far from the 20 % set before the measure, but
+the part of the prompt left to prefill shrinks, and the first token of turns 2 and 3 came 19 to 59 % sooner, outside the
+A-A' gap of 0.2 to 1.2 %. The outputs of the cache and of a cold run stayed identical within each arm, but the greedy
+probe texts of B differed from A in all 20 generations (A and A' identical), with the acceptance at position 2 moving
+by -16 % to +17 % depending on the prompt; the cause was not isolated. Read in the v0.32.0 code: with
+`disable_eagle_block_drop` the KV cache manager is built without a draft group (`use_eagle` follows the block drop in
+`v1/core/sched/scheduler.py`), so the shared-prefix checkpoint stays off and only the unit acted. Not kept.
 
 ## A fixed KV cache size (2026-10-20, 10:19 to 11:17)
 
