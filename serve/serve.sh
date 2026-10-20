@@ -42,6 +42,7 @@ DRAFT_VOCAB_DIR="${DRAFT_VOCAB_DIR:-/opt/draft-vocab}"
 TOOL_PARSER="${TOOL_PARSER:-$PATCHES/tool-parser}"
 MROPE_FLOOR="${MROPE_FLOOR:-$PATCHES/mrope-draft-floor}"
 AUTH_ALL="${AUTH_ALL:-$PATCHES/auth-all-routes}"
+WEIGHT_PREFAULT="${WEIGHT_PREFAULT:-$PATCHES/weight-prefault}"
 VERIFIED_MARKER="${VERIFIED_MARKER:-.verified}"
 
 VP=/usr/local/lib/python3.12/dist-packages/vllm   # the vllm package inside the image
@@ -76,6 +77,13 @@ done
 # The drafter's M-RoPE cache floored on max_model_len (after vllm#62409, YaRN untouched); the key on every route.
 for f in "$MROPE_FLOOR:model_executor/layers/rotary_embedding/mrope.py" "$AUTH_ALL:entrypoints/serve/middleware/authenticate.py"; do
   MOUNTS+=(-v "${f%%:*}/vllm-overlay/${f#*:}:$VP/${f#*:}:ro")
+done
+# The shared weight loaders touch each checkpoint page on the CPU before the copy to the integrated GPU (vllm#58868):
+# a copy straight from the safetensors mapping takes its page faults inside the driver copy, several times slower.
+for f in model_executor/layers/fused_moe/routed_experts.py model_executor/layers/linear.py \
+         model_executor/layers/vocab_parallel_embedding.py model_executor/model_loader/weight_utils.py \
+         model_executor/parameter.py model_executor/utils.py; do
+  MOUNTS+=(-v "$WEIGHT_PREFAULT/vllm-overlay/$f:$VP/$f:ro")
 done
 
 KEYFILE=()
@@ -141,4 +149,4 @@ if [ "${1:-}" = --check ]; then
 fi
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 "${RUN[@]}"
-echo "serve.sh: $CONTAINER started on $BIND:$PORT; the first completion takes 12 to 18 minutes (docker logs -f $CONTAINER)"
+echo "serve.sh: $CONTAINER started on $BIND:$PORT; the first completion takes about 4 to 5 minutes (docker logs -f $CONTAINER)"

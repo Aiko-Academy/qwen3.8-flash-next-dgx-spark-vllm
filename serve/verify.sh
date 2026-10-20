@@ -176,8 +176,11 @@ settings = [
     ("API key on every route but GET /health (authenticate.py mounted)", ends("serve/middleware/authenticate.py")),
     ("prefix-cache hit keeps its last block for the drafter (disable_eagle_block_drop)",
      spec.get("disable_eagle_block_drop") is True),
+    ("checkpoint pages touched on the CPU before each copy to the GPU (six loader files mounted)",
+     all(ends(p) for p in ("fused_moe/routed_experts.py", "layers/linear.py", "layers/vocab_parallel_embedding.py",
+                           "model_loader/weight_utils.py", "model_executor/parameter.py", "model_executor/utils.py"))),
 ]
-assert len(settings) == 28
+assert len(settings) == 29
 for n, (name, ok) in enumerate(settings, 1):
     line(f"setting {n:2d}: {name}", ok)
 print(f"\n{sum(rows)} OK, {len(rows) - sum(rows)} FAIL")

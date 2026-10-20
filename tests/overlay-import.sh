@@ -29,7 +29,9 @@ mods = ["vllm.model_executor.layers.quantization.modelopt", "vllm.models.qwen4_e
         "vllm.models.qwen4_exp.common.ngram_embedding", "vllm.models.qwen4_exp.nvidia.model_state",
         "vllm.models.qwen4_exp.nvidia.ngram_embedding", "vllm.models.qwen4_exp.nvidia.ple_pageable",
         "vllm.model_executor.layers.rotary_embedding.mrope", "vllm.entrypoints.serve.middleware.authenticate",
-        "vllm_fp8_hybrid_modelopt"]
+        "vllm.model_executor.utils", "vllm.model_executor.parameter", "vllm.model_executor.layers.linear",
+        "vllm.model_executor.layers.vocab_parallel_embedding", "vllm.model_executor.model_loader.weight_utils",
+        "vllm.model_executor.layers.fused_moe.routed_experts", "vllm_fp8_hybrid_modelopt"]
 for m in mods:
     try:
         importlib.import_module(m); check(True, f"import {m}")
@@ -76,6 +78,13 @@ def status(method, path, key):
     return got["s"]
 check((status("POST", "/invocations", None), status("POST", "/invocations", b"k"), status("GET", "/health", None))
       == (401, 200, 200), "key required on /invocations, GET /health open")
+import torch, vllm.model_executor.utils as wu
+sites = {m: open(importlib.import_module(m).__file__).read().count("copy_weight_(") for m in
+         ("vllm.model_executor.parameter", "vllm.model_executor.layers.linear", "vllm.model_executor.layers.vocab_parallel_embedding",
+          "vllm.model_executor.model_loader.weight_utils", "vllm.model_executor.layers.fused_moe.routed_experts")}
+check(sum(sites.values()) == 26, f"weight loaders: 26 copies through copy_weight_ ({sites})")
+d, s = torch.zeros(4096, dtype=torch.uint8), torch.arange(4096).to(torch.uint8)
+wu.copy_weight_(d, s); check(torch.equal(d, s), "copy_weight_ copies byte for byte (CPU, the touch is off)")
 print(f"\n{ok} OK, {ko} FAIL"); sys.exit(1 if ko else 0)
 PY
 exit "${PIPESTATUS[0]}"

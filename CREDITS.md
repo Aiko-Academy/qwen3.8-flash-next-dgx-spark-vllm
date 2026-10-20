@@ -115,6 +115,12 @@ One row per file. `modified` says whether the file differs from its source, and 
 | `patches/tool-parser/vllm-overlay/parser/qwen3.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `427907ac` | Apache-2.0 | yes, by the three patches |
 | `patches/mrope-draft-floor/vllm-overlay/model_executor/layers/rotary_embedding/mrope.py` | the vLLM project; floor by @wtogami | vllm-project/vllm | v0.32.0, #62409 at `2c2c57288bbb` | Apache-2.0 | yes, by Aiko Academy: the floor applied without YaRN only |
 | `patches/auth-all-routes/vllm-overlay/entrypoints/serve/middleware/authenticate.py` | the vLLM project | vllm-project/vllm | v0.32.0 | Apache-2.0 | yes, by Aiko Academy: the key on every route but GET /health |
+| `patches/weight-prefault/vllm-overlay/model_executor/layers/fused_moe/routed_experts.py` | the vLLM project; change by @Willian-Zhang | vllm-project/vllm | v0.32.0, PR #58868 (`f66f2108`) | Apache-2.0 | yes, by Aiko Academy: the pull request applied to v0.32.0 |
+| `patches/weight-prefault/vllm-overlay/model_executor/layers/linear.py` | the vLLM project; change by @Willian-Zhang | vllm-project/vllm | v0.32.0, PR #58868 (`f66f2108`) | Apache-2.0 | yes, by Aiko Academy: the pull request applied to v0.32.0 |
+| `patches/weight-prefault/vllm-overlay/model_executor/layers/vocab_parallel_embedding.py` | the vLLM project; change by @Willian-Zhang | vllm-project/vllm | v0.32.0, PR #58868 (`f66f2108`) | Apache-2.0 | yes, by Aiko Academy: the pull request applied to v0.32.0 |
+| `patches/weight-prefault/vllm-overlay/model_executor/model_loader/weight_utils.py` | the vLLM project; change by @Willian-Zhang | vllm-project/vllm | v0.32.0, PR #58868 (`f66f2108`) | Apache-2.0 | yes, by Aiko Academy: the pull request applied to v0.32.0 |
+| `patches/weight-prefault/vllm-overlay/model_executor/parameter.py` | the vLLM project; change by @Willian-Zhang | vllm-project/vllm | v0.32.0, PR #58868 (`f66f2108`) | Apache-2.0 | yes, by Aiko Academy: the pull request applied to v0.32.0 |
+| `patches/weight-prefault/vllm-overlay/model_executor/utils.py` | the vLLM project; change by @Willian-Zhang | vllm-project/vllm | v0.32.0, PR #58868 (`f66f2108`) | Apache-2.0 | yes, by Aiko Academy: the pull request applied to v0.32.0 |
 
 ## Our own files
 

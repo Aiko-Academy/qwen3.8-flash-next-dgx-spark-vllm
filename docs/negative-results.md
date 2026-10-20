@@ -166,7 +166,7 @@ the same replay on the same server, and it is left out of the table. The finer u
 the warm turns (21 760 tokens is 1 360 units of 16, 21 424 is 13 blocks), far from the 20 % set before the measure, but
 the part of the prompt left to prefill shrinks, and the first token of turns 2 and 3 came 19 to 59 % sooner, outside the
 A-A' gap of 0.2 to 1.2 %. The outputs of the cache and of a cold run stayed identical within each arm, but the greedy
-probe texts of B differed from A in all 20 generations (A and A' identical), with the acceptance at position 2 moving
+probe texts of B differed from A in all 10 generations (A and A' identical), with the acceptance at position 2 moving
 by -16 % to +17 % depending on the prompt; the cause was not isolated. Read in the v0.32.0 code: with
 `disable_eagle_block_drop` the KV cache manager is built without a draft group (`use_eagle` follows the block drop in
 `v1/core/sched/scheduler.py`), so the shared-prefix checkpoint stays off and only the unit acted. Not kept.

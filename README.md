@@ -113,6 +113,7 @@ v0.31.0 outputs, `tools/draft_vocab_coverage.py`, `results/draft-vocab-coverage-
 | engine | vLLM v0.32.0, official image pinned by digest | `serve/serve.sh` |
 | checkpoint | `nvidia/Qwen3.8-Flash-Next-NVFP4` at a pinned revision; dense BF16 layers converted to block FP8; the QSA indexer projection kept apart from q, k and v | `serve/prepare.sh`, `patches/fp8-hybrid/` |
 | memory | per-layer embedding table (51.2 GB) read in place from the checkpoint, rows prefetched with `MADV_WILLNEED` | `patches/ple-checkpoint-mapped/` (vllm#58439) |
+| loading | each checkpoint page touched on the CPU before its copy to the integrated GPU: the main weight load takes under a minute instead of about eight | `patches/weight-prefault/` (vllm#58868) |
 | context | 524 288 tokens, YaRN factor 2 over 262 144; KV cache fp8, MTP layer in BF16 (`--kv-cache-dtype-skip-layers 48`, honoured by vLLM since v0.32.0, vllm#60023) | `serve/serve.sh` |
 | speculative decoding | MTP 2; the drafter scores 65 536 rows of the head, in NVFP4 on Marlin; on a prefix-cache hit the last cached block is kept for the drafter (`disable_eagle_block_drop`) | `patches/draft-vocab/`, `patches/draft-nvfp4-head/`, `serve/serve.sh` |
 | cache and determinism | prefix cache repaired (the scheduler half; the worker half is in vLLM since v0.32.0, vllm#55601); deterministic sparse-attention top-k | `patches/cache-det/` |
@@ -144,7 +145,7 @@ serve/serve.sh && serve/verify.sh
 
 `serve.sh` binds 127.0.0.1:8000 and serves the model as `qwen3.8-flash-next`. To serve the network, put a key in
 a file (`VLLM_API_KEY=<key>`, `chmod 600`) and set `BIND` and `API_KEY_FILE` (`serve/config.example.env`). The first
-completion comes 12 to 18 minutes after the start. `serve/serve.sh --check` runs every check without touching a
+completion comes about 4 to 5 minutes after the start (12 to 18 before `patches/weight-prefault/`). `serve/serve.sh --check` runs every check without touching a
 running container; `--print` shows the docker run. The version on vLLM v0.31.0 stays at tag `v0.31.0-1`.
 
 With a key, every route but `GET /health` requires it, `/metrics`, `/tokenize` and `/detokenize` included

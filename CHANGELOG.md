@@ -1,7 +1,14 @@
 # Changelog
 
-## Since v0.32.0-3 (2026-10-20)
+## v0.32.0-4 (2026-10-20)
 
+- `patches/weight-prefault/`: the shared weight loaders touch each checkpoint page on the CPU before the copy to the
+  integrated GPU (vllm-project/vllm#58868 by @Willian-Zhang, applied to v0.32.0). Measured in A-B-A on 2026-10-20:
+  the main weight load takes 51.5 s instead of 466.7 s, and the first completion comes 254 s after the restart order
+  instead of 738 s; greedy probe texts and MTP acceptance identical in the three arms. `serve.sh` mounts 32 files;
+  `verify.sh` checks 29 settings.
+- `docs/negative-results.md`: a finer prefix-cache unit, FlashInfer autotuning, MTP index sharing, Marlin MoE,
+  CUDA graphs for decoding only, fewer draft tokens under load.
 - `results/`: the served v0.32.0-3 measured after its restart (probe with and without a system message, prefix cache,
   invented tool calls on a bare code prompt); README table.
 - `docs/negative-results.md`: a tuned config for the MTP layer's FP8 MoE kernel (bounded at 0.05 % of a step).
