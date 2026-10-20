@@ -1,0 +1,55 @@
+{
+ "kind": "prefix-cache",
+ "label": "c1-bloc-B-1020-bis",
+ "measured_at": "2026-10-20T01:55:40+0200",
+ "repo_commit": "24ca12091806eabe546e2c3e89e6c4e0cad4cb77",
+ "served_model": "qwen3.8-flash-next",
+ "protocol": {
+  "prompt_chars": 63575,
+  "repeats": 3,
+  "max_tokens": 120,
+  "temperature": 0
+ },
+ "passes": [
+  {
+   "seconds": 10.49,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte de parier vingt mille livres qu'il accomplira le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique, Passepartout.\n\nAlors que leur départ suscite une immense controverse dans la presse et parmi les parieurs, l'inspecteur de police Fix les prend en filature à Suez, convaincu que Fogg est en réalité le voleur de cinquante-cinq mille livres de la Banque d'Angleterre.\n\nL'histoire se"
+  },
+  {
+   "seconds": 3.21,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte de parier vingt mille livres qu'il accomplira le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique, Passepartout.\n\nAlors que leur départ suscite une immense controverse dans la presse et parmi les parieurs, l'inspecteur de police Fix les prend en filature à Suez, convaincu que Fogg est en réalité le voleur de cinquante-cinq mille livres de la Banque d'Angleterre.\n\nL'histoire se"
+  },
+  {
+   "seconds": 3.13,
+   "prompt_tokens": 18517,
+   "output": "Phileas Fogg, un gentleman londonien d'une exactitude mathématique, accepte de parier vingt mille livres qu'il accomplira le tour du monde en quatre-vingts jours et part immédiatement avec son nouveau domestique, Passepartout.\n\nAlors que leur départ suscite une immense controverse dans la presse et parmi les parieurs, l'inspecteur de police Fix les prend en filature à Suez, convaincu que Fogg est en réalité le voleur de cinquante-cinq mille livres de la Banque d'Angleterre.\n\nL'histoire se"
+  }
+ ],
+ "hit_tokens": 36256.0,
+ "cases": [
+  {
+   "name": "prefix cache served (36256 tokens hit)",
+   "ok": true
+  },
+  {
+   "name": "repeats faster than the cold pass (under 0.7 times)",
+   "ok": true
+  },
+  {
+   "name": "the two cached outputs identical (passes 1 and 2)",
+   "ok": true
+  },
+  {
+   "name": "cold output identical to the cached outputs (pass 0)",
+   "ok": true
+  }
+ ],
+ "verdict": "green",
+ "requests": {
+  "sent": 3,
+  "errors": 0
+ },
+ "finished_at": "2026-10-20T01:55:56+0200"
+}

@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I prefix_cache.py c1-bloc-B-1020-bis",
+ "result": "prefix-cache-c1-bloc-B-1020-bis.json",
+ "waited_for_rest_s": 25,
+ "start": "2026-10-20T01:55:39+0200",
+ "end": "2026-10-20T01:55:57+0200",
+ "rc": 0,
+ "sent": 3,
+ "errors": 0,
+ "finished_by_engine": 3,
+ "peak_running": 1.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

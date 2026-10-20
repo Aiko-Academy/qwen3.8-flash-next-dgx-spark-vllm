@@ -293,6 +293,7 @@ class Qwen3Parser(ParserEngine):
         )
         if self.parser_engine_config.defer_reasoning_tool_start:
             self._engine.defer_reasoning_tool_start = False
+        self._chat_tool_name_passthrough = False
 
     def _check_skip_tool_parsing(
         self, request: ChatCompletionRequest | ResponsesRequest
@@ -308,6 +309,26 @@ class Qwen3Parser(ParserEngine):
             self.parser_engine_config.stream_arg_deltas
             and not isinstance(request, ResponsesRequest)
         )
+        # Preserve Chat Completions' pre-patch-19 tool-name contract: the
+        # client receives an unoffered name and can reject/recover the call.
+        # Responses retains its explicit failure policy. Keep this per-parser,
+        # never mutate the cached configuration shared by concurrent requests.
+        self._chat_tool_name_passthrough = (
+            self.parser_engine_config.name == "qwen3"
+            and not isinstance(request, ResponsesRequest)
+        )
+
+    def _resolve_tool_name(self, name: str) -> str | None:
+        resolved = super()._resolve_tool_name(name)
+        if resolved is not None:
+            return resolved
+        if self._chat_tool_name_passthrough:
+            stripped = name.strip()
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]*", stripped):
+                # Preserve the actual name; never map unknown tools to an
+                # offered shell/file tool. Known aliases were resolved above.
+                return stripped
+        return None
 
     def adjust_initial_state_from_prompt(self, prompt_token_ids: Sequence[int]) -> None:
         if not self.parser_engine_config.defer_reasoning_tool_start:

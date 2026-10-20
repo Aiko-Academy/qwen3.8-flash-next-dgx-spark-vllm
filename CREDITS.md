@@ -25,7 +25,7 @@ that says what was taken and what was changed.
 | contribution | author | where it comes from | licence |
 |---|---|---|---|
 | dense layers in block FP8 (shim, conversion formula), repaired prefix cache, reduced draft vocabulary hook and builder, and the public draft set used as complement | blazux | blazux/qwen3.8-Flash-DGX, commit `7d0798e` (2026-10-09) | Apache-2.0 (abbreviated `LICENSE`, see below) |
-| repaired Qwen tool parser: patches 12, 13 and 19 | blazux; patch 19 from fixes and fixtures by Chaos2522 (blazux issue #31) | blazux/qwen3.8-Flash-DGX, commit `a9ec989` (2026-10-16) | Apache-2.0 |
+| repaired Qwen tool parser: patches 12, 13 and 19 | blazux; patch 19 from fixes and fixtures by Chaos2522 (blazux issue #31); its Chat Completions follow-up by blazux on a report by FinSnow (blazux issue #56) | blazux/qwen3.8-Flash-DGX, commit `427907ac` (2026-10-19) | Apache-2.0 |
 | original `fp8_convert.py` | Saren Arterius (@Saren-Arterius) | Saren-Arterius/qwen3.8-Flash-DGX-AutoRound, `tools/fp8_convert.py`, as vendored by blazux | Apache-2.0 per its header |
 | checkpoint-mapped PLE storage, the change that makes the model fit one Spark | Jürgen Schmied (@jschmied) | vllm-project/vllm#58439 (open), PR head `047fc1ce` merged onto v0.32.0 | Apache-2.0 |
 | PLE prefetch with `MADV_WILLNEED` | Mike Waychison (@waych) | commit `b2cc913` in jschmied/vllm#4 | Apache-2.0 |
@@ -103,16 +103,16 @@ One row per file. `modified` says whether the file differs from its source, and 
 | `patches/tool-parser/LICENSE-blazux` | blazux | blazux/qwen3.8-Flash-DGX | `a9ec989` | Apache-2.0 | no |
 | `patches/tool-parser/upstream-patches/qwen-tool-preamble.patch` | blazux | blazux/qwen3.8-Flash-DGX | `a9ec989` | Apache-2.0 | no |
 | `patches/tool-parser/upstream-patches/qwen-tool-marker-guard.patch` | blazux | blazux/qwen3.8-Flash-DGX | `a9ec989` | Apache-2.0 | no |
-| `patches/tool-parser/upstream-patches/qwen-safe-output.patch` | Chaos2522, ported by blazux | blazux/qwen3.8-Flash-DGX | `a9ec989`, issue #31 | Apache-2.0 | no |
+| `patches/tool-parser/upstream-patches/qwen-safe-output.patch` | Chaos2522, ported by blazux | blazux/qwen3.8-Flash-DGX | `427907ac`, issues #31 and #56 | Apache-2.0 | no |
 | `patches/tool-parser/vllm-overlay/entrypoints/openai/responses/protocol.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
 | `patches/tool-parser/vllm-overlay/entrypoints/openai/responses/serving.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches; two hunks of patch 19 ported by hand by Aiko Academy |
 | `patches/tool-parser/vllm-overlay/parser/abstract_parser.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
 | `patches/tool-parser/vllm-overlay/parser/engine/adapters.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
-| `patches/tool-parser/vllm-overlay/parser/engine/parser_engine.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
+| `patches/tool-parser/vllm-overlay/parser/engine/parser_engine.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `427907ac` | Apache-2.0 | yes, by the three patches |
 | `patches/tool-parser/vllm-overlay/parser/engine/parser_engine_config.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
 | `patches/tool-parser/vllm-overlay/parser/engine/streaming_parser_engine.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
 | `patches/tool-parser/vllm-overlay/parser/nemotron_v3.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
-| `patches/tool-parser/vllm-overlay/parser/qwen3.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `a9ec989` | Apache-2.0 | yes, by the three patches |
+| `patches/tool-parser/vllm-overlay/parser/qwen3.py` | the vLLM project; patches by blazux and Chaos2522 | vllm-project/vllm, blazux/qwen3.8-Flash-DGX | v0.32.0, `427907ac` | Apache-2.0 | yes, by the three patches |
 | `patches/mrope-draft-floor/vllm-overlay/model_executor/layers/rotary_embedding/mrope.py` | the vLLM project; floor by @wtogami | vllm-project/vllm | v0.32.0, #62409 at `2c2c57288bbb` | Apache-2.0 | yes, by Aiko Academy: the floor applied without YaRN only |
 | `patches/auth-all-routes/vllm-overlay/entrypoints/serve/middleware/authenticate.py` | the vLLM project | vllm-project/vllm | v0.32.0 | Apache-2.0 | yes, by Aiko Academy: the key on every route but GET /health |
 

@@ -129,7 +129,7 @@ qwen3_xml
 --default-chat-template-kwargs
 {"enable_thinking": false}
 --speculative-config
-{"method":"mtp","num_speculative_tokens":2,"max_model_len":524288}
+{"method":"mtp","num_speculative_tokens":2,"max_model_len":524288,"disable_eagle_block_drop":true}
 --no-enable-flashinfer-autotune
 --host
 0.0.0.0

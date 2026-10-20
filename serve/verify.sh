@@ -8,7 +8,7 @@
 #    `serve.sh --print` would run with the same configuration. Environment that comes from the image or from the
 #    key file is set aside; a value is never printed for a name that looks secret.
 # 2. Content: each mounted overlay file has the sha256 of the file this repository publishes for that target.
-# 3. The 27 settings of the recipe, one line each.
+# 3. The 28 settings of the recipe, one line each.
 # Exit 0 only if every line is OK. Same configuration as serve.sh (SERVE_CONFIG or environment).
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -124,7 +124,7 @@ vsrc = {t: s for s, t, _ in cm}.get(vocab[0]) if vocab else None
 if vsrc and os.path.exists(vsrc):
     print(f"INFO  draft vocabulary mounted: {os.path.basename(vsrc)}, sha256 {sha(vsrc)[:16]}")
 
-# 3. The 27 settings
+# 3. The 28 settings
 args = cmd
 val = lambda f: args[args.index(f) + 1] if f in args else None
 spec = json.loads(val("--speculative-config") or "{}")
@@ -174,8 +174,10 @@ settings = [
      val("--kv-cache-dtype-skip-layers") == "48"),
     ("drafter M-RoPE cache floored on the served window (mrope.py mounted)", ends("rotary_embedding/mrope.py")),
     ("API key on every route but GET /health (authenticate.py mounted)", ends("serve/middleware/authenticate.py")),
+    ("prefix-cache hit keeps its last block for the drafter (disable_eagle_block_drop)",
+     spec.get("disable_eagle_block_drop") is True),
 ]
-assert len(settings) == 27
+assert len(settings) == 28
 for n, (name, ok) in enumerate(settings, 1):
     line(f"setting {n:2d}: {name}", ok)
 print(f"\n{sum(rows)} OK, {len(rows) - sum(rows)} FAIL")

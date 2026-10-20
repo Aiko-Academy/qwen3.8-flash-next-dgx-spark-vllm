@@ -444,9 +444,10 @@ class ParserEngine(Parser):
         slot = self._tool_slots[idx]
         if not slot.rejection_logged:
             logger.warning(
-                "Rejected tool call: parser=%s index=%s name absent from offered tools",
+                "Rejected tool call: parser=%s index=%s name=%r absent from offered tools",
                 self.parser_engine_config.name,
                 idx,
+                (slot.name or self._try_extract_name(idx) or "")[:256],
             )
             slot.rejection_logged = True
 

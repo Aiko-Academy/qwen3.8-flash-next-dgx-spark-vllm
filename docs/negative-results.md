@@ -1,13 +1,15 @@
 # Negative results
 
 What we tried on this machine and did not keep, with the measurement that decided. These were measured on our
-Spark between 2026-10-12 and 2026-10-18 with the scripts that `bench/` derives from (same prompts and protocols
+Spark between 2026-10-12 and 2026-10-20 with the scripts that `bench/` derives from (same prompts and protocols
 unless stated); the raw files are not published. The probe is greedy, 600 tokens, reasoning off, second pass.
 
 ## Summary
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| MTP 3 instead of MTP 2, on vLLM v0.32.0 | 2026-10-19 and 2026-10-20 | French prose +6.8 %, code +21.4 % | greedy outputs change, and a private code gate fell from 5 of 6 to 3 of 6 tasks, with a systematic error on one task |
+| long-prefill threshold of 1 024 tokens (`--long-prefill-token-threshold`) | 2026-10-19 | a short stream 2.4 and 2.2 times faster during a long prefill | still under 10 tok/s, and the long prompt waits 56 to 66 % longer for its first token |
 | Qwen's non-thinking sampling instead of the checkpoint's generation_config | 2026-10-19 | 16 clients 2.6 % faster | one client (French prose) level: 38.0 against 38.1 tok/s, under the 3 % set before the measure |
 | vllm#62409 as it stands, for the drafter's M-RoPE cache | 2026-10-19 | drafter cache 524 288 rows | it also moves 8 of the 32 YaRN frequencies of the target; an adapted floor is served instead (`patches/mrope-draft-floor`) |
 | NVMe APST delays raised to 2 s and 60 s | 2026-10-18 | disk wake-up 10.3 ms to 1.5 ms, 6.3 ms to 0.15 ms per read at 16 streams | throughput unchanged in A-B-A |
@@ -17,6 +19,50 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## MTP 3 on vLLM v0.32.0 (2026-10-19 and 2026-10-20)
+
+On v0.32.0 a verification step at M = 4 falls into the SM121 skinny-GEMM plans, which reopened the 2026-10-12 result
+below. A-B-A on the served recipe, same day, same commands, our private draft set; probe with a system message,
+second pass, tok/s:
+
+| measure | MTP 2 (A) | MTP 3 (B) | MTP 2 (A') |
+|---|---|---|---|
+| French prose | 43.27 | 46.22 | 43.31 |
+| English prose | 44.67 | 42.21 | 44.73 |
+| code | 55.45 | 67.34 | 55.53 |
+| load, 1 / 4 / 8 / 16 clients, greedy | 40.0 / 95.3 / 132.1 / 192.3 | 38.1 / 87.0 / 135.0 / 203.7 | 39.2 / 89.6 / 134.3 / 196.9 |
+| load, 1 / 8 / 16 clients, sampled as our clients (T 1.0, top_p 0.95, top_k 20) | 40.4 / 119.4 / 178.1 | 38.3 / 118.9 / 182.5 | 39.0 / 118.9 / 181.4 |
+
+The speed criterion written before the measure held (French prose at least level, code at least +5 %, 8 and 16
+clients not under the A arms). MTP 3 changes the greedy texts, so the quality gates of MTP 2 were replayed on it: all
+held but one, a private code gate of three tasks taken from a payment node, 3 of 6 against at least 5 of 6. In both
+passes MTP 3 wrote the same exchange-rate function, which triangulates as (USD to destination) / (USD to source)
+on a rounded inverse instead of (source to USD) x (USD to destination) as the task states; the hidden case misses by
+1.65e-9. The next night, six passes of the same gate on MTP 2 gave 15 of 18, the triangulation case 6 of 6: the bar
+of 5 of 6 holds on the default. Not kept.
+
+## Long-prefill threshold (2026-10-19, 22:19 to 23:19)
+
+A short stream decoding while a long prompt prefills gets about 2 tok/s on the default recipe: each step carries
+two 1 648-token blocks of the long prompt. `--long-prefill-token-threshold 1024` (batches of 4 096 unchanged) in A-B-A:
+
+| measure | default (A) | threshold 1 024 (B) | default (A') |
+|---|---|---|---|
+| short stream during a 23 393-token prefill, tok/s | 2.07 | 4.96 | 2.01 |
+| short stream during a 100 005-token prefill, tok/s | 1.85 | 4.03 | 1.86 |
+| longest run under 10 tok/s, 23 393 / 100 005 tokens, s | 6 / 36 | 12 / 57 | 8 / 35 |
+| first token of the long prompt, 23 393 / 100 005 tokens, s | 8.69 / 37.86 | 14.42 / 59.22 | 10.56 / 37.69 |
+| prefill alone, 8 023 / 23 406 tokens, tok/s | 2 726 / 2 758 | 2 667 / 2 711 | 2 727 / 2 765 |
+
+The criterion written before (the short stream at least twice as fast, prefill alone within 10 %) held, but the
+short stream stays under 10 tok/s and the long prompt waits 56 to 66 % longer: a trade between the two requests,
+not a fix. Read in the v0.32.0 scheduler afterwards: in Mamba `align` mode a prefill chunk that does not end the
+prompt is cut back to a block boundary unless the configured threshold is under one block, so the threshold of
+1 024 gives chunks of 1 024 then 624 tokens; `--long-prefill-token-threshold-adaptive` raises it to the fair share of
+the batch, 2 048 for two requests, which the alignment brings to one block of 1 648, about 1.6 times the default
+short-stream speed by the same arithmetic. That variant was not run. `--prefill-schedule-interval` acts only in the
+data-parallel engine core, not on one engine. Not kept.
 
 ## Sampling: Qwen's non-thinking recommendation (2026-10-19, 11:28 to 11:44)
 

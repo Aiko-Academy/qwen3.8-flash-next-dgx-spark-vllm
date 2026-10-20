@@ -65,6 +65,7 @@ Measured once per version, the draft set named in each cell:
 |---|---|---|---|---|
 | long context with a needle | 449 365 tokens read, 3 reasoning items out of 3, needle found (our set) | the same (our set) | `bench/reasoning_bench.py --depths 510000` | `reasoning-deep-510k-v0320-private-set-1018`, `reasoning-deep-510k-off-1018` |
 | MTP acceptance at positions 1 and 2 past the checkpoint's native window, reasoning item / needle question, with `patches/mrope-draft-floor` | 200 013 tokens: 0.921, 0.808 / 0.963, 0.815; 280 007: 0.897, 0.758 / 0.923, 0.654; 449 977: 0.898, 0.781 / 0.864, 0.75; every answer correct, no Xid in the kernel journal (our set) | not measured | `bench/deep_acceptance.py` | `deep-acceptance-v0320-private-set-1019` |
+| prefix cache, 18 517-token prompt, with and without `disable_eagle_block_drop` (A-B-A) | without it: 32 960 tokens served by the cache, cached passes 3.59 and 3.48 s, then 3.73 and 3.66 s; with it: 36 256 tokens, 3.21 and 3.13 s; outputs identical in each arm (our set) | not measured | `bench/prefix_cache.py` | `prefix-cache-c1-bloc-*-1020-bis` |
 | short reasoning items | 15 / 15 (public set) | 15 / 15 (our set) | `bench/reasoning_bench.py --short-only`, reasoning off | `reasoning-v0320-short-off-1018`, `reasoning-short-off-1018` |
 | code gate, mechanical judge | 4 / 4 (public set) | 4 / 4 (our set) | `bench/quality/code_gate.py` then `judge_code.py`: Solidity compiles, TypeScript and bash parse | `code-gate-v0320-off-1018`, `code-gate-off-1018` |
 | literal `<tool_call>` written in prose | 32 complete answers out of 36, 4 short stops, no content lost, no fabricated call (public set) | 35 out of 36, 1 short stop, no content lost, no fabricated call (our set) | `bench/toolcall.py`, temperature 0.7 | `toolcall-v0320-public-set-1018`, `toolcall-private-set-1018` |
@@ -74,6 +75,11 @@ Measured once per version, the draft set named in each cell:
 | code prompt, Bash tool declared | 12 calls to Bash out of 12, 0 undeclared, no code answer (our set) | not measured | `bench/toolcall.py --cases code_with_tool --series 3 --per-series 4`, temperature 0.7 | `toolcall-with-tool-v0320-private-set-1019` |
 | invented tool calls, code prompt, reasoning low | 0 of 12, 12 code answers, none cut (our set) | not measured | `bench/toolcall.py --cases code_without_tool --reasoning low` | `toolcall-reasoning-low-v0320-private-set-1019` |
 | NVMe reads of decoding | not measured | disk wake-up about 10 ms after 120 ms of silence; 16 streams of new text: 140.0 tok/s, 5.4 ms per read (our set) | `bench/nvme_reads.py` | `nvme-reads-private-set-1018` |
+
+With `disable_eagle_block_drop` the greedy probe texts and the MTP acceptance by position were identical in the three
+arms of that A-B-A (`probe-c1-bloc-*-1020-bis-system`, `probe-c1-bloc-*-1020-bis-prose`). The block a hit used to drop
+is the scheduler block of this hybrid model, 1 648 tokens, which vLLM sets so that an attention page is at least as
+large as a Mamba state page.
 
 How much of the model's output each draft set covers (share of generated tokens inside the set, measured on the
 v0.31.0 outputs, `tools/draft_vocab_coverage.py`, `results/draft-vocab-coverage-1018.json`):
@@ -93,9 +99,9 @@ v0.31.0 outputs, `tools/draft_vocab_coverage.py`, `results/draft-vocab-coverage-
 | checkpoint | `nvidia/Qwen3.8-Flash-Next-NVFP4` at a pinned revision; dense BF16 layers converted to block FP8; the QSA indexer projection kept apart from q, k and v | `serve/prepare.sh`, `patches/fp8-hybrid/` |
 | memory | per-layer embedding table (51.2 GB) read in place from the checkpoint, rows prefetched with `MADV_WILLNEED` | `patches/ple-checkpoint-mapped/` (vllm#58439) |
 | context | 524 288 tokens, YaRN factor 2 over 262 144; KV cache fp8, MTP layer in BF16 (`--kv-cache-dtype-skip-layers 48`, honoured by vLLM since v0.32.0, vllm#60023) | `serve/serve.sh` |
-| speculative decoding | MTP 2; the drafter scores 65 536 rows of the head, in NVFP4 on Marlin | `patches/draft-vocab/`, `patches/draft-nvfp4-head/` |
+| speculative decoding | MTP 2; the drafter scores 65 536 rows of the head, in NVFP4 on Marlin; on a prefix-cache hit the last cached block is kept for the drafter (`disable_eagle_block_drop`) | `patches/draft-vocab/`, `patches/draft-nvfp4-head/`, `serve/serve.sh` |
 | cache and determinism | prefix cache repaired (the scheduler half; the worker half is in vLLM since v0.32.0, vllm#55601); deterministic sparse-attention top-k | `patches/cache-det/` |
-| tools | Qwen tool parser repaired: a literal `<tool_call>` in prose no longer cuts the answer | `patches/tool-parser/` |
+| tools | Qwen tool parser repaired: a literal `<tool_call>` in prose no longer cuts the answer; on Chat Completions a call to a tool the request did not offer reaches the client unchanged (blazux issue #56) | `patches/tool-parser/` |
 | CPU | vLLM pinned on the ten Cortex-X925 cores; 16 sequences; recurrent state in BF16 | `serve/serve.sh` |
 | long context | the MTP drafter's rotary cache floored on the served window; on v0.32.0 it stops at 262 144 positions (vllm#62383) | `patches/mrope-draft-floor/` |
 | security | the API key required on every route but `GET /health`; v0.32.0 checks it on `/v1` paths only, and `/invocations` serves inference without it (vllm#58144) | `patches/auth-all-routes/` |

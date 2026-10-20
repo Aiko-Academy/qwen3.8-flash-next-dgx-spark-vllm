@@ -1,0 +1,14 @@
+{
+ "command": "python3 -I probe.py c1-bloc-A2-1020-bis-system --system You are a helpful assistant.",
+ "result": "probe-c1-bloc-A2-1020-bis-system.json",
+ "waited_for_rest_s": 26,
+ "start": "2026-10-20T02:13:30+0200",
+ "end": "2026-10-20T02:17:06+0200",
+ "rc": 0,
+ "sent": 7,
+ "errors": 0,
+ "finished_by_engine": 7,
+ "peak_running": 1.0,
+ "peak_waiting": 0.0,
+ "verdict": "clean"
+}

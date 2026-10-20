@@ -1,6 +1,20 @@
 # Changelog
 
-## Since v0.32.0-1 (2026-10-19)
+## Since v0.32.0-2 (2026-10-20)
+
+- `serve.sh`: `"disable_eagle_block_drop": true` in `--speculative-config`. On a prefix-cache hit vLLM drops the last
+  cached block for the MTP drafter and recomputes it; on this model a block is 1 648 tokens. Measured in A-B-A on
+  2026-10-20 with `bench/prefix_cache.py`: the cache serves 36 256 tokens of the 18 517-token prompt instead of
+  32 960, the cached passes take 3.21 and 3.13 s instead of 3.48 to 3.73 s, outputs identical; greedy probe texts
+  and MTP acceptance identical in the three arms. `verify.sh` checks 28 settings.
+- `patches/tool-parser/`: rebuilt on blazux's commit `427907ac` (issue #56). With the first port of patch 19, a call
+  to a tool the request did not offer became, on Chat Completions, an empty turn ending in `stop`; it now reaches the
+  client unchanged, known aliases still resolve, Responses stays strict. Two of the nine files change
+  (`parser/qwen3.py`, `parser/engine/parser_engine.py`); blazux's Chat tests (10) pass on the rebuilt overlay, the
+  unoffered-call test failed on the first port.
+- `docs/negative-results.md`: MTP 3 on v0.32.0, and the long-prefill threshold.
+
+## v0.32.0-2 (2026-10-19)
 
 - `patches/mrope-draft-floor/`: on v0.32.0 the MTP drafter's rotary cache stops at 262 144 positions while 524 288
   are served (vllm-project/vllm#62383). The overlay floors it on `max_model_len`, after vllm-project/vllm#62409 by

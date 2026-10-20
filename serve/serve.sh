@@ -88,7 +88,7 @@ ARGS=(serve /models/flashnext --served-model-name qwen3.8-flash-next
   --engram-config '{"checkpoint_mapped": true}'
   --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml
   --default-chat-template-kwargs '{"enable_thinking": false}'
-  --speculative-config "{\"method\":\"mtp\",\"num_speculative_tokens\":2,\"max_model_len\":$CTX}"
+  --speculative-config "{\"method\":\"mtp\",\"num_speculative_tokens\":2,\"max_model_len\":$CTX,\"disable_eagle_block_drop\":true}"
   --no-enable-flashinfer-autotune
   --host 0.0.0.0 --port 8000
   --hf-overrides '{"text_config": {"rope_parameters": {"mrope_interleaved": true, "mrope_section": [11, 11, 10], "rope_type": "yarn", "rope_theta": 10000000, "partial_rotary_factor": 0.25, "factor": 2.0, "original_max_position_embeddings": 262144}}}'
