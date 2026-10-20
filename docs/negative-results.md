@@ -8,6 +8,7 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| a fixed KV cache size (`--kv-cache-memory-bytes`, 18.33 GiB) instead of memory profiling | 2026-10-20 | the same pool on two restarts, no out-of-memory error | the first completion came 12 s sooner (11.9 against 12.1 min), for a pool 3.0 % smaller than the profiled one |
 | a tuned config for the MTP layer's Triton FP8 MoE kernel | 2026-10-20 | the image's GB10 config of the nearest shape: 0 % of a decoding step at one client, 0.05 % at 16 clients | under the 1 % set before the measure; any config is bounded at 0.34 % of a one-client step |
 | MTP 3 instead of MTP 2, on vLLM v0.32.0 | 2026-10-19 and 2026-10-20 | French prose +6.8 %, code +21.4 % | greedy outputs change, and a private code gate fell from 5 of 6 to 3 of 6 tasks, with a systematic error on one task |
 | long-prefill threshold of 1 024 tokens (`--long-prefill-token-threshold`) | 2026-10-19 | a short stream 2.4 and 2.2 times faster during a long prefill | still under 10 tok/s, and the long prompt waits 56 to 66 % longer for its first token |
@@ -20,6 +21,21 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## A fixed KV cache size (2026-10-20, 10:19 to 11:17)
+
+`--kv-cache-memory-bytes` skips the memory profiling at start-up and fixes the KV pool. Criterion written before the
+measure: the same pool on two restarts of the variant, with no out-of-memory error. A-B-B2-A' with 18.33 GiB, the
+smallest value the profiler had found that day:
+
+| measure | default (A) | 18.33 GiB (B) | 18.33 GiB, second restart (B2) | default (A') |
+|---|---|---|---|---|
+| KV pool, tokens | 1 262 348 | 1 228 019 | 1 228 019 | 1 270 150 |
+| restart order to first completion, min | 12.1 | 11.9 | 11.9 | 12.1 |
+
+The criterion held, and the greedy probe texts were identical in the three probed arms. But the profiling it skips
+costs about 12 s of a 12-minute start, and the fixed value gives up 3.0 % of the pool the profiler finds on a typical
+start; the profiled pool varied by 0.6 % between A and A'. Not kept.
 
 ## MoE kernel of the MTP layer (2026-10-20, 09:39, server stopped)
 
