@@ -4,6 +4,7 @@
 
 - `results/`: the served v0.32.0-3 measured after its restart (probe with and without a system message, prefix cache,
   invented tool calls on a bare code prompt); README table.
+- `docs/negative-results.md`: a tuned config for the MTP layer's FP8 MoE kernel (bounded at 0.05 % of a step).
 
 ## v0.32.0-3 (2026-10-20)
 

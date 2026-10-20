@@ -8,6 +8,7 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| a tuned config for the MTP layer's Triton FP8 MoE kernel | 2026-10-20 | the image's GB10 config of the nearest shape: 0 % of a decoding step at one client, 0.05 % at 16 clients | under the 1 % set before the measure; any config is bounded at 0.34 % of a one-client step |
 | MTP 3 instead of MTP 2, on vLLM v0.32.0 | 2026-10-19 and 2026-10-20 | French prose +6.8 %, code +21.4 % | greedy outputs change, and a private code gate fell from 5 of 6 to 3 of 6 tasks, with a systematic error on one task |
 | long-prefill threshold of 1 024 tokens (`--long-prefill-token-threshold`) | 2026-10-19 | a short stream 2.4 and 2.2 times faster during a long prefill | still under 10 tok/s, and the long prompt waits 56 to 66 % longer for its first token |
 | Qwen's non-thinking sampling instead of the checkpoint's generation_config | 2026-10-19 | 16 clients 2.6 % faster | one client (French prose) level: 38.0 against 38.1 tok/s, under the 3 % set before the measure |
@@ -19,6 +20,33 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## MoE kernel of the MTP layer (2026-10-20, 09:39, server stopped)
+
+The MTP layer is the only layer whose routed experts go through vLLM's Triton FP8 MoE kernel (E = 512, N = 640,
+hidden 2 560, top-k 10, `fp8_w8a8`, block [128, 128]); the 48 target layers are NVFP4 and use another kernel. The
+v0.32.0 image ships no tuned config for this shape on the GB10, so the kernel runs its default config. Read in the
+v0.32.0 code (`v1/worker/gpu/spec_decode/target_dependent_ar/speculator.py`): with MTP 2 a decoding step calls this
+MoE twice, once on the step's tokens (3 per request) and once on 1 token per request, so M = 3 and 1 at one client,
+48 and 16 at 16 clients.
+
+`benchmark_config` from the image's `benchmarks/kernels/benchmark_moe.py` (a CUDA graph of 10 calls, 20 replays),
+default config against the image's GB10 config for the nearest shape (E = 512, N = 512), microseconds per call:
+
+| M | default | GB10 config, N = 512 |
+|---|---|---|
+| 1 | 231.74 | 234.97 |
+| 3 | 652.04 | 660.85 |
+| 16 | 2 961.43 | 2 954.38 |
+| 48 | 6 693.13 | 6 610.82 |
+
+Rule written before the measure: the gain on the two calls of a step, over the step (48.3 ms at one client, from the
+probe; 171 ms at 16 clients, derived from the load bench: 2.43 tokens per step per stream at 14.2 tok/s), under 1 % at
+both loads means no tuning. It came out at 0 % at one client (the neighbour config is slower at M = 1 and 3) and
+0.05 % at 16 clients. Any config is bounded too: the two calls of a one-client step take 0.88 ms against a floor of
+about 0.72 ms to read 40 experts of 4.9 MB at 273 GB/s, so 0.34 % of the step at most. A full `--tune` sweep (1 920
+configs, hours of GPU) was not run. On the GB10, CUDA counts only strictly free memory (1.58 GB beside the server,
+not the page cache), so this measure needs the server stopped. Not kept.
 
 ## MTP 3 on vLLM v0.32.0 (2026-10-19 and 2026-10-20)
 
