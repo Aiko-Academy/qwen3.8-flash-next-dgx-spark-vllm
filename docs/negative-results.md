@@ -8,6 +8,7 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| internal prefill checkpoints (vllm#60050 and #61601, merged after v0.32.0) | 2026-10-20 | warm replayed turns 14 to 42 % sooner, KV pool +5.6 % (1 664-token blocks) | the summed first token of the replayed turns fell 3.6 %, not 10 %, and cached outputs differed from cold outputs |
 | one draft token instead of two above 8 requests (`num_speculative_tokens_per_batch_size` `[[1, 8, 2], [9, 16, 1]]`) | 2026-10-20 | the same probe texts and speed (two draft tokens kept at one client) | 16 clients 8.7 % slower greedy and 5.1 % slower sampled, where a 5 % gain was set before |
 | CUDA graphs for decoding only (`cudagraph_mode` `FULL_DECODE_ONLY`) | 2026-10-20 | graph capture 0.34 GiB instead of about 1 GiB, KV pool +3.6 % | under the 5 % pool gain set before; one client 5.1 % slower on the load bench, the French prose probe with a system message 3.2 % slower |
 | MoE experts on Marlin (`--moe-backend marlin`) | 2026-10-20 | one client 10.6 % faster on the load bench, 4 to 16 clients 4.4 to 4.5 % faster, KV pool +4.4 % | the greedy probe with a system message fell 3.3 % in French prose (a 2 % gain was set before), the 23 406-token prefill fell 4.4 %, and greedy texts changed |
@@ -27,6 +28,30 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## Internal prefill checkpoints (2026-10-20, 21:11 to 22:08)
+
+vllm-project/vllm#60050 and #61601, both merged into `main` after v0.32.0, let the FlashInfer GDN prefill and the PLE
+short convolution export their state at block boundaries inside a prefill, so a prompt that crosses its last cacheable
+boundary no longer needs a split prefill. We applied both to v0.32.0 (eight files, no conflict). In `align` mode the
+Mamba block then becomes a multiple of the GDN checkpoint stride (64 tokens): 1 664 tokens instead of 1 648. Criterion
+written before the measure: the summed first-token time of the five replayed turns of two agent sessions at least 10 %
+lower, cached outputs identical to cold outputs, no decoding loss.
+
+| measure | default (A) | internal checkpoints (B) | default (A') |
+|---|---|---|---|
+| first token, five replayed turns summed, s | 27.849 | 26.766 | 27.655 |
+| first session, turn 2: first token, s | 0.520 | 0.436 | 0.498 |
+| second session, turn 3: first token, s | 0.769 | 0.447 | 0.767 |
+| `bench/prefix_cache.py`: cold output identical to the cached outputs | yes | no | yes |
+| prefill, 23 406 tokens, tok/s | 2 793.6 | 2 879.7 | 2 801.8 |
+| KV pool, tokens | 1 262 348 | 1 344 168 | 1 282 633 |
+
+The warm turns came 14 to 42 % sooner, but the cold first turns, which dominate the sum, only 1 to 2 %: the sum fell
+3.6 %. And in B the cold output of `bench/prefix_cache.py` differed from the two cached outputs, and so did the last
+turn of one replayed session, sent cold then served by the cache, while A and A' passed everywhere. The greedy probe
+texts were identical in the three arms, and the decoding level. The cause of the cached against cold difference was
+not isolated. Not kept.
 
 ## Fewer draft tokens under load (2026-10-20, 17:31 to 18:29)
 

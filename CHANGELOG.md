@@ -1,5 +1,9 @@
 # Changelog
 
+## Since v0.32.0-4 (2026-10-20)
+
+- `docs/negative-results.md`: internal prefill checkpoints (vllm#60050 and #61601) on v0.32.0.
+
 ## v0.32.0-4 (2026-10-20)
 
 - `patches/weight-prefault/`: the shared weight loaders touch each checkpoint page on the CPU before the copy to the
