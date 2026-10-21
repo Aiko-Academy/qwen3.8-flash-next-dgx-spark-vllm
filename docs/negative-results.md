@@ -8,6 +8,7 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 
 | experiment | date | what it gave | why it was not kept |
 |---|---|---|---|
+| narrow GEMM plans at M = 3, 6 and 12 on SM121 (the measured M = 4, 8 and 16 tiles reused) | 2026-10-21 | verification step 2.2 to 3.0 % shorter at one client | greedy texts change from the first words, and two code gates fell: 7 of 8 (8 of 8 required) and 3 of 6 (at least 5 of 6) |
 | screened target head (`--screened-lm-head`, vllm#60566, open) | 2026-10-20 and 21 | greedy probe 6.0 to 6.2 % faster at one client, same texts and acceptance | 8 clients 1.9 % faster (median of three passes per arm), under the 2 % gain set before |
 | internal prefill checkpoints (vllm#60050 and #61601, merged after v0.32.0) | 2026-10-20 | warm replayed turns 14 to 42 % sooner, KV pool +5.6 % (1 664-token blocks) | the summed first token of the replayed turns fell 3.6 %, not 10 %, and cached outputs differed from cold outputs |
 | one draft token instead of two above 8 requests (`num_speculative_tokens_per_batch_size` `[[1, 8, 2], [9, 16, 1]]`) | 2026-10-20 | the same probe texts and speed (two draft tokens kept at one client) | 16 clients 8.7 % slower greedy and 5.1 % slower sampled, where a 5 % gain was set before |
@@ -29,6 +30,32 @@ unless stated); the raw files are not published. The probe is greedy, 600 tokens
 | output head in FP8 | 2026-10-12 | prose +9 %, code +3 % | outputs change, two quality gates regressed |
 | 262 144 tokens native instead of 524 288 with YaRN | 2026-10-12 | prose +4 %, code +12 % | KV pool -12 %, outputs change, a quality gate regressed, half the context |
 | nightly image with the SM121 skinny-GEMM plans (vllm#59753) | 2026-10-12 | estimated +0.5 to +1 % | below any useful threshold; studied without download |
+
+## Narrow GEMM plans at M = 3 (2026-10-21, 01:04 to 01:43, quality gates 01:53 to 02:40)
+
+vLLM v0.32.0 runs the BF16 layers of this model through measured CuTe skinny-GEMM plans on SM121 at M = 1, 2, 4, 8 and
+16 tokens (`models/qwen4_exp/nvidia/low_latency_gemm.py`), and through cuBLAS at any other M. With two draft tokens the
+target verifies 3 tokens per request, and the CUDA-graph sizes 3, 6, 12, 24 and 48 have no plan. On this configuration
+about 2.1 GB of BF16 weights per verification step go through cuBLAS there: the target head (1.27 GB), the
+hyper-connection up projections (0.64 GB), the router, the indexer projection and the GDN B/A projection. We added
+plans at M = 3, 6 and 12 that reuse the measured M = 4, 8 and 16 tiles of each shape with `num_rows` alone changed (one
+file, 38 entries; the kernel takes M up to 16, so 24 and 48 stay on cuBLAS), and 26 more kernels were compiled at
+warm-up. Criterion written before: the greedy probe with a system message (French prose and code) at least 2 % faster,
+outside the gap between the two default arms, and greedy texts identical; otherwise the quality gates before any keep.
+
+| measure | default (A) | M = 3 plans (B) | default (A') |
+|---|---|---|---|
+| probe with a system message, French prose, tok/s | 43.16 | 44.51 | 43.21 |
+| probe with a system message, code, tok/s | 55.32 | 56.62 | 55.35 |
+| time per verification step, five prompts, ms | 48.42 to 49.53 | 46.96 to 48.04 | 48.37 to 49.50 |
+| greedy probe texts identical to A | | 0 of 10 | 10 of 10 |
+
+The step became 2.2 to 3.0 % shorter on all five prompts, under a gap of 0.1 % at most between the default arms. But the
+new kernels round differently from cuBLAS, and every greedy text changed within its first words, so the speed of the
+probe mixes the kernel and a different acceptance. The quality gates were then replayed on the variant, against their
+reference on the default (2026-10-18): the code gate gave 7 of 8 (a Solidity contract no longer compiles; 8 of 8 required), the private code gate of
+three tasks 3 of 6 (at least 5 of 6); the other gates held (no em dash in the institutional writing, tool-call witness
+33 of 36, YaRN short 14 of 15, no unprompted call in prose). Not kept.
 
 ## Screened target head (2026-10-20, 22:09 to 22:52, and 2026-10-21, 00:00 to 00:38)
 

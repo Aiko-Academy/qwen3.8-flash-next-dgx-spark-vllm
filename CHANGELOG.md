@@ -4,6 +4,7 @@
 
 - `docs/negative-results.md`: internal prefill checkpoints (vllm#60050 and #61601) on v0.32.0.
 - `docs/negative-results.md`: the screened target head (vllm#60566) on v0.32.0.
+- `docs/negative-results.md`: narrow GEMM plans at M = 3, 6 and 12 on SM121.
 
 ## v0.32.0-4 (2026-10-20)
 
